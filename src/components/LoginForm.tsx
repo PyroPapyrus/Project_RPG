@@ -24,7 +24,7 @@ export default function LoginForm() {
         setError('Falha no login. Verifique suas credenciais.')
       }
     } catch (err) {
-      setError('Ocorreu um erro ao fazer login.')
+      setError('Falha no login. Verifique suas credenciais.')
     } finally {
       setLoading(false)
     }
@@ -35,7 +35,7 @@ export default function LoginForm() {
       <div className="max-w-md w-full space-y-8">
         <div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Entre na sua conta
+            Entre na sua conta bocó
           </h2>
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>

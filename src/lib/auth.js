@@ -1,8 +1,8 @@
-import { createClient } from "./supabaseClient";
+import { getSupabaseClient } from "./supabaseClient";
 
 export async function checkEmailExists(email) {
   try {
-    const supabase = createClient();
+    const supabase = getSupabaseClient();
     const { data, error } = await supabase.auth.admin.listUsers({
       filter: { email: email }
     });
@@ -22,7 +22,7 @@ export async function checkEmailExists(email) {
 // Sign Up Function
 export async function signUp(email, password) {
   try {
-    const supabase = createClient();
+    const supabase = getSupabaseClient();
     console.log('Tentando cadastrar:', email);
 
     const { data, error } = await supabase.auth.signUp({
@@ -55,7 +55,7 @@ export async function signUp(email, password) {
 // Login Function
 export async function signIn(email, password) {
   try {
-    const supabase = createClient();
+    const supabase = getSupabaseClient();
     console.log('Tentando fazer login:', email);
 
     const { data, error } = await supabase.auth.signInWithPassword({
@@ -82,7 +82,7 @@ export async function signIn(email, password) {
 // Logout Function
 export async function signOut() {
   try {
-    const supabase = createClient();
+    const supabase = getSupabaseClient();
     const { error } = await supabase.auth.signOut();
 
     if (error) {
