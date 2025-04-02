@@ -1,24 +1,5 @@
 import { getSupabaseClient } from "./supabaseClient";
 
-export async function checkEmailExists(email) {
-  try {
-    const supabase = getSupabaseClient();
-    const { data, error } = await supabase.auth.admin.listUsers({
-      filter: { email: email }
-    });
-
-    if (error) {
-      console.error('Erro ao verificar email:', error);
-      throw error;
-    }
-
-    return data.users.length > 0;
-  } catch (error) {
-    console.error('Erro ao verificar email:', error);
-    throw error;
-  }
-}
-
 // Sign Up Function
 export async function signUp(email, password) {
   try {
@@ -36,9 +17,6 @@ export async function signUp(email, password) {
     console.log('Resposta do Supabase:', data, error);
 
     if (error) {
-      if (error.message.includes("User already registered")) {
-        throw new Error("Este e-mail já está cadastrado. Tente recuperar a senha.");
-      }
       throw error;
     }
 

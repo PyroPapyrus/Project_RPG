@@ -39,13 +39,3 @@ yarn dev
 ```
 
 5. Acesse [http://localhost:3000](http://localhost:3000) no seu navegador.
-
-## Estrutura do Projeto
-
-```
-src/
-  ├── app/              # Páginas e rotas da aplicação
-  ├── components/       # Componentes reutilizáveis
-  ├── lib/             # Utilitários e configurações
-  └── types/           # Definições de tipos TypeScript
-``` 
