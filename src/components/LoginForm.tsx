@@ -19,7 +19,7 @@ export default function LoginForm() {
       const user = await signIn(email, password)
       if (user) {
         // Redirecionar para a página principal após o login bem-sucedido
-        window.location.href = '/'
+        window.location.href = '/home'
       } else {
         setError('Falha no login. Verifique suas credenciais.')
       }
