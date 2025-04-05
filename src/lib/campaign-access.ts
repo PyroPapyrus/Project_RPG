@@ -24,5 +24,5 @@ export function removeCampaignAccess(slug: string) {
 export function generateCampaignLink(campaign: Campaign): string {
   const slug = campaign.name.toLowerCase().replace(/ /g, '-')
   storeCampaignAccess(slug, campaign.id)
-  return `/campaigns/${encodeURIComponent(slug)}`
+  return `/campaign/${encodeURIComponent(slug)}`
 } 

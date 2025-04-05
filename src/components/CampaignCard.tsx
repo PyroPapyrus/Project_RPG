@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { Campaign } from '@/types/campaign'
+import { Button } from '@/components/ui/button'
 
 interface CampaignCardProps {
   campaign: Campaign
@@ -33,12 +34,14 @@ export function CampaignCard({ campaign, role }: CampaignCardProps) {
             {campaign.players_count}/{campaign.max_players} jogadores
           </span>
         </div>
-        <Link 
-          href={`/campaigns/${campaign.id}`}
-          className="text-indigo-600 hover:text-indigo-800 text-sm font-medium"
-        >
-          Ver detalhes →
-        </Link>
+        <Button asChild>
+          <Link
+            href={`/campaign/${campaign.id}`}
+            className="w-full"
+          >
+            Ver detalhes
+          </Link>
+        </Button>
       </div>
     </div>
   )
