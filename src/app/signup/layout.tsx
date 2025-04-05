@@ -16,7 +16,7 @@ export default function SignupLayout({
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession()
       if (session) {
-        router.push('/(authenticated)/dashboard')
+        router.push('/dashboard')
       }
     }
 
