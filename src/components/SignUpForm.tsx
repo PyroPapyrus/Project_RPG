@@ -1,81 +1,80 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { signUp } from '@/lib/auth'
+import { useState } from 'react'
 import Link from 'next/link'
-import { usePasswordValidation } from '@/hooks/usePasswordValidation'
-import { PasswordRequirements } from './PasswordRequirements'
-import { FeedbackMessage } from './FeedbackMessage'
-import { ErrorPopup } from './ErrorPopup'
+import { useRouter } from 'next/navigation'
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { FormInput } from './FormInput'
 import { SubmitButton } from './SubmitButton'
+import { ErrorPopup } from './ErrorPopup'
+import { PasswordRequirements } from './PasswordRequirements'
+import { FeedbackMessage } from './FeedbackMessage'
+import { usePasswordValidation } from '@/lib/hooks/use-password-validation'
 
-export default function SignUpForm() {
+export default function SignupForm() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [success, setSuccess] = useState<{ message: string; email: string } | null>(null)
   const [error, setError] = useState<string | null>(null)
-  
-  const { passwordValidation, validatePassword } = usePasswordValidation()
-
-  useEffect(() => {
-    if (error) {
-      const timer = setTimeout(() => {
-        setError(null)
-      }, 5000)
-      return () => clearTimeout(timer)
-    }
-  }, [error])
-
-  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newPassword = e.target.value;
-    setPassword(newPassword);
-    validatePassword(newPassword);
-  };
-
-  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setEmail(e.target.value);
-  };
+  const [loading, setLoading] = useState(false)
+  const [success, setSuccess] = useState(false)
+  const router = useRouter()
+  const supabase = createClientComponentClient()
+  const passwordValidation = usePasswordValidation(password)
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSuccess(null);
-    setError(null);
-
-    const passwordError = validatePassword(password);
-    if (passwordError) {
-      setError(passwordError);
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      setError("As senhas não coincidem.");
-      return;
-    }
-
-    setLoading(true);
+    e.preventDefault()
+    setError(null)
+    setLoading(true)
 
     try {
-      const result = await signUp(email, password);
-      if (result.user) {
-        setSuccess({
-          message: result.message,
-          email: email
-        });
+      if (!passwordValidation.isValid) {
+        throw new Error("A senha não atende aos requisitos mínimos.")
       }
+
+      if (password !== confirmPassword) {
+        throw new Error("As senhas não coincidem.")
+      }
+
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
+        },
+      })
+
+      if (error) {
+        if (error.message.includes("User already registered")) {
+          throw new Error("Este email já está cadastrado.")
+        }
+        throw error
+      }
+
+      if (!data.user) {
+        throw new Error("Não foi possível criar o usuário.")
+      }
+
+      setSuccess(true)
+      setTimeout(() => {
+        router.push('/login')
+      }, 3000)
     } catch (err: any) {
-      setError(err.message || "Não foi possível criar a conta. Tente novamente.");
-      setSuccess(null);
+      setError(err.message || 'Falha no cadastro. Tente novamente.')
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       {error && <ErrorPopup message={error} onClose={() => setError(null)} />}
+      {success && (
+        <FeedbackMessage
+          message="Conta criada com sucesso! Redirecionando para o login..."
+          type="success"
+        />
+      )}
       <div className="max-w-md w-full space-y-8">
         <div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
@@ -90,7 +89,7 @@ export default function SignUpForm() {
               type="email"
               placeholder="Email"
               value={email}
-              onChange={handleEmailChange}
+              onChange={(e) => setEmail(e.target.value)}
               disabled={loading}
               required
               className="rounded-t-md"
@@ -102,16 +101,18 @@ export default function SignUpForm() {
               type="password"
               placeholder="Senha"
               value={password}
-              onChange={handlePasswordChange}
+              onChange={(e) => setPassword(e.target.value)}
               disabled={loading}
               required
             />
+
+            <PasswordRequirements password={password} />
 
             <FormInput
               id="confirmPassword"
               name="confirmPassword"
               type="password"
-              placeholder="Confirmar Senha"
+              placeholder="Confirme a senha"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               disabled={loading}
@@ -120,23 +121,11 @@ export default function SignUpForm() {
             />
           </div>
 
-          <PasswordRequirements validation={passwordValidation} />
-
-          {success && !error && (
-            <FeedbackMessage
-              type="success"
-              message={success.message}
-              additionalMessage={`Enviamos um email de confirmação para ${success.email}`}
-            />
-          )}
-
-          <div>
-            <SubmitButton
-              loading={loading}
-              loadingText="Criando conta..."
-              buttonText="Criar conta"
-            />
-          </div>
+          <SubmitButton
+            loading={loading}
+            loadingText="Criando conta..."
+            buttonText="Cadastrar"
+          />
 
           <div className="text-sm text-center">
             <Link href="/login" className="font-medium text-indigo-600 hover:text-indigo-500">

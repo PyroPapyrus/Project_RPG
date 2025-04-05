@@ -1,5 +1,11 @@
 import SignUpForm from '@/components/SignUpForm'
+import { BackButton } from '@/components/ui/back-button'
 
 export default function SignUpPage() {
-  return <SignUpForm />
+  return (
+    <div className="relative">
+      <BackButton />
+      <SignUpForm />
+    </div>
+  )
 } 
