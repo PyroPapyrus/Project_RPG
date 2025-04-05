@@ -1,9 +1,8 @@
-import { getSupabaseClient } from "./supabaseClient";
+import { supabase } from "./supabaseClient";
 
 // Sign Up Function
 export async function signUp(email, password) {
   try {
-    const supabase = getSupabaseClient();
     console.log('Tentando cadastrar:', email);
 
     const { data, error } = await supabase.auth.signUp({
@@ -33,7 +32,6 @@ export async function signUp(email, password) {
 // Login Function
 export async function signIn(email, password) {
   try {
-    const supabase = getSupabaseClient();
     console.log('Tentando fazer login:', email);
 
     const { data, error } = await supabase.auth.signInWithPassword({
@@ -50,6 +48,13 @@ export async function signIn(email, password) {
       throw error;
     }
 
+    if (!data.session) {
+      throw new Error("Não foi possível criar uma sessão.");
+    }
+
+    // Aguardar um momento para garantir que a sessão foi estabelecida
+    await new Promise(resolve => setTimeout(resolve, 500));
+
     return data.user;
   } catch (error) {
     console.error('Erro no login:', error);
@@ -60,7 +65,6 @@ export async function signIn(email, password) {
 // Logout Function
 export async function signOut() {
   try {
-    const supabase = getSupabaseClient();
     const { error } = await supabase.auth.signOut();
 
     if (error) {

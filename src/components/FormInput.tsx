@@ -1,4 +1,6 @@
-interface FormInputProps {
+import { InputHTMLAttributes } from 'react'
+
+interface FormInputProps extends InputHTMLAttributes<HTMLInputElement> {
   id: string;
   name: string;
   type: string;
@@ -19,7 +21,8 @@ export function FormInput({
   onChange,
   disabled = false,
   required = false,
-  className = ""
+  className = '',
+  ...props
 }: FormInputProps) {
   return (
     <div>
@@ -31,11 +34,12 @@ export function FormInput({
         name={name}
         type={type}
         required={required}
-        className={`appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm ${className}`}
+        className={`appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm ${className}`}
         placeholder={placeholder}
         value={value}
         onChange={onChange}
         disabled={disabled}
+        {...props}
       />
     </div>
   );
