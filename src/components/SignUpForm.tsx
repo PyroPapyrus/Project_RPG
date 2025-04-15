@@ -36,6 +36,7 @@ export default function SignupForm() {
         throw new Error("As senhas não coincidem.")
       }
 
+      // Tentar criar o usuário
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -44,17 +45,28 @@ export default function SignupForm() {
         },
       })
 
+      // Verificar se houve erro
       if (error) {
-        if (error.message.includes("User already registered")) {
+        // Verificar se o erro é de usuário já registrado
+        if (error.message.includes("User already registered") || 
+            error.message.includes("already registered") ||
+            error.message.includes("already exists")) {
           throw new Error("Este email já está cadastrado.")
         }
         throw error
       }
 
+      // Verificar se o usuário foi criado
       if (!data.user) {
         throw new Error("Não foi possível criar o usuário.")
       }
 
+      // Verificar se o usuário foi realmente criado (não apenas verificado)
+      if (data.user && data.user.identities && data.user.identities.length === 0) {
+        throw new Error("Este email já está cadastrado.")
+      }
+
+      // Se chegou aqui, o usuário foi criado com sucesso
       setSuccess(true)
       setTimeout(() => {
         router.push('/login')
@@ -68,13 +80,7 @@ export default function SignupForm() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      {error && <ErrorPopup message={error} onClose={() => setError(null)} />}
-      {success && (
-        <FeedbackMessage
-          message="Conta criada com sucesso! Redirecionando para o login..."
-          type="success"
-        />
-      )}
+
       <div className="max-w-md w-full space-y-8">
         <div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
@@ -106,11 +112,6 @@ export default function SignupForm() {
               required
             />
 
-
-            <PasswordRequirements password={password} />
-
-            
-            
             <FormInput
               id="confirmPassword"
               name="confirmPassword"
@@ -121,6 +122,16 @@ export default function SignupForm() {
               disabled={loading}
               required
             />
+
+            <PasswordRequirements password={password} />
+
+            {error && <ErrorPopup message={error} onClose={() => setError(null)} />}
+            {success && (
+              <FeedbackMessage
+                message="Conta criada com sucesso! Redirecionando para o login..."
+                type="success"
+              />
+            )}
 
           </div>
 
