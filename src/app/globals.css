@@ -1,3 +1,8 @@
 @tailwind base;
 @tailwind components;
-@tailwind utilities; 
+@tailwind utilities;
+
+/* Evita o deslocamento do conteúdo quando a barra de rolagem aparece */
+html {
+  overflow-y: scroll;
+} 

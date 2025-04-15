@@ -25,7 +25,7 @@ export function CampaignCard({ campaign, role }: CampaignCardProps) {
       </div>
       
       <div className="mt-4">
-        <p className="text-gray-600 text-sm">{campaign.description}</p>
+        <p className="text-gray-600 text-sm break-words whitespace-pre-wrap">{campaign.description}</p>
       </div>
 
       <div className="mt-4 flex items-center justify-between">
@@ -39,7 +39,6 @@ export function CampaignCard({ campaign, role }: CampaignCardProps) {
             href={`/campaign/${campaign.id}`}
             className="w-full"
           >
-            Ver detalhes
           </Link>
         </Button>
       </div>

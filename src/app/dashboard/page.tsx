@@ -21,6 +21,26 @@ interface EditCampaignData {
   status: 'em_andamento' | 'hiato' | 'concluido'
 }
 
+interface CampaignPlayer {
+  campaign_id: string;
+}
+
+interface PlayerCampaignData {
+  campaigns: {
+    id: string;
+    name: string;
+    description: string;
+    system: string;
+    created_at: string;
+    max_players: number;
+    status: string;
+    master_id: string;
+    world_story: string;
+    invite_code: string;
+    players: { count: number }[];
+  };
+}
+
 export default function DashboardPage() {
   const [masterCampaigns, setMasterCampaigns] = useState<Campaign[]>([])
   const [playerCampaigns, setPlayerCampaigns] = useState<Campaign[]>([])
@@ -82,19 +102,22 @@ export default function DashboardPage() {
         players_count: campaign.players?.[0]?.count || 0
       })) as Campaign[]
 
-      const processedPlayerData = (playerData || []).map(item => ({
-        id: item.campaigns.id,
-        name: item.campaigns.name,
-        description: item.campaigns.description,
-        system: item.campaigns.system,
-        created_at: item.campaigns.created_at,
-        max_players: item.campaigns.max_players,
-        status: item.campaigns.status,
-        master_id: item.campaigns.master_id,
-        world_story: item.campaigns.world_story,
-        invite_code: item.campaigns.invite_code,
-        players_count: item.campaigns.players?.[0]?.count || 0
-      })) as Campaign[]
+      const processedPlayerData = (playerData || []).map(item => {
+        const campaign = item.campaigns as any;
+        return {
+          id: campaign.id,
+          name: campaign.name,
+          description: campaign.description,
+          system: campaign.system,
+          created_at: campaign.created_at,
+          max_players: campaign.max_players,
+          status: campaign.status,
+          master_id: campaign.master_id,
+          world_story: campaign.world_story,
+          invite_code: campaign.invite_code,
+          players_count: campaign.players?.[0]?.count || 0
+        } as Campaign;
+      });
 
       setMasterCampaigns(processedMasterData)
       setPlayerCampaigns(processedPlayerData)
@@ -204,7 +227,10 @@ export default function DashboardPage() {
                 size="sm"
                 variant="ghost"
                 className="text-red-600 hover:text-red-800 hover:bg-red-50"
-                onClick={() => setDeletingCampaign(campaign.id)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setDeletingCampaign(campaign.id);
+                }}
               >
                 <Trash2 className="h-4 w-4" />
               </Button>
@@ -213,10 +239,10 @@ export default function DashboardPage() {
         )}
       </div>
       <div className="flex-grow overflow-y-auto">
-        <div className="space-y-2">
-          <p className="text-gray-600">
-            {campaign.description}
-          </p>
+      <div className="space-y-2">
+          <p className="text-gray-600 break-words whitespace-pre-wrap">
+          {campaign.description}
+        </p>
         </div>
       </div>
       <div className="flex justify-between items-center mt-4 pt-2 border-t border-gray-100">
@@ -225,7 +251,6 @@ export default function DashboardPage() {
           onClick={() => router.push(`/campaign/${campaign.name.toLowerCase().replace(/ /g, '-')}`)}
           className="text-blue-600 hover:text-blue-800"
         >
-          Ver detalhes →
         </button>
       </div>
     </div>
@@ -240,18 +265,18 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="bg-gray-100">
       <header className="bg-gray-800 text-white py-4">
-        <div className="container mx-auto px-4 flex justify-between items-center">
+        <div className="mx-auto px-4 flex justify-between items-center">
           <h1 className="text-2xl font-semibold">
             {activeTab === 'master' ? 'Minhas Campanhas' : 'Campanhas que Participo'}
           </h1>
           <LogoutButton />
-        </div>
+      </div>
       </header>
 
       <main className="container mx-auto px-4 py-8">
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex justify-between items-center mb-6 max-w-6xl mx-auto">
           <div className="flex space-x-4">
             <button 
               className={`px-6 py-2 rounded-md flex items-center space-x-2 transition-colors ${
@@ -269,6 +294,7 @@ export default function DashboardPage() {
                 {masterCampaigns.length}
               </span>
             </button>
+
             <button 
               className={`px-6 py-2 rounded-md flex items-center space-x-2 transition-colors ${
                 activeTab === 'player' 
@@ -277,6 +303,7 @@ export default function DashboardPage() {
               }`}
               onClick={() => setActiveTab('player')}
             >
+              
               <span>Campanhas que jogo</span>
               <span className={`${
                 activeTab === 'player' ? 'bg-gray-600' : 'bg-gray-300'
@@ -295,7 +322,7 @@ export default function DashboardPage() {
           )}
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-6xl mx-auto">
           {activeTab === 'master' ? (
             masterCampaigns.length === 0 ? (
               <p className="text-gray-500 col-span-2 text-center py-8">Você ainda não criou nenhuma campanha.</p>
@@ -303,7 +330,7 @@ export default function DashboardPage() {
               masterCampaigns.map((campaign) => (
                 <div
                   key={campaign.id}
-                  className="bg-white rounded-lg shadow-md overflow-hidden cursor-pointer transition-transform hover:scale-[1.02] h-[330px] flex flex-col"
+                  className="bg-white rounded-lg shadow-md overflow-hidden cursor-pointer transition-transform hover:scale-[1.02] h-[355px] flex flex-col w-full"
                   onClick={() => router.push(`/campaign/${campaign.id}/sessions`)}
                 >
                   <div className="bg-gray-800 text-white p-4">
@@ -325,13 +352,19 @@ export default function DashboardPage() {
                         </span>
                         <div className="flex items-center space-x-2" onClick={(e) => e.stopPropagation()}>
                           <button
-                            onClick={() => handleEditClick(campaign)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEditClick(campaign);
+                            }}
                             className="text-gray-300 hover:text-yellow-400"
                           >
                             <Pencil className="h-5 w-5" />
                           </button>
                           <button
-                            onClick={() => setDeletingCampaign(campaign.id)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setDeletingCampaign(campaign.id);
+                            }}
                             className="text-gray-300 hover:text-red-400"
                           >
                             <Trash2 className="h-5 w-5" />
@@ -343,7 +376,7 @@ export default function DashboardPage() {
                   
                   <div className="p-4 flex-grow overflow-y-auto">
                     <div className="space-y-2">
-                      <p className="text-gray-600">
+                      <p className="text-gray-600 break-words whitespace-pre-wrap">
                         {campaign.description}
                       </p>
                     </div>
@@ -374,7 +407,7 @@ export default function DashboardPage() {
               playerCampaigns.map((campaign) => (
                 <div
                   key={campaign.id}
-                  className="bg-white rounded-lg shadow-md overflow-hidden cursor-pointer transition-transform hover:scale-[1.02] h-[330px] flex flex-col"
+                  className="bg-white rounded-lg shadow-md overflow-hidden cursor-pointer transition-transform hover:scale-[1.02] h-[340px] flex flex-col w-full"
                   onClick={() => router.push(`/campaign/${campaign.id}/sessions`)}
                 >
                   <div className="bg-gray-800 text-white p-4">
@@ -396,13 +429,19 @@ export default function DashboardPage() {
                         </span>
                         <div className="flex items-center space-x-2" onClick={(e) => e.stopPropagation()}>
                           <button
-                            onClick={() => handleEditClick(campaign)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEditClick(campaign);
+                            }}
                             className="text-gray-300 hover:text-yellow-400"
                           >
                             <Pencil className="h-5 w-5" />
                           </button>
                           <button
-                            onClick={() => setDeletingCampaign(campaign.id)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setDeletingCampaign(campaign.id);
+                            }}
                             className="text-gray-300 hover:text-red-400"
                           >
                             <Trash2 className="h-5 w-5" />
@@ -414,7 +453,7 @@ export default function DashboardPage() {
                   
                   <div className="p-4 flex-grow overflow-y-auto">
                     <div className="space-y-2">
-                      <p className="text-gray-600">
+                      <p className="text-gray-600 break-words whitespace-pre-wrap">
                         {campaign.description}
                       </p>
                     </div>
@@ -434,7 +473,7 @@ export default function DashboardPage() {
                       {new Date(campaign.created_at).toLocaleDateString('pt-BR')}
                     </span>
                   </div>
-                </div>
+            </div>
               ))
             )
           )}
@@ -443,7 +482,7 @@ export default function DashboardPage() {
 
       {/* Modal de Edição */}
       {isEditModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-md">
             <h2 className="text-2xl font-bold mb-4">Editar Campanha</h2>
             
@@ -548,6 +587,36 @@ export default function DashboardPage() {
                 </Button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Confirmação de Exclusão */}
+      {deletingCampaign && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <h2 className="text-2xl font-bold mb-4">Confirmar Exclusão</h2>
+            
+            <p className="mb-6 text-gray-600">
+              Tem certeza que deseja excluir esta campanha? Esta ação não pode ser desfeita.
+            </p>
+
+            <div className="flex justify-end space-x-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setDeletingCampaign(null)}
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="button"
+                className="bg-red-600 text-white hover:bg-red-700"
+                onClick={() => handleDeleteCampaign(deletingCampaign)}
+              >
+                Excluir Campanha
+              </Button>
+            </div>
           </div>
         </div>
       )}
