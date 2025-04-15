@@ -351,7 +351,8 @@ export default function DashboardPage() {
                   
                   <div className="flex justify-between items-center p-4 pt-2 border-t border-gray-100">
                     <div className="flex items-center space-x-4">
-                      <span className="text-sm text-gray-500">{campaign.system}</span>
+                      <span className="text-sm text-gray-500">
+                        <span className='font-bold'>Sistema:</span> {campaign.system}</span>
                       <div className="flex items-center space-x-1">
                         <span className="text-sm text-gray-500">{campaign.players_count}/{campaign.max_players}</span>
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-500" viewBox="0 0 20 20" fill="currentColor">
@@ -483,6 +484,7 @@ export default function DashboardPage() {
                 value={editFormData.system}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditFormData({ ...editFormData, system: e.target.value })}
                 required
+                maxLength={40}
               />
 
               <div className="space-y-1">
