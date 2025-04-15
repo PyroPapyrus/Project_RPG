@@ -68,7 +68,6 @@ export default function LoginForm() {
               onChange={(e) => setEmail(e.target.value)}
               disabled={loading}
               required
-              className="rounded-t-md"
             />
             
             <FormInput
@@ -80,7 +79,6 @@ export default function LoginForm() {
               onChange={(e) => setPassword(e.target.value)}
               disabled={loading}
               required
-              className="rounded-b-md"
             />
           </div>
 

@@ -8,5 +8,8 @@ export interface Campaign {
   created_at: string
   updated_at: string
   master_id: string
-  status: 'active' | 'paused' | 'completed'
+  status: 'em_andamento' | 'hiato' | 'concluido'
+  world_story: string | null
+  invite_code: string
+  players?: { count: number }[]
 } 

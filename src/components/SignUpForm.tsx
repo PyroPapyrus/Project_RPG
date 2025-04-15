@@ -83,6 +83,7 @@ export default function SignupForm() {
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="rounded-md shadow-sm -space-y-px">
+
             <FormInput
               id="email"
               name="email"
@@ -92,7 +93,6 @@ export default function SignupForm() {
               onChange={(e) => setEmail(e.target.value)}
               disabled={loading}
               required
-              className="rounded-t-md"
             />
             
             <FormInput

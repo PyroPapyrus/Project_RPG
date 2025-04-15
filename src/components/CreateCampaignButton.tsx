@@ -79,9 +79,12 @@ export function CreateCampaignButton({ onSuccess }: CreateCampaignButtonProps) {
 
   return (
     <>
-      <Button onClick={() => setIsModalOpen(true)}>
-        <Plus className="h-4 w-4 mr-2" />
-        Nova Campanha
+      <Button 
+        onClick={() => setIsModalOpen(true)}
+        className="bg-black text-white hover:bg-gray-900 rounded-full px-6 py-2 flex items-center space-x-2"
+      >
+        <Plus className="h-5 w-5" />
+        <span>Criar Campanha</span>
       </Button>
 
       {isModalOpen && (
