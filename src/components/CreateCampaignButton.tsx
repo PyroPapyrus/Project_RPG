@@ -113,12 +113,12 @@ export function CreateCampaignButton({ onSuccess }: CreateCampaignButtonProps) {
                   type="textarea"
                   placeholder="Descrição"
                   value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setFormData({ ...formData, description: e.target.value })}
                   required
-                  maxLength={250}
+                  maxLength={500}
                 />
                 <p className="text-xs text-gray-500">
-                  {formData.description.length}/250 caracteres
+                  {formData.description.length}/500 caracteres
                 </p>
               </div>
 

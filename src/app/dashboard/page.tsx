@@ -167,7 +167,7 @@ export default function DashboardPage() {
   const CampaignCard = ({ campaign, isMaster = false }: { campaign: Campaign, isMaster?: boolean }) => (
     <div
       key={campaign.id}
-      className="bg-white shadow-md rounded-lg p-6 hover:shadow-lg transition-shadow h-[300px] flex flex-col"
+      className="bg-white shadow-md rounded-lg p-6 hover:shadow-lg transition-shadow h-[330px] flex flex-col"
     >
       <div className="flex justify-between items-start mb-2">
         <h3 className="text-xl font-semibold">{campaign.name}</h3>
@@ -303,7 +303,7 @@ export default function DashboardPage() {
               masterCampaigns.map((campaign) => (
                 <div
                   key={campaign.id}
-                  className="bg-white rounded-lg shadow-md overflow-hidden cursor-pointer transition-transform hover:scale-[1.02] h-[300px] flex flex-col"
+                  className="bg-white rounded-lg shadow-md overflow-hidden cursor-pointer transition-transform hover:scale-[1.02] h-[330px] flex flex-col"
                   onClick={() => router.push(`/campaign/${campaign.id}/sessions`)}
                 >
                   <div className="bg-gray-800 text-white p-4">
@@ -373,7 +373,7 @@ export default function DashboardPage() {
               playerCampaigns.map((campaign) => (
                 <div
                   key={campaign.id}
-                  className="bg-white rounded-lg shadow-md overflow-hidden cursor-pointer transition-transform hover:scale-[1.02] h-[300px] flex flex-col"
+                  className="bg-white rounded-lg shadow-md overflow-hidden cursor-pointer transition-transform hover:scale-[1.02] h-[330px] flex flex-col"
                   onClick={() => router.push(`/campaign/${campaign.id}/sessions`)}
                 >
                   <div className="bg-gray-800 text-white p-4">
@@ -459,7 +459,7 @@ export default function DashboardPage() {
                 type="text"
                 placeholder="Nome da Campanha"
                 value={editFormData.name}
-                onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditFormData({ ...editFormData, name: e.target.value })}
                 required
                 maxLength={50}
               />
@@ -470,9 +470,9 @@ export default function DashboardPage() {
                 type="textarea"
                 placeholder="Descrição"
                 value={editFormData.description}
-                onChange={(e) => setEditFormData({ ...editFormData, description: e.target.value })}
+                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setEditFormData({ ...editFormData, description: e.target.value })}
                 required
-                maxLength={250}
+                maxLength={500}
               />
 
               <FormInput
@@ -481,7 +481,7 @@ export default function DashboardPage() {
                 type="text"
                 placeholder="Sistema (D&D 5e, Pathfinder, etc.)"
                 value={editFormData.system}
-                onChange={(e) => setEditFormData({ ...editFormData, system: e.target.value })}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditFormData({ ...editFormData, system: e.target.value })}
                 required
               />
 
@@ -498,7 +498,7 @@ export default function DashboardPage() {
                   type="number"
                   placeholder="Ex: 5"
                   value={editFormData.max_players.toString()}
-                  onChange={(e) => {
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                     const value = parseInt(e.target.value)
                     if (value > 20) {
                       setEditFormData({ ...editFormData, max_players: 20 })
@@ -520,7 +520,7 @@ export default function DashboardPage() {
                   id="status"
                   name="status"
                   value={editFormData.status}
-                  onChange={(e) => setEditFormData({ ...editFormData, status: e.target.value as 'em_andamento' | 'hiato' | 'concluido' })}
+                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setEditFormData({ ...editFormData, status: e.target.value as 'em_andamento' | 'hiato' | 'concluido' })}
                   className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
                 >
                   <option value="em_andamento">Em Andamento</option>

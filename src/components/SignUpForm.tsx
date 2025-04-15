@@ -106,8 +106,11 @@ export default function SignupForm() {
               required
             />
 
+
             <PasswordRequirements password={password} />
 
+            
+            
             <FormInput
               id="confirmPassword"
               name="confirmPassword"
@@ -117,8 +120,8 @@ export default function SignupForm() {
               onChange={(e) => setConfirmPassword(e.target.value)}
               disabled={loading}
               required
-              className="rounded-b-md"
             />
+
           </div>
 
           <SubmitButton
