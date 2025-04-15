@@ -22,27 +22,15 @@ export default function LoginForm() {
     setLoading(true)
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      })
-
-      if (error) {
-        if (error.message.includes("Invalid login credentials")) {
-          throw new Error("Email ou senha incorretos.")
-        }
-        throw error
+      const user = await signIn(email, password)
+      if (user) {
+        // Redirecionar para a página principal após o login bem-sucedido
+        window.location.href = '/'
+      } else {
+        setError('Falha no login. Verifique suas credenciais.')
       }
-
-      if (!data.session) {
-        throw new Error("Não foi possível criar uma sessão.")
-      }
-
-      // Forçar um refresh da página para garantir que o middleware pegue a nova sessão
-      router.refresh()
-      router.push('/dashboard')
-    } catch (err: any) {
-      setError(err.message || 'Falha no login. Verifique suas credenciais.')
+    } catch (err) {
+      setError('Falha no login. Verifique suas credenciais.')
     } finally {
       setLoading(false)
     }
