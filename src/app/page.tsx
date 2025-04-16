@@ -94,8 +94,8 @@ export default function Home() {
               <div className="bg-blue-600 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4">
                 <span className="text-xl font-bold">3</span>
               </div>
-              <h3 className="font-bold mb-2">Crie Personagens</h3>
-              <p className="text-gray-300">Desenvolva seus heróis</p>
+              <h3 className="font-bold mb-2">Adicione seus Amigos</h3>
+              <p className="text-gray-300">Desenvolva suas histórias juntos</p>
             </div>
             <div className="text-center">
               <div className="bg-blue-600 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4">
