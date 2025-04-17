@@ -181,6 +181,23 @@ const Page = ({ params }: PageProps) => {
               <h1 className="text-3xl font-bold mb-2">{campaign.name}</h1>
               <p className="text-gray-600 mb-1">{campaign.description}</p>
               <p className="text-sm text-gray-500">Sistema: {campaign.system}</p>
+              {isMaster && campaign.invite_code && (
+              <div className="mt-4 flex items-center gap-2">
+                <span className="text-sm text-gray-600">Código de Convite:</span>
+                <code className="bg-gray-100 px-2 py-1 rounded font-mono text-blue-700">{campaign.invite_code}</code>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    navigator.clipboard.writeText(campaign.invite_code);
+                    alert('Código copiado para a área de transferência!');
+                  }}
+                >
+                  Copiar
+                </Button>
+              </div>
+            )}
+
               {/* Pode adicionar status, nº de jogadores, etc. aqui */}
             </div>
             {/* Área para botões de ação do Mestre sobre a CAMPANHA (ex: Editar Campanha) */}

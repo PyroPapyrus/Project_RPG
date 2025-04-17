@@ -7,11 +7,9 @@ import { CreateCampaignButton } from '@/components/CreateCampaignButton'
 import { useRouter } from 'next/navigation'
 import { Trash2, Pencil, ChevronDown, ChevronUp, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs'
 import { FormInput } from '@/components/FormInput'
-import { cn } from '@/lib/utils'
-import { generateCampaignLink } from '@/lib/campaign-access'
 import LogoutButton from '@/components/LogoutButton'
+import JoinCampaignModal from '@/components/modals/JoinCampaignModal'
 
 interface EditCampaignData {
   name: string
@@ -37,6 +35,7 @@ export default function DashboardPage() {
   })
   const [editError, setEditError] = useState<string | null>(null)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [joinModalOpen, setJoinModalOpen] = useState(false)
   const router = useRouter()
   const supabase = createClientComponentClient()
 
@@ -286,13 +285,16 @@ export default function DashboardPage() {
             </button>
           </div>
           {activeTab === 'master' ? (
-            <CreateCampaignButton onSuccess={loadCampaigns} />
-          ) : (
-            <button className="bg-black text-white hover:bg-gray-900 rounded-full px-6 py-2 flex items-center space-x-2">
-              <Plus className="h-5 w-5" />
-              <span>Entrar em Campanha</span>
-            </button>
-          )}
+              <CreateCampaignButton onSuccess={loadCampaigns} />
+            ) : (
+              <button
+                onClick={() => setJoinModalOpen(true)}
+                className="bg-black text-white hover:bg-gray-900 rounded-full px-6 py-2 flex items-center space-x-2"
+              >
+                <Plus className="h-5 w-5" />
+                <span>Entrar em Campanha</span>
+              </button>
+            )}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -549,6 +551,14 @@ export default function DashboardPage() {
           </div>
         </div>
       )}
+
+      {/* Modal de Entrada em Campanha */}
+      <JoinCampaignModal
+        isOpen={joinModalOpen}
+        onClose={() => setJoinModalOpen(false)}
+        onSuccess={loadCampaigns}
+      />
+
     </div>
   )
 } 
