@@ -55,16 +55,16 @@ export default function DashboardPage() {
         .order('created_at')
 
       // Buscar campanhas onde o usuário é jogador com contagem de jogadores
-      const { data: playerData } = await supabase
-        .from('campaign_players')
-        .select(`
-          campaigns(
-            *,
-            players:campaign_players(count)
-          )
-        `)
-        .eq('player_id', user.id)
-        .order('created_at')
+      const { data: playerData, error } = await supabase
+      .from('campaign_players')
+      .select(`
+        campaigns:campaign_id (
+          *,
+          players:campaign_players(count)
+        )
+      `)
+      .eq('user_id', user.id);
+
 
       // Processar os dados para incluir a contagem de jogadores
       const processedMasterData = (masterData || []).map(campaign => ({
@@ -81,19 +81,27 @@ export default function DashboardPage() {
         players_count: campaign.players?.[0]?.count || 0
       })) as Campaign[]
 
-      const processedPlayerData = (playerData || []).map(item => ({
-        id: item.campaigns.id,
-        name: item.campaigns.name,
-        description: item.campaigns.description,
-        system: item.campaigns.system,
-        created_at: item.campaigns.created_at,
-        max_players: item.campaigns.max_players,
-        status: item.campaigns.status,
-        master_id: item.campaigns.master_id,
-        world_story: item.campaigns.world_story,
-        invite_code: item.campaigns.invite_code,
-        players_count: item.campaigns.players?.[0]?.count || 0
-      })) as Campaign[]
+      type CampaignWithCount = {
+        campaigns: Campaign & {
+          players?: { count: number }[];
+        };
+      };
+      
+      const processedPlayerData = ((playerData || []) as CampaignWithCount[])
+        .filter(item => item.campaigns && !Array.isArray(item.campaigns)) // Evita erro se vier array
+        .map(item => ({
+          id: item.campaigns.id,
+          name: item.campaigns.name,
+          description: item.campaigns.description,
+          system: item.campaigns.system,
+          created_at: item.campaigns.created_at,
+          max_players: item.campaigns.max_players,
+          status: item.campaigns.status,
+          master_id: item.campaigns.master_id,
+          world_story: item.campaigns.world_story,
+          invite_code: item.campaigns.invite_code,
+          players_count: item.campaigns.players?.[0]?.count || 0
+        })) as Campaign[];
 
       setMasterCampaigns(processedMasterData)
       setPlayerCampaigns(processedPlayerData)
