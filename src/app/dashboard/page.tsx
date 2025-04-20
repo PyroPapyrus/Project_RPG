@@ -7,11 +7,9 @@ import { CreateCampaignButton } from '@/components/CreateCampaignButton'
 import { useRouter } from 'next/navigation'
 import { Trash2, Pencil, ChevronDown, ChevronUp, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs'
 import { FormInput } from '@/components/FormInput'
-import { cn } from '@/lib/utils'
-import { generateCampaignLink } from '@/lib/campaign-access'
 import LogoutButton from '@/components/LogoutButton'
+import JoinCampaignModal from '@/components/modals/JoinCampaignModal'
 
 interface EditCampaignData {
   name: string
@@ -57,6 +55,7 @@ export default function DashboardPage() {
   })
   const [editError, setEditError] = useState<string | null>(null)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [joinModalOpen, setJoinModalOpen] = useState(false)
   const router = useRouter()
   const supabase = createClientComponentClient()
 
@@ -76,16 +75,16 @@ export default function DashboardPage() {
         .order('created_at')
 
       // Buscar campanhas onde o usuário é jogador com contagem de jogadores
-      const { data: playerData } = await supabase
-        .from('campaign_players')
-        .select(`
-          campaigns(
-            *,
-            players:campaign_players(count)
-          )
-        `)
-        .eq('player_id', user.id)
-        .order('created_at')
+      const { data: playerData, error } = await supabase
+      .from('campaign_players')
+      .select(`
+        campaigns:campaign_id (
+          *,
+          players:campaign_players(count)
+        )
+      `)
+      .eq('user_id', user.id);
+
 
       // Processar os dados para incluir a contagem de jogadores
       const processedMasterData = (masterData || []).map(campaign => ({
@@ -102,22 +101,27 @@ export default function DashboardPage() {
         players_count: campaign.players?.[0]?.count || 0
       })) as Campaign[]
 
-      const processedPlayerData = (playerData || []).map(item => {
-        const campaign = item.campaigns as any;
-        return {
-          id: campaign.id,
-          name: campaign.name,
-          description: campaign.description,
-          system: campaign.system,
-          created_at: campaign.created_at,
-          max_players: campaign.max_players,
-          status: campaign.status,
-          master_id: campaign.master_id,
-          world_story: campaign.world_story,
-          invite_code: campaign.invite_code,
-          players_count: campaign.players?.[0]?.count || 0
-        } as Campaign;
-      });
+      type CampaignWithCount = {
+        campaigns: Campaign & {
+          players?: { count: number }[];
+        };
+      };
+      
+      const processedPlayerData = ((playerData || []) as CampaignWithCount[])
+        .filter(item => item.campaigns && !Array.isArray(item.campaigns)) // Evita erro se vier array
+        .map(item => ({
+          id: item.campaigns.id,
+          name: item.campaigns.name,
+          description: item.campaigns.description,
+          system: item.campaigns.system,
+          created_at: item.campaigns.created_at,
+          max_players: item.campaigns.max_players,
+          status: item.campaigns.status,
+          master_id: item.campaigns.master_id,
+          world_story: item.campaigns.world_story,
+          invite_code: item.campaigns.invite_code,
+          players_count: item.campaigns.players?.[0]?.count || 0
+        })) as Campaign[];
 
       setMasterCampaigns(processedMasterData)
       setPlayerCampaigns(processedPlayerData)
@@ -313,13 +317,16 @@ export default function DashboardPage() {
             </button>
           </div>
           {activeTab === 'master' ? (
-            <CreateCampaignButton onSuccess={loadCampaigns} />
-          ) : (
-            <button className="bg-black text-white hover:bg-gray-900 rounded-full px-6 py-2 flex items-center space-x-2">
-              <Plus className="h-5 w-5" />
-              <span>Entrar em Campanha</span>
-            </button>
-          )}
+              <CreateCampaignButton onSuccess={loadCampaigns} />
+            ) : (
+              <button
+                onClick={() => setJoinModalOpen(true)}
+                className="bg-black text-white hover:bg-gray-900 rounded-full px-6 py-2 flex items-center space-x-2"
+              >
+                <Plus className="h-5 w-5" />
+                <span>Entrar em Campanha</span>
+              </button>
+            )}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-6xl mx-auto">
@@ -620,6 +627,13 @@ export default function DashboardPage() {
           </div>
         </div>
       )}
+      {/* Modal de Entrada em Campanha */}
+      <JoinCampaignModal
+        isOpen={joinModalOpen}
+        onClose={() => setJoinModalOpen(false)}
+        onSuccess={loadCampaigns}
+      />
+
     </div>
   )
 } 
