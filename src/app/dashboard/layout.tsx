@@ -1,7 +1,6 @@
 'use client'
 
 import AuthGuard from '@/components/AuthGuard'
-import LogoutButton from '@/components/LogoutButton'
 
 export default function DashboardLayout({
   children,

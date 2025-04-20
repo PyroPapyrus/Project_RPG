@@ -5,11 +5,12 @@ import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { Campaign } from '@/types/campaign'
 import { CreateCampaignButton } from '@/components/CreateCampaignButton'
 import { useRouter } from 'next/navigation'
-import { Trash2, Pencil, ChevronDown, ChevronUp, Plus } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { FormInput } from '@/components/FormInput'
 import LogoutButton from '@/components/LogoutButton'
 import JoinCampaignModal from '@/components/modals/JoinCampaignModal'
+import { CampaignCard } from '@/components/CampaignCard'
 
 interface EditCampaignData {
   name: string
@@ -75,7 +76,7 @@ export default function DashboardPage() {
         .order('created_at')
 
       // Buscar campanhas onde o usuário é jogador com contagem de jogadores
-      const { data: playerData, error } = await supabase
+      const { data: playerData } = await supabase
       .from('campaign_players')
       .select(`
         campaigns:campaign_id (
@@ -83,7 +84,8 @@ export default function DashboardPage() {
           players:campaign_players(count)
         )
       `)
-      .eq('user_id', user.id);
+        .eq('user_id', user.id)
+      
 
 
       // Processar os dados para incluir a contagem de jogadores
@@ -125,12 +127,17 @@ export default function DashboardPage() {
 
       setMasterCampaigns(processedMasterData)
       setPlayerCampaigns(processedPlayerData)
+
+      console.log('Player Data Raw:', playerData)
+      console.log('Processed Player Data:', processedPlayerData)
     } catch (error) {
       console.error('Erro ao carregar campanhas:', error)
     } finally {
       setLoading(false)
     }
   }
+
+
 
   const handleDeleteCampaign = async (campaignId: string) => {
     try {
@@ -190,85 +197,9 @@ export default function DashboardPage() {
   useEffect(() => {
     loadCampaigns()
   }, [supabase])
-
-  const CampaignCard = ({ campaign, isMaster = false }: { campaign: Campaign, isMaster?: boolean }) => (
-    <div
-      key={campaign.id}
-      className="bg-white shadow-md rounded-lg p-6 hover:shadow-lg transition-shadow h-[330px] flex flex-col"
-    >
-      <div className="flex justify-between items-start mb-2">
-        <h3 className="text-xl font-semibold">{campaign.name}</h3>
-        {isMaster && (
-          <div className="flex gap-2">
-            <Button
-              size="sm"
-              variant="ghost"
-              className="text-blue-600 hover:text-blue-800 hover:bg-blue-50"
-              onClick={() => handleEditClick(campaign)}
-            >
-              <Pencil className="h-4 w-4" />
-            </Button>
-            {deletingCampaign === campaign.id ? (
-              <div className="flex items-center gap-2">
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="bg-red-600 text-white hover:bg-red-700"
-                  onClick={() => handleDeleteCampaign(campaign.id)}
-                >
-                  Confirmar
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setDeletingCampaign(null)}
-                >
-                  Cancelar
-                </Button>
-              </div>
-            ) : (
-              <Button
-                size="sm"
-                variant="ghost"
-                className="text-red-600 hover:text-red-800 hover:bg-red-50"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setDeletingCampaign(campaign.id);
-                }}
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            )}
-          </div>
-        )}
-      </div>
-      <div className="flex-grow overflow-y-auto">
-      <div className="space-y-2">
-          <p className="text-gray-600 break-words whitespace-pre-wrap">
-          {campaign.description}
-        </p>
-        </div>
-      </div>
-      <div className="flex justify-between items-center mt-4 pt-2 border-t border-gray-100">
-        <span className="text-sm text-gray-500">Sistema: {campaign.system}</span>
-        <button
-          onClick={() => router.push(`/campaign/${campaign.name.toLowerCase().replace(/ /g, '-')}`)}
-          className="text-blue-600 hover:text-blue-800"
-        >
-        </button>
-      </div>
-    </div>
-  )
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-gray-900"></div>
-      </div>
-    )
-  }
-
+  
   return (
+
     <div className="bg-gray-100">
       <header className="bg-gray-800 text-white py-4">
         <div className="mx-auto px-4 flex justify-between items-center">
@@ -335,76 +266,12 @@ export default function DashboardPage() {
               <p className="text-gray-500 col-span-2 text-center py-8">Você ainda não criou nenhuma campanha.</p>
             ) : (
               masterCampaigns.map((campaign) => (
-                <div
+                <CampaignCard
                   key={campaign.id}
-                  className="bg-white rounded-lg shadow-md overflow-hidden cursor-pointer transition-transform hover:scale-[1.02] h-[355px] flex flex-col w-full"
-                  onClick={() => router.push(`/campaign/${campaign.id}/sessions`)}
-                >
-                  <div className="bg-gray-800 text-white p-4">
-                    <div className="flex flex-wrap justify-between items-start gap-2">
-                      <h3 className="text-xl font-semibold break-words max-w-[60%]">{campaign.name}</h3>
-                      <div className="flex items-center space-x-4 min-w-[200px] justify-end">
-                        <span className={`text-sm px-3 py-1 rounded-full whitespace-nowrap ${
-                          campaign.status === 'concluido' 
-                            ? 'bg-red-100 text-red-600' 
-                            : campaign.status === 'hiato'
-                            ? 'bg-yellow-100 text-yellow-600'
-                            : 'bg-green-100 text-green-600'
-                        }`}>
-                          {campaign.status === 'concluido' 
-                            ? 'Concluído' 
-                            : campaign.status === 'hiato'
-                            ? 'Em Hiato'
-                            : 'Em Andamento'}
-                        </span>
-                        <div className="flex items-center space-x-2" onClick={(e) => e.stopPropagation()}>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleEditClick(campaign);
-                            }}
-                            className="text-gray-300 hover:text-yellow-400"
-                          >
-                            <Pencil className="h-5 w-5" />
-                          </button>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setDeletingCampaign(campaign.id);
-                            }}
-                            className="text-gray-300 hover:text-red-400"
-                          >
-                            <Trash2 className="h-5 w-5" />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="p-4 flex-grow overflow-y-auto">
-                    <div className="space-y-2">
-                      <p className="text-gray-600 break-words whitespace-pre-wrap">
-                        {campaign.description}
-                      </p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex justify-between items-center p-4 pt-2 border-t border-gray-100">
-                    <div className="flex items-center space-x-4">
-                      <span className="text-sm text-gray-500">
-                        <span className='font-bold'>Sistema:</span> {campaign.system}</span>
-                      <div className="flex items-center space-x-1">
-                        <span className="text-sm text-gray-500">{campaign.players_count}/{campaign.max_players}</span>
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-500" viewBox="0 0 20 20" fill="currentColor">
-                          <path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" />
-                        </svg>
-                      </div>
-                    </div>
-                    <span className="text-sm text-gray-500">
-                      {new Date(campaign.created_at).toLocaleDateString('pt-BR')}
-                    </span>
-                  </div>
-                </div>
+                  campaign={campaign}
+                  onEdit={handleEditClick}
+                  onDelete={(id) => setDeletingCampaign(id)}
+                />
               ))
             )
           ) : (
@@ -412,75 +279,10 @@ export default function DashboardPage() {
               <p className="text-gray-500 col-span-2 text-center py-8">Você ainda não participa de nenhuma campanha.</p>
             ) : (
               playerCampaigns.map((campaign) => (
-                <div
+                <CampaignCard
                   key={campaign.id}
-                  className="bg-white rounded-lg shadow-md overflow-hidden cursor-pointer transition-transform hover:scale-[1.02] h-[340px] flex flex-col w-full"
-                  onClick={() => router.push(`/campaign/${campaign.id}/sessions`)}
-                >
-                  <div className="bg-gray-800 text-white p-4">
-                    <div className="flex flex-wrap justify-between items-start gap-2">
-                      <h3 className="text-xl font-semibold break-words max-w-[60%]">{campaign.name}</h3>
-                      <div className="flex items-center space-x-4 min-w-[200px] justify-end">
-                        <span className={`text-sm px-3 py-1 rounded-full whitespace-nowrap ${
-                          campaign.status === 'concluido' 
-                            ? 'bg-red-100 text-red-600' 
-                            : campaign.status === 'hiato'
-                            ? 'bg-yellow-100 text-yellow-600'
-                            : 'bg-green-100 text-green-600'
-                        }`}>
-                          {campaign.status === 'concluido' 
-                            ? 'Concluído' 
-                            : campaign.status === 'hiato'
-                            ? 'Em Hiato'
-                            : 'Em Andamento'}
-                        </span>
-                        <div className="flex items-center space-x-2" onClick={(e) => e.stopPropagation()}>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleEditClick(campaign);
-                            }}
-                            className="text-gray-300 hover:text-yellow-400"
-                          >
-                            <Pencil className="h-5 w-5" />
-                          </button>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setDeletingCampaign(campaign.id);
-                            }}
-                            className="text-gray-300 hover:text-red-400"
-                          >
-                            <Trash2 className="h-5 w-5" />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="p-4 flex-grow overflow-y-auto">
-                    <div className="space-y-2">
-                      <p className="text-gray-600 break-words whitespace-pre-wrap">
-                        {campaign.description}
-                      </p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex justify-between items-center p-4 pt-2 border-t border-gray-100">
-                    <div className="flex items-center space-x-4">
-                      <span className="text-sm text-gray-500">{campaign.system}</span>
-                      <div className="flex items-center space-x-1">
-                        <span className="text-sm text-gray-500">{campaign.players_count}/{campaign.max_players}</span>
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-500" viewBox="0 0 20 20" fill="currentColor">
-                          <path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" />
-                        </svg>
-                      </div>
-                    </div>
-                    <span className="text-sm text-gray-500">
-                      {new Date(campaign.created_at).toLocaleDateString('pt-BR')}
-                    </span>
-                  </div>
-            </div>
+                  campaign={campaign}
+                />
               ))
             )
           )}
@@ -636,4 +438,4 @@ export default function DashboardPage() {
 
     </div>
   )
-} 
+}
