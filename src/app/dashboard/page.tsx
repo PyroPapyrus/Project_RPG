@@ -75,9 +75,10 @@ export default function DashboardPage() {
         .eq('master_id', user.id)
         .order('created_at')
 
-      // Buscar campanhas onde o usuário é jogador com contagem de jogadores
+      // Buscar campanhas onde o usuário é jogador com contagem de jogadores, agora usando uma view que possibilita
+      // que a busca ocorra sem causar repercussão infinita só com base em RLS
       const { data: playerData } = await supabase
-      .from('campaign_players')
+      .from('view_campaign_players_visible')
       .select(`
         campaigns:campaign_id (
           *,
