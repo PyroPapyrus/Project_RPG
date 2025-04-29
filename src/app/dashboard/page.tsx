@@ -21,26 +21,6 @@ interface EditCampaignData {
   status: 'em_andamento' | 'hiato' | 'concluido'
 }
 
-interface CampaignPlayer {
-  campaign_id: string;
-}
-
-interface PlayerCampaignData {
-  campaigns: {
-    id: string;
-    name: string;
-    description: string;
-    system: string;
-    created_at: string;
-    max_players: number;
-    status: string;
-    master_id: string;
-    world_story: string;
-    invite_code: string;
-    players: { count: number }[];
-  };
-}
-
 export default function DashboardPage() {
   const [masterCampaigns, setMasterCampaigns] = useState<Campaign[]>([])
   const [playerCampaigns, setPlayerCampaigns] = useState<Campaign[]>([])
