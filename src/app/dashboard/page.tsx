@@ -11,6 +11,7 @@ import { FormInput } from '@/components/FormInput'
 import LogoutButton from '@/components/LogoutButton'
 import JoinCampaignModal from '@/components/modals/JoinCampaignModal'
 import { CampaignCard } from '@/components/CampaignCard'
+import { BackButton } from '@/components/ui/back-button'
 
 interface EditCampaignData {
   name: string
@@ -203,6 +204,7 @@ export default function DashboardPage() {
     <div className="bg-gray-100">
       <header className="bg-gray-800 text-white py-4">
         <div className="mx-auto px-4 flex justify-between items-center">
+          <BackButton />
           <h1 className="text-2xl font-semibold">
             {activeTab === 'master' ? 'Minhas Campanhas' : 'Campanhas que Participo'}
           </h1>
