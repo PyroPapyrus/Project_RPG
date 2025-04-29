@@ -120,7 +120,7 @@ const SessionPage = ({ params }: PageProps) => {
         </div>
 
         <div className="lg:col-span-1">
-          <SessionNotes sessionId={sessionData.id} userId={userId} />
+          <SessionNotes sessionId={sessionData.id} />
         </div>
       </div>
     </div>
