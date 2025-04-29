@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft } from 'lucide-react'
+import CampaignNotes from '@/components/CampaignNotes'; 
 
 // Tipos (Importe o seu tipo Campaign também)
 import { Campaign } from '@/types/campaign' // Assumindo que você tem este arquivo
@@ -301,12 +302,13 @@ const Page = ({ params }: PageProps) => {
           {/* Coluna da Direita: Placeholder para o Chat Futuro */}
           {/* Ocupa 1/3 da largura em telas grandes (lg:w-1/3), some ou fica abaixo em telas pequenas */}
           {/* Você pode ocultar isso (hidden lg:block) ou deixar visível para desenvolvimento */}
-          <div className="w-full lg:w-1/3 border-l pl-8 hidden lg:block"> {/* hidden lg:block = some em telas pequenas */}
-             <h2 className="text-2xl font-semibold mb-6">Chat da Campanha</h2>
-             <div className="h-[70vh] bg-gray-100 rounded flex items-center justify-center">
-                <p className="text-gray-400 italic">O chat aparecerá aqui</p>
-             </div>
-          </div> {/* Fim da Coluna da Direita (Chat) */}
+          <div className="w-full lg:w-1/3 border-l pl-8 hidden lg:block">
+            <h2 className="text-2xl font-semibold mb-6">Notas da Campanha</h2>
+            {campaign && (
+              <CampaignNotes campaignId={campaign.id} userId={campaign.master_id} />
+            )}
+          </div>
+
 
         </div> {/* Fim da Área Principal Flexbox/Grid */}
 

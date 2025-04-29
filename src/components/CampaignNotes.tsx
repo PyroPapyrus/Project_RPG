@@ -12,17 +12,17 @@ interface Note {
   title: string;
   content: string;
   is_private: boolean;
-  session_id: string | null; // Agora pode ser null para reutilizar no futuro
+  session_id: string | null;
   campaign_id: string | null;
   user_id: string;
 }
 
-interface SessionNotesProps {
-  sessionId: string;
+interface CampaignNotesProps {
+  campaignId: string;
   userId: string;
 }
 
-export default function SessionNotes({ sessionId, userId }: SessionNotesProps) {
+export default function CampaignNotes({ campaignId, userId }: CampaignNotesProps) {
   const [notes, setNotes] = useState<Note[]>([]);
   const [editingNote, setEditingNote] = useState<Note | null>(null);
   const [newNote, setNewNote] = useState({ title: '', content: '', is_private: true });
@@ -30,18 +30,19 @@ export default function SessionNotes({ sessionId, userId }: SessionNotesProps) {
 
   useEffect(() => {
     fetchNotes();
-  }, [sessionId]);
+  }, [campaignId]);
 
   const fetchNotes = async () => {
     const { data, error } = await supabase
       .from('notes')
       .select('*')
-      .eq('session_id', sessionId)
+      .eq('campaign_id', campaignId)
       .eq('user_id', userId)
-      .eq('is_private', true);
+      .eq('is_private', true)
+      .is('session_id', null); // ⚡ Só traz notas que são da campanha (sem sessão associada)
 
     if (error) {
-      toast.error('Erro ao buscar notas.');
+      toast.error('Erro ao buscar notas da campanha.');
     } else {
       setNotes(data || []);
     }
@@ -52,22 +53,22 @@ export default function SessionNotes({ sessionId, userId }: SessionNotesProps) {
     const { error } = await supabase.from('notes').insert([
       {
         ...newNote,
-        session_id: sessionId,
+        campaign_id: campaignId,
+        session_id: null, // ⚡ Forçando ser nota de campanha
         user_id: userId,
       },
     ]);
-  
+
     setLoading(false);
-  
+
     if (error) {
       toast.error('Erro ao adicionar a nota.');
     } else {
+      fetchNotes();
       setNewNote({ title: '', content: '', is_private: true });
       toast.success('Nota adicionada com sucesso.');
-      fetchNotes(); // <-- recarrega as notas
     }
   };
-  
 
   const handleEdit = async () => {
     if (!editingNote) return;
@@ -102,7 +103,7 @@ export default function SessionNotes({ sessionId, userId }: SessionNotesProps) {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-lg font-bold mb-4">Notas Privadas da Sessão</h2>
+        <h2 className="text-lg font-bold mb-4">Notas Privadas da Campanha</h2>
 
         <div className="space-y-4">
           {notes.map((note) => (
