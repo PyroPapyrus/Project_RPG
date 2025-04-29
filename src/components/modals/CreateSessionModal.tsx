@@ -23,7 +23,7 @@ interface CreateSessionModalProps {
 // Interface para o estado do formulário interno
 interface CreateSessionFormData {
   name: string;
-  description: string;
+  goal: string;
   session_date: string; // Input type="datetime-local" trabalha bem com string YYYY-MM-DDTHH:mm
 }
 
@@ -37,7 +37,7 @@ export default function CreateSessionModal({
   const supabase = createClientComponentClient();
   const [formData, setFormData] = useState<CreateSessionFormData>({
     name: '',
-    description: '',
+    goal: '',
     session_date: ''
   });
   const [error, setError] = useState<string | null>(null);
@@ -45,7 +45,7 @@ export default function CreateSessionModal({
 
   // Função para resetar o formulário e o erro
   const resetFormAndClose = () => {
-    setFormData({ name: '', description: '', session_date: '' });
+    setFormData({ name: '', goal: '', session_date: '' });
     setError(null);
     setLoading(false); // Garante que o loading seja resetado
     onClose(); // Chama a função passada por props para fechar
@@ -56,7 +56,7 @@ export default function CreateSessionModal({
     if (!isOpen) {
       // Pequeno delay para não limpar enquanto a animação de fechar ocorre (se houver)
       const timer = setTimeout(() => {
-         setFormData({ name: '', description: '', session_date: '' });
+         setFormData({ name: '', goal: '', session_date: '' });
          setError(null);
          setLoading(false);
       }, 300); // Ajuste o tempo se necessário
@@ -69,7 +69,7 @@ export default function CreateSessionModal({
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     // Validação básica
-    if (!formData.name || !formData.description || !formData.session_date) {
+    if (!formData.name || !formData.goal || !formData.session_date) {
       setError("Todos os campos são obrigatórios.");
       return;
     }
@@ -92,7 +92,7 @@ export default function CreateSessionModal({
           {
             campaign_id: campaignId,     // ID da campanha vindo das props
             name: formData.name,
-            description: formData.description,
+            goal: formData.goal,
             session_date: isoDateString, // Data convertida
           }
         ])
@@ -165,16 +165,16 @@ export default function CreateSessionModal({
 
         {/* Campo Descrição */}
         <div className="space-y-1"> {/* Agrupa label e input */}
-            <label htmlFor="session_description" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="session_goal" className="block text-sm font-medium text-gray-700">
             Descrição / Objetivos
             </label>
             <FormInput
-            id="session_description" // ID para o htmlFor
-            name="session_description"
+            id="session_goal" // ID para o htmlFor
+            name="session_goal"
             type="textarea"
             placeholder="O que se espera que aconteça nesta sessão?"
-            value={formData.description}
-            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setFormData({ ...formData, description: e.target.value })}
+            value={formData.goal}
+            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setFormData({ ...formData, goal: e.target.value })}
             required
             rows={4}
             // label="Descrição / Objetivos" <-- REMOVIDO
