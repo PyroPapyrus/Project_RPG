@@ -23,15 +23,15 @@ export default function Home() {
             priority
           />
         </div>
-        <div className="relative z-10 text-center px-4 sm:px-6 lg:px-8">
+        <div className="relative z-10 text-center">
 
           {/*<h1 className={`${poppins.className} text-9xl text-center`}>
             STORY<span className='text-blue-600 '>&</span>PLOT
           </h1>*/}
 
-          <img src="/images/logo-1-extenso.png" alt="logo story&plot" className='-mb-5'/>
+          <img src="/images/logo.png" alt="logo story&plot" className='-mb-12'/>
 
-          <p className="text-2xl mb-10 mt-2 max-w-2xl mx-auto">
+          <p className="text-2xl mb-10 mt-2 max-w-2xl mx-auto -mt-12">
             Gerencie as narrativas de suas campanhas e sessões, histórias e personagens de RPG em um só lugar!
           </p>
 
