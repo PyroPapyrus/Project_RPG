@@ -166,13 +166,13 @@ export default function CreateSessionModal({
         {/* Campo Descrição */}
         <div className="space-y-1"> {/* Agrupa label e input */}
             <label htmlFor="session_goal" className="block text-sm font-medium text-gray-700">
-            Descrição / Objetivos
+            Descrição breve / Sinopse
             </label>
             <FormInput
             id="session_goal" // ID para o htmlFor
             name="session_goal"
             type="textarea"
-            placeholder="O que se espera que aconteça nesta sessão?"
+            placeholder="O que se espera que aconteça? Qual foi o marco dessa sessão?"
             value={formData.goal}
             onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setFormData({ ...formData, goal: e.target.value })}
             required
