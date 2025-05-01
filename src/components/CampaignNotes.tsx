@@ -22,7 +22,7 @@ interface Note {
   created_at: string;
   updated_at: string;
    // Adicione a propriedade users se você selecionar users(name) na query CampaignNotes
-  users: { name: string | null }[] | null; // Tipo para o relacionamento users(name)
+   users?: { id: string; username: string | null }[] | null; // Tipo para o relacionamento users(name)
 }
 
 // Renomear a interface de props
@@ -57,22 +57,68 @@ export default function CampaignNotes({ campaignId }: CampaignNotesProps) {
   }, [campaignId, userId]); // Dependências: campaignId e userId (do hook)
 
   const fetchNotes = async () => {
-    // Use o supabaseClient do useSessionContext
+    // Usar o supabaseClient do useSessionContext
+    // Busca inicial das notas da tabela notes (esta já funciona e retorna 200)
     const { data, error } = await supabaseClient
       .from('notes')
-      // **Remova ', users(name)' daqui temporariamente:**
       .select('id, title, content, is_private, session_id, campaign_id, user_id, created_at, updated_at')
       .eq('campaign_id', campaignId)
-      .is('session_id', null) // Apenas notas "puras" de campanha
+      .is('session_id', null)
       .order('created_at', { ascending: true });
   
     if (error) {
-      console.error("Erro ao buscar notas de campanha:", error);
+      console.error("Erro ao buscar notas da campanha:", error);
       toast.error('Erro ao buscar notas da campanha.');
     } else {
-      setNotes(data || []);
+      // Set notes initially (opcional, você pode preferir setar apenas após o mapeamento dos nomes)
+      // setNotes(data || []);
+  
+      // Certifique-se de que há notas e que o userId do usuário logado está disponível
+      if (data && data.length > 0 && userId) {
+        // Coleta os IDs únicos dos usuários das notas (incluindo você e outros)
+        const userIds = Array.from(new Set(data.map(note => note.user_id)));
+        console.log("User IDs das notas (verifique se IDs dos usuários populados estão aqui):", userIds); // Verifique este log
+  
+        // **Busca os usuários na tabela public.users usando .in()**
+        // Esta query agora DEVE retornar dados para os IDs que existem na tabela populada.
+        const { data: usersData, error: usersError } = await supabaseClient
+          .from('users') // Query a tabela public.users (com id e username)
+          .select('id, username') // Selecionar id e username
+          .in('id', userIds); // <--- Filtrar pela coluna 'id' usando a lista de IDs
+  
+        console.log("Dados de usuários buscados (verifique se contém os usuários esperados):", usersData); // **VERIFIQUE ESTE LOG**
+  
+        if (usersError) {
+          console.error("Erro ao buscar nomes dos usuários:", usersError);
+          console.error("Detalhes do erro de usuários:", usersError); // Loga detalhes completos do erro
+          // Se a busca de dados de usuário falhar (RLS deny, etc.), defina as notas sem nomes mapeados
+          setNotes(data || []);
+          toast.error('Não foi possível carregar nomes dos autores.'); // Informa o usuário
+        } else {
+          // Mapeia os nomes dos usuários para as notas
+          const notesWithUserNames = data.map(note => {
+            // Encontrar o autor em usersData onde user.id === note.user_id
+            const author = usersData?.find(user => user.id === note.user_id);
+  
+            return {
+              ...note,
+              // Mapear para a estrutura da propriedade 'users' (array de objetos com id e username)
+              // Interface Note: users?: { id: string; username: string | null }[] | null;
+              users: author ? [{ id: author.id, username: author.username }] : null
+            };
+          });
+  
+          console.log("Notas no state com nomes de usuário mapeados (VERIFIQUE AQUI):", notesWithUserNames); // **VERIFIQUE ESTE LOG FINAL**
+          setNotes(notesWithUserNames); // Atualiza o state com as notas mapeadas
+        }
+      } else {
+          // Define as notas se não houver notas buscadas ou userId não disponível
+          setNotes(data || []);
+           console.log("Não há notas para processar ou userId não disponível.");
+      }
     }
   };
+  
 
   const handleEdit = async () => {
     if (!editingNote || !userId) return; // Não editar se não houver nota ou usuário
@@ -195,8 +241,12 @@ export default function CampaignNotes({ campaignId }: CampaignNotesProps) {
                      <h4 className="font-semibold text-gray-800">
                         {note.title}
                         {note.is_private ? " (Privada)" : " (Pública)"}
-                         {/* Mostrar quem criou se os dados estiverem disponíveis - usando a correção de tipagem */}
-                         {note.user_id !== userId && note.users?.[0]?.name && ` por ${note.users?.[0]?.name}`}
+                            {/* Mostrar quem criou / indicar se é sua */}
+{note.user_id !== userId ? ( // Se a nota NÃO é minha
+  note.users?.[0]?.username && ` por ${note.users?.[0]?.username}` // Mostrar "por [Nome]" se o nome estiver disponível
+) : ( // Se a nota É minha
+  "(Minha Nota)" // Mostrar "(Minha Nota)" (ou remova esta linha se não quiser texto para suas notas)
+)}
                     </h4>
                    <p className="text-sm text-gray-600 whitespace-pre-wrap">{note.content}</p>
                    {note.user_id === userId && (
