@@ -39,7 +39,7 @@ export function FormInput(props: FormInputProps) {
     }
   }, [props.value, props.type]);
 
-  const baseClasses = "rounded-md shadow-md appearance-none relative w-full px-3 py-2 border border-gray-300 sm:text-sm";
+  const baseClasses = "w-full justify-items-start rounded-r-md px-3 py-2 text-sm";
   const textareaClasses = `${baseClasses} min-h-[100px] resize-none overflow-hidden ${props.className || ''}`;
   const inputClasses = `${baseClasses} ${props.className || ''}`;
 
@@ -48,6 +48,7 @@ export function FormInput(props: FormInputProps) {
     return (
       <div>
         <label htmlFor={textareaProps.id} className="sr-only">
+          
           {textareaProps.placeholder}
         </label>
         <textarea

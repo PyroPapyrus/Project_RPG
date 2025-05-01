@@ -37,7 +37,10 @@ export default async function RootLayout({
       <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin='anonymous'/>
       <link href="https://fonts.googleapis.com/css2?family=Boldonse&display=swap" rel="stylesheet"/>
 
-      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,300,1,0" />
+      <link rel="stylesheet" 
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,1,0"
+      />
+
       </head>
 
       <body className={poppins.className}>

@@ -77,6 +77,8 @@ export default function SignupForm() {
       setLoading(false)
     }
   }
+  
+  const isFormValid = email.trim() !== '' && password.trim() !== '';
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -139,6 +141,7 @@ export default function SignupForm() {
             loading={loading}
             loadingText="Criando conta..."
             buttonText="Cadastrar"
+            isValid={isFormValid}
           />
 
           <div className="text-sm text-center">

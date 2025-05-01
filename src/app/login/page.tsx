@@ -50,8 +50,10 @@ export default function LoginForm() {
     }
   }
 
+  const isFormValid = email.trim() !== '' && password.trim() !== '';
+
   return (
-    <div className='bg-gray-900 min-h-screen '>
+    <div className='bg-gray-900 min-h-screen'>
       <Image
         src="/images/rpg-camp-bg.png"
         alt="RPG Background"
@@ -66,51 +68,70 @@ export default function LoginForm() {
           <BackButton />
         </div>
 
-        <img 
-          src="/images/logo.png" 
-          alt="logo Story&Plot" 
-          className="w-80" 
-        />
+        <a href="/">
+          <img 
+            src="/images/logo.png" 
+            alt="logo Story&Plot" 
+            className="w-80" 
+          />
+        </a>
       </header>
 
-      <div className="relative bg-opacity-25 flex justify-center items-center min-h-[calc(100vh-6rem)]">
-        <div className="bg-gray-200 rounded-lg shadow-md p-8 w-full max-w-xl">
-          <div className='text-center mb-40'>
+      <div className="text-center relative flex justify-center items-center min-h-[calc(100vh-6rem)]">
+        <div className="bg-gray-200/60 backdrop-blur-sm rounded-lg shadow-md p-8 w-full max-w-xl">
+          <div className='text-center mb-5'>
             <h2 className="text-3xl font-bold ">
-              Entre na sua conta
+              LOGIN
             </h2>
 
-            <p className='mt-3'>aaaaaaaaaaaaaaaaaaa</p>
+            <p className='mt-3'>Faça login em sua conta</p>
           </div>
           <form className="space-y-6" onSubmit={handleSubmit}>
             <div className="space-y-2">
-              <FormInput
-                id="email"
-                name="email"
-                type="email"
-                placeholder="Email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                disabled={loading}
-                required
-              />
-              
-              <FormInput
-                id="password"
-                name="password"
-                type="password"
-                placeholder="Senha"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                disabled={loading}
-                required
-              />
+
+              <div className='bg-white border shadow-md border-gray-300 rounded-md flex items-center'>
+                <span className="material-symbols-outlined px-2" style={{ fontSize: '20px' }}>
+                  mail
+                </span>
+                <div className='flex-1'>
+                  <FormInput
+                    id="email"
+                    name="email"
+                    type="email"
+                    placeholder="Email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    disabled={loading}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className='bg-white border shadow-md border-gray-300 rounded-md flex items-center'>
+                <span className="material-symbols-outlined px-2" style={{ fontSize: '20px' }}>
+                  lock
+                </span>
+                <div className='flex-1'>
+                  <FormInput
+                    id="password"
+                    name="password"
+                    type="password"
+                    placeholder="Senha"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    disabled={loading}
+                    required
+                  />
+                </div>
+              </div>
+
             </div>
 
             <SubmitButton
               loading={loading}
               loadingText="Entrando..."
               buttonText="Entrar"
+              isValid={isFormValid}
             />
 
             <div className="text-sm text-center">
