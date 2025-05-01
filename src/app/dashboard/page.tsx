@@ -1,423 +1,345 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react' // Importe useCallback
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { Campaign } from '@/types/campaign'
 import { CreateCampaignButton } from '@/components/CreateCampaignButton'
 import { useRouter } from 'next/navigation'
 import { Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { FormInput } from '@/components/FormInput'
 import LogoutButton from '@/components/LogoutButton'
 import JoinCampaignModal from '@/components/modals/JoinCampaignModal'
 import { CampaignCard } from '@/components/CampaignCard'
 import { BackButton } from '@/components/ui/back-button'
 
-interface EditCampaignData {
-  name: string
-  description: string
-  system: string
-  max_players: number
-  status: 'em_andamento' | 'hiato' | 'concluido'
-}
+// Importe os novos Modais
+import EditCampaignModal from '@/components/modals/EditCampaignModal'; // <--- Importe o modal de edição
+import ConfirmationModal from '@/components/modals/ConfirmationModal'; // <--- Importe o modal de confirmação
+import { toast } from 'react-toastify'; // Importe o toast
+
 
 export default function DashboardPage() {
   const [masterCampaigns, setMasterCampaigns] = useState<Campaign[]>([])
   const [playerCampaigns, setPlayerCampaigns] = useState<Campaign[]>([])
   const [loading, setLoading] = useState(true)
-  const [deletingCampaign, setDeletingCampaign] = useState<string | null>(null)
-  const [editingCampaign, setEditingCampaign] = useState<Campaign | null>(null)
+
+  // --- ESTADOS PARA EXCLUSÃO E EDIÇÃO (AGORA GERENCIADOS AQUI NA PÁGINA) ---
+  const [campaignToDelete, setCampaignToDelete] = useState<Campaign | null>(null) // Armazena a campanha a ser excluída
+  const [campaignToEdit, setCampaignToEdit] = useState<Campaign | null>(null) // Armazena a campanha a ser editada
+  // --- FIM ESTADOS GERENCIADOS ---
+
+
   const [activeTab, setActiveTab] = useState<'master' | 'player'>('master')
-  const [editFormData, setEditFormData] = useState<EditCampaignData>({
-    name: '',
-    description: '',
-    system: '',
-    max_players: 8,
-    status: 'em_andamento'
-  })
-  const [editError, setEditError] = useState<string | null>(null)
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [joinModalOpen, setJoinModalOpen] = useState(false)
+
   const router = useRouter()
   const supabase = createClientComponentClient()
 
-  const loadCampaigns = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
 
-      // Buscar campanhas onde o usuário é mestre com contagem de jogadores
-      const { data: masterData } = await supabase
+  // --- FUNÇÃO PARA CARREGAR CAMPANHAS (AGORA OTIMIZADA COM useCallback) ---
+  const loadCampaigns = useCallback(async () => {
+    try {
+      setLoading(true); // Move loading para o início da função de carregamento
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+         setLoading(false);
+         router.push('/login'); // Redirecionar se não autenticado
+         return;
+      }
+
+      // --- BUSCAR CAMPANHAS DO MESTRE ---
+      const { data: masterData, error: masterError } = await supabase
         .from('campaigns')
         .select(`
           *,
           players:campaign_players(count)
         `)
         .eq('master_id', user.id)
-        .order('created_at')
+        .order('created_at');
 
-      // Buscar campanhas onde o usuário é jogador com contagem de jogadores, agora usando uma view que possibilita
-      // que a busca ocorra sem causar repercussão infinita só com base em RLS
-      const { data: playerData } = await supabase
-      .from('view_campaign_players_visible')
-      .select(`
-        campaigns:campaign_id (
-          *,
-          players:campaign_players(count)
-        )
-      `)
-        .eq('user_id', user.id)
-      
+        if(masterError) {
+             console.error("Erro ao buscar campanhas do mestre:", masterError);
+             // Tratar erro
+        }
+
+        // --- BUSCAR CAMPANHAS DO JOGADOR (usando a view) ---
+        const { data: playerData, error: playerError } = await supabase
+        .from('view_campaign_players_visible') // Usando a view
+        .select(`
+          campaigns:campaign_id (
+            *,
+            players:campaign_players(count)
+          )
+        `)
+        .eq('user_id', user.id);
+
+        if(playerError) {
+            console.error("Erro ao buscar campanhas do jogador:", playerError);
+            // Tratar erro
+        }
 
 
-      // Processar os dados para incluir a contagem de jogadores
+      // --- PROCESSAR DADOS ---
+      // Adicionando tratamento para caso os dados sejam null ou undefined
       const processedMasterData = (masterData || []).map(campaign => ({
-        id: campaign.id,
-        name: campaign.name,
-        description: campaign.description,
-        system: campaign.system,
-        created_at: campaign.created_at,
-        max_players: campaign.max_players,
-        status: campaign.status,
-        master_id: campaign.master_id,
-        world_story: campaign.world_story,
-        invite_code: campaign.invite_code,
+        ...campaign, // Espalha as propriedades existentes
         players_count: campaign.players?.[0]?.count || 0
-      })) as Campaign[]
+      })) as Campaign[]; // Garante o tipo
 
-      type CampaignWithCount = {
+      // Definindo um tipo mais claro para o resultado da view antes do map
+      type PlayerCampaignRaw = {
         campaigns: Campaign & {
           players?: { count: number }[];
         };
       };
-      
-      const processedPlayerData = ((playerData || []) as CampaignWithCount[])
-        .filter(item => item.campaigns && !Array.isArray(item.campaigns)) // Evita erro se vier array
+
+      // --- TRECHO CORRIGIDO PARA PROCESSAR playerData ---
+      const processedPlayerData = ((playerData || []) as unknown as PlayerCampaignRaw[]) // <-- Adicionado 'as unknown' aqui
+        .filter(item => item.campaigns && typeof item.campaigns === 'object' && !Array.isArray(item.campaigns)) // Filtra itens inválidos
         .map(item => ({
-          id: item.campaigns.id,
-          name: item.campaigns.name,
-          description: item.campaigns.description,
-          system: item.campaigns.system,
-          created_at: item.campaigns.created_at,
-          max_players: item.campaigns.max_players,
-          status: item.campaigns.status,
-          master_id: item.campaigns.master_id,
-          world_story: item.campaigns.world_story,
-          invite_code: item.campaigns.invite_code,
+          ...item.campaigns, // Espalha as propriedades da campanha aninhada
           players_count: item.campaigns.players?.[0]?.count || 0
         })) as Campaign[];
+      // --- FIM TRECHO CORRIGIDO ---
 
-      setMasterCampaigns(processedMasterData)
-      setPlayerCampaigns(processedPlayerData)
 
-      console.log('Player Data Raw:', playerData)
-      console.log('Processed Player Data:', processedPlayerData)
+      setMasterCampaigns(processedMasterData);
+      setPlayerCampaigns(processedPlayerData);
+
+      console.log('Processed Master Data:', processedMasterData); // Logar dados processados
+      console.log('Processed Player Data:', processedPlayerData); // Logar dados processados
+
     } catch (error) {
-      console.error('Erro ao carregar campanhas:', error)
+      console.error('Erro ao carregar campanhas (catch geral):', error);
+      toast.error('Ocorreu um erro ao carregar as campanhas.'); // Toast para erro geral
     } finally {
-      setLoading(false)
+      setLoading(false); // Define loading como false no finally
     }
-  }
+  }, [supabase, router]); // Adicionado router como dependência
+
+  // --- USE EFFECT PARA CARREGAR AO MONTAR ---
+  useEffect(() => {
+     loadCampaigns(); // Chama a função de carregamento inicial
+  }, [loadCampaigns]); // Dependência: loadCampaigns
 
 
+  // --- HANDLER PARA EXCLUIR CAMPANHA (AGORA COM CALLBACK DE CONFIRMAÇÃO) ---
+  // O handler original no CampaignCard agora apenas define campaignToDelete
+  const handleConfirmDeleteCampaign = async () => { // Esta função é chamada pelo ConfirmationModal
+    if (!campaignToDelete) return; // Garante que há uma campanha para deletar
 
-  const handleDeleteCampaign = async (campaignId: string) => {
     try {
+      setLoading(true); // Mostra loading enquanto deleta
       const { error } = await supabase
         .from('campaigns')
         .delete()
-        .eq('id', campaignId)
+        .eq('id', campaignToDelete.id); // Usa o ID da campanha no estado campaignToDelete
 
-      if (error) throw error
+      if (error) throw error;
 
-      loadCampaigns()
-    } catch (error) {
-      console.error('Erro ao excluir campanha:', error)
-    } finally {
-      setDeletingCampaign(null)
-    }
-  }
-
-  const handleEditClick = (campaign: Campaign) => {
-    setEditingCampaign(campaign)
-    setEditFormData({
-      name: campaign.name,
-      description: campaign.description,
-      system: campaign.system,
-      max_players: campaign.max_players,
-      status: campaign.status
-    })
-    setIsEditModalOpen(true)
-  }
-
-  const handleEditSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!editingCampaign) return
-
-    try {
-      const { error } = await supabase
-        .from('campaigns')
-        .update({
-          name: editFormData.name,
-          description: editFormData.description,
-          system: editFormData.system,
-          max_players: editFormData.max_players,
-          status: editFormData.status
-        })
-        .eq('id', editingCampaign.id)
-
-      if (error) throw error
-
-      setIsEditModalOpen(false)
-      setEditingCampaign(null)
-      loadCampaigns()
+      toast.success(`Campanha "${campaignToDelete.name}" excluída com sucesso.`); // Toast de sucesso
+      // Não precisa mais chamar setDeletingCampaign(null) aqui, o onClose do modal fará isso no finally
+      loadCampaigns(); // Recarrega a lista de campanhas
     } catch (error: any) {
-      setEditError(error.message || 'Erro ao atualizar campanha')
+      console.error('Erro ao excluir campanha:', error);
+      toast.error(`Erro ao excluir campanha: ${error.message || 'Desconhecido'}`); // Toast de erro
+    } finally {
+      setLoading(false); // Remove loading
+       setCampaignToDelete(null); // Garante que o estado seja limpo (fecha o modal de confirmação)
     }
   }
+  // --- FIM HANDLER EXCLUIR ---
 
-  useEffect(() => {
-    loadCampaigns()
-  }, [supabase])
-  
+
+  // --- HANDLER PARA CLICAR EM EDITAR CAMPANHA ---
+  const handleEditCampaignClick = (campaign: Campaign) => {
+    setCampaignToEdit(campaign); // Define a campanha a ser editada no estado. Isso abrirá o modal.
+  };
+  // --- FIM HANDLER EDITAR ---
+
+// --- HANDLER PARA QUANDO A CAMPANHA FOR ATUALIZADA NO MODAL ---
+  const handleCampaignUpdated = () => {
+       console.log("Dashboard: handleCampaignUpdated chamado."); // Mantenha para debug
+       setCampaignToEdit(null); // <--- ADICIONE ESTA LINHA DE VOLTA! ISSO FECHA O MODAL.
+       console.log("Dashboard: campaignToEdit definido como null."); // Mantenha para debug
+       loadCampaigns(); // Recarrega a lista de campanhas
+       console.log("Dashboard: loadCampaigns chamado."); // Mantenha para debug
+       // O toast de sucesso já está dentro do EditCampaignModal (ou adicione aqui se preferir)
+    };
+    // --- FIM HANDLER CAMPANHA ATUALIZADA ---
+
+
+  if (loading) {
+    // Use o estado loading geral para mostrar o spinner enquanto carrega TUDO
+     return (
+      <div className="flex items-center justify-center min-h-screen">
+         <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-gray-900"></div>
+       </div>
+     );
+   }
+
+  // Se não está carregando E não tem campanhas mestre nem jogador, e não tem um erro genérico visível
+  // Pode ser que não esteja autorizado ou não encontrou as campanhas
+  const noCampaignsLoaded = !loading && masterCampaigns.length === 0 && playerCampaigns.length === 0;
+  const potentialAuthError = !loading && !masterCampaigns.length && !playerCampaigns.length; // Indicador simples
+
+
+  // Considere se você quer mostrar uma mensagem diferente se o usuário não estiver autorizado
+  // ou se simplesmente não encontrou nenhuma campanha
+   /*
+   if (potentialAuthError && !userId) { // Se não carregou campanhas E não tem userId (deveria ter redirecionado)
+        return (
+            <div className="flex flex-col items-center justify-center min-h-screen">
+                <p className="text-gray-500 mb-4">Acesso não autorizado. Faça login novamente.</p>
+                 <Button onClick={() => router.push('/login')}>
+                   <ArrowLeft className="h-4 w-4 mr-2" />
+                   Ir para Login
+                 </Button>
+            </div>
+        );
+   }
+   */
+
+
   return (
 
-    <div className="bg-gray-100">
-      <header className="bg-gray-800 text-white py-4">
-        <div className="mx-auto px-4 flex justify-between items-center">
+    <div className="bg-gray-100 min-h-screen"> {/* Adicionado min-h-screen para ocupar a altura */}
+      <header className="bg-gray-800 text-white py-4 shadow-md"> {/* Adicionado shadow-md */}
+        <div className="container mx-auto px-4 flex justify-between items-center"> {/* Usar container mx-auto */}
           <BackButton />
-          <h1 className="text-2xl font-semibold">
+          <h1 className="text-xl font-semibold"> {/* Reduzido tamanho da fonte */}
             {activeTab === 'master' ? 'Minhas Campanhas' : 'Campanhas que Participo'}
           </h1>
           <LogoutButton />
-      </div>
+        </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8">
-        <div className="flex justify-between items-center mb-6 max-w-6xl mx-auto">
-          <div className="flex space-x-4">
-            <button 
-              className={`px-6 py-2 rounded-md flex items-center space-x-2 transition-colors ${
-                activeTab === 'master' 
-                  ? 'bg-gray-700 text-white' 
+      <main className="container mx-auto px-4 py-8"> {/* Usar container mx-auto */}
+        <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4"> {/* Adicionado gap e flex-col/sm:flex-row */}
+          <div className="flex space-x-2 sm:space-x-4"> {/* Ajustado espaçamento para telas pequenas */}
+            <button
+              className={`px-4 py-2 rounded-md flex items-center space-x-2 transition-colors text-sm sm:text-base ${ // Ajustado padding e tamanho da fonte
+                activeTab === 'master'
+                  ? 'bg-gray-700 text-white'
                   : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
               }`}
               onClick={() => setActiveTab('master')}
             >
               <span>Minhas Campanhas</span>
-
               <span className={`${
-                activeTab === 'master' ? 'bg-gray-600' : 'bg-gray-300'
-              } px-2 py-0.5 rounded-full text-sm`}>
+                activeTab === 'master' ? 'bg-gray-600' : 'bg-gray-300 text-gray-700' // Consistência na cor do badge
+              } px-2 py-0.5 rounded-full text-xs`}> {/* Ajustado tamanho da fonte do badge */}
                 {masterCampaigns.length}
               </span>
             </button>
 
-            <button 
-              className={`px-6 py-2 rounded-md flex items-center space-x-2 transition-colors ${
-                activeTab === 'player' 
-                  ? 'bg-gray-700 text-white' 
+            <button
+              className={`px-4 py-2 rounded-md flex items-center space-x-2 transition-colors text-sm sm:text-base ${ // Ajustado padding e tamanho da fonte
+                activeTab === 'player'
+                  ? 'bg-gray-700 text-white'
                   : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
               }`}
               onClick={() => setActiveTab('player')}
             >
-              
+
               <span>Campanhas que jogo</span>
               <span className={`${
-                activeTab === 'player' ? 'bg-gray-600' : 'bg-gray-300'
-              } px-2 py-0.5 rounded-full text-sm`}>
+                activeTab === 'player' ? 'bg-gray-600' : 'bg-gray-300 text-gray-700' // Consistência na cor do badge
+              } px-2 py-0.5 rounded-full text-xs`}> {/* Ajustado tamanho da fonte do badge */}
                 {playerCampaigns.length}
               </span>
             </button>
           </div>
           {activeTab === 'master' ? (
+              // CreateCampaignButton já controla seu próprio modal
               <CreateCampaignButton onSuccess={loadCampaigns} />
             ) : (
-              <button
+              <Button // Usando seu componente Button agora
                 onClick={() => setJoinModalOpen(true)}
-                className="bg-black text-white hover:bg-gray-900 rounded-full px-6 py-2 flex items-center space-x-2"
+                 variant="default" // Exemplo: usar a variante default
+                 className="rounded-full px-4 py-2 text-sm sm:text-base" // Ajustado padding/tamanho da fonte
               >
-                <Plus className="h-5 w-5" />
+                <Plus className="h-4 w-4 mr-1" /> {/* Ajustado tamanho do ícone */}
                 <span>Entrar em Campanha</span>
-              </button>
+              </Button>
             )}
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-6xl mx-auto">
-          {activeTab === 'master' ? (
+        {/* --- LISTA DE CAMPANHAS --- */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6"> {/* Aumentado para 3 colunas em telas grandes */}
+          {loading ? ( // Mostra loading se o estado loading geral for true
+              <p className="text-gray-500 col-span-full text-center py-8">Carregando campanhas...</p> // Col-span-full para centralizar
+          ) : activeTab === 'master' ? (
             masterCampaigns.length === 0 ? (
-              <p className="text-gray-500 col-span-2 text-center py-8">Você ainda não criou nenhuma campanha.</p>
+              <p className="text-gray-500 col-span-full text-center py-8">Você ainda não criou nenhuma campanha.</p> // Col-span-full para centralizar
             ) : (
               masterCampaigns.map((campaign) => (
                 <CampaignCard
                   key={campaign.id}
                   campaign={campaign}
-                  onEdit={handleEditClick}
-                  onDelete={(id) => setDeletingCampaign(id)}
+                  // Handlers para as ações na CampaignCard
+                  onEdit={handleEditCampaignClick} // <--- Define a campanha a ser editada no estado campaignToEdit
+                  onDelete={setCampaignToDelete} // <--- Define a campanha a ser deletada no estado campaignToDelete
                 />
               ))
             )
-          ) : (
+          ) : ( // activeTab === 'player'
             playerCampaigns.length === 0 ? (
-              <p className="text-gray-500 col-span-2 text-center py-8">Você ainda não participa de nenhuma campanha.</p>
+              <p className="text-gray-500 col-span-full text-center py-8">Você ainda não participa de nenhuma campanha.</p> // Col-span-full para centralizar
             ) : (
               playerCampaigns.map((campaign) => (
                 <CampaignCard
                   key={campaign.id}
                   campaign={campaign}
+                   // Não passa onEdit/onDelete para campanhas de jogador (se essa for a regra)
                 />
               ))
             )
           )}
         </div>
+         {/* --- FIM LISTA DE CAMPANHAS --- */}
+
       </main>
 
-      {/* Modal de Edição */}
-      {isEditModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
-            <h2 className="text-2xl font-bold mb-4">Editar Campanha</h2>
-            
-            {editError && (
-              <div className="bg-red-50 text-red-600 p-3 rounded-md mb-4">
-                {editError}
-              </div>
-            )}
-
-            <form onSubmit={handleEditSubmit} className="space-y-4">
-              <FormInput
-                id="name"
-                name="name"
-                type="text"
-                placeholder="Nome da Campanha"
-                value={editFormData.name}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditFormData({ ...editFormData, name: e.target.value })}
-                required
-                maxLength={50}
-              />
-
-              <FormInput
-                id="description"
-                name="description"
-                type="textarea"
-                placeholder="Descrição"
-                value={editFormData.description}
-                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setEditFormData({ ...editFormData, description: e.target.value })}
-                required
-                maxLength={500}
-              />
-
-              <FormInput
-                id="system"
-                name="system"
-                type="text"
-                placeholder="Sistema (D&D 5e, Pathfinder, etc.)"
-                value={editFormData.system}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditFormData({ ...editFormData, system: e.target.value })}
-                required
-                maxLength={40}
-              />
-
-              <div className="space-y-1">
-                <label htmlFor="max_players" className="block text-sm font-medium text-gray-700">
-                  Limite de Jogadores
-                </label>
-                <p className="text-sm text-gray-500 mb-1">
-                  Defina o número máximo de jogadores que poderão participar da campanha (sem contar você, o mestre).
-                </p>
-                <FormInput
-                  id="max_players"
-                  name="max_players"
-                  type="number"
-                  placeholder="Ex: 5"
-                  value={editFormData.max_players.toString()}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                    const value = parseInt(e.target.value)
-                    if (value > 20) {
-                      setEditFormData({ ...editFormData, max_players: 20 })
-                    } else {
-                      setEditFormData({ ...editFormData, max_players: value })
-                    }
-                  }}
-                  required
-                  min={1}
-                  max={20}
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label htmlFor="status" className="block text-sm font-medium text-gray-700">
-                  Status da Campanha
-                </label>
-                <select
-                  id="status"
-                  name="status"
-                  value={editFormData.status}
-                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setEditFormData({ ...editFormData, status: e.target.value as 'em_andamento' | 'hiato' | 'concluido' })}
-                  className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
-                >
-                  <option value="em_andamento">Em Andamento</option>
-                  <option value="hiato">Em Hiato</option>
-                  <option value="concluido">Concluído</option>
-                </select>
-              </div>
-
-              <div className="flex justify-end space-x-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    setIsEditModalOpen(false)
-                    setEditingCampaign(null)
-                    setEditError(null)
-                  }}
-                >
-                  Cancelar
-                </Button>
-                <Button type="submit">
-                  Salvar Alterações
-                </Button>
-              </div>
-            </form>
-          </div>
-        </div>
+      {/* --- MODAL DE EDIÇÃO DE CAMPANHA --- */}
+      {/* Renderiza o modal se campaignToEdit NÃO FOR NULL */}
+      {campaignToEdit && (
+         <EditCampaignModal
+            isOpen={!!campaignToEdit} // Aberto se campaignToEdit não for null
+            onClose={() => setCampaignToEdit(null)} // Fechar modal limpando o estado
+            campaign={campaignToEdit} // Passa a campanha a ser editada
+            onCampaignUpdated={handleCampaignUpdated} // Callback após salvar
+         />
       )}
+      {/* --- FIM MODAL DE EDIÇÃO --- */}
 
-      {/* Modal de Confirmação de Exclusão */}
-      {deletingCampaign && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
-            <h2 className="text-2xl font-bold mb-4">Confirmar Exclusão</h2>
-            
-            <p className="mb-6 text-gray-600">
-              Tem certeza que deseja excluir esta campanha? Esta ação não pode ser desfeita.
-            </p>
 
-            <div className="flex justify-end space-x-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setDeletingCampaign(null)}
-              >
-                Cancelar
-              </Button>
-              <Button
-                type="button"
-                className="bg-red-600 text-white hover:bg-red-700"
-                onClick={() => handleDeleteCampaign(deletingCampaign)}
-              >
-                Excluir Campanha
-              </Button>
-            </div>
-          </div>
-        </div>
+      {/* --- MODAL DE CONFIRMAÇÃO DE EXCLUSÃO --- */}
+      {/* Renderiza o modal se campaignToDelete NÃO FOR NULL */}
+      {campaignToDelete && (
+         <ConfirmationModal
+            isOpen={!!campaignToDelete} // Aberto se campaignToDelete não for null
+            onClose={() => setCampaignToDelete(null)} // Chamado ao cancelar/fechar (limpa estado)
+            message={`Tem certeza que deseja excluir a campanha "${campaignToDelete.name}"? Esta ação não pode ser desfeita. Todas as sessões, notas e dados de jogadores relacionados também serão excluídos!`} // Mensagem específica
+            onConfirm={handleConfirmDeleteCampaign} // Chamado ao confirmar (executa delete)
+            title="Confirmar Exclusão da Campanha" // Título específico
+            confirmButtonText="Excluir Campanha" // Texto específico para o botão de confirmação
+            isConfirmDestructive={true} // Indica que a ação é destrutiva (botão vermelho)
+         />
       )}
+      {/* --- FIM MODAL CONFIRMAÇÃO --- */}
+
+
       {/* Modal de Entrada em Campanha */}
       <JoinCampaignModal
         isOpen={joinModalOpen}
         onClose={() => setJoinModalOpen(false)}
-        onSuccess={loadCampaigns}
+        onSuccess={loadCampaigns} // Recarrega campanhas após entrar em uma
       />
+
+       {/* Opcional: Renderiza os toasts */}
+       {/* <ToastContainer /> */}
+
 
     </div>
   )
