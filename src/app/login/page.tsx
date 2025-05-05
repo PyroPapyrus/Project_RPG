@@ -10,7 +10,7 @@ import { ErrorPopup } from '@/components/ErrorPopup'
 import { BackButton } from '@/components/ui/back-button'
 import Image from 'next/image'
 
-export default function LoginForm() {
+export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -55,15 +55,15 @@ export default function LoginForm() {
   return (
     <div className='bg-gray-900 min-h-screen'>
       <Image
-        src="/images/rpg-camp-bg.png"
+        src="/images/bg-login.gif"
         alt="RPG Background"
         fill
-        className="object-cover opacity-50"
+        className="object-cover opacity-80"
         priority
       />
             
       {error && <ErrorPopup message={error} onClose={() => setError(null)} />}
-      <header className='bg-gray-800 relative flex justify-center items-center'>
+      <header className='bg-gray-800/30 shadow-md relative flex justify-center items-center'>
         <div className='absolute left-4'>
           <BackButton />
         </div>
@@ -77,7 +77,7 @@ export default function LoginForm() {
         </a>
       </header>
 
-      <div className="text-center relative flex justify-center items-center min-h-[calc(100vh-6rem)]">
+      <div className="text-center relative flex justify-center items-center min-h-[calc(100vh-10rem)]">
         <div className="bg-gray-200/60 backdrop-blur-sm rounded-lg shadow-md p-8 w-full max-w-xl">
           <div className='text-center mb-5'>
             <h2 className="text-3xl font-bold ">
@@ -86,11 +86,12 @@ export default function LoginForm() {
 
             <p className='mt-3'>Faça login em sua conta</p>
           </div>
+
           <form className="space-y-6" onSubmit={handleSubmit}>
             <div className="space-y-2">
 
               <div className='bg-white border shadow-md border-gray-300 rounded-md flex items-center'>
-                <span className="material-symbols-outlined px-2" style={{ fontSize: '20px' }}>
+                <span className="material-symbols-rounded px-2" style={{ fontSize: '20px' }}>
                   mail
                 </span>
                 <div className='flex-1'>
@@ -108,7 +109,7 @@ export default function LoginForm() {
               </div>
 
               <div className='bg-white border shadow-md border-gray-300 rounded-md flex items-center'>
-                <span className="material-symbols-outlined px-2" style={{ fontSize: '20px' }}>
+                <span className="material-symbols-rounded px-2" style={{ fontSize: '20px' }}>
                   lock
                 </span>
                 <div className='flex-1'>
@@ -121,6 +122,7 @@ export default function LoginForm() {
                     onChange={(e) => setPassword(e.target.value)}
                     disabled={loading}
                     required
+                    showPasswordToggle
                   />
                 </div>
               </div>
@@ -139,6 +141,7 @@ export default function LoginForm() {
                 Não tem uma conta? Cadastre-se
               </Link>
             </div>
+
           </form>
         </div>
       </div>

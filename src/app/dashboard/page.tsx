@@ -119,8 +119,6 @@ export default function DashboardPage() {
     }
   }
 
-
-
   const handleDeleteCampaign = async (campaignId: string) => {
     try {
       const { error } = await supabase
@@ -284,42 +282,58 @@ export default function DashboardPage() {
               </div>
             )}
 
-            <form onSubmit={handleEditSubmit} className="space-y-4">
+            
+            <form onSubmit={handleEditSubmit} className="flex flex-col gap-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Nome
+              </label>
               <FormInput
                 id="name"
                 name="name"
                 type="text"
-                placeholder="Nome da Campanha"
+                placeholder="Descent into Avernus, Curse of Strahd, etc."
                 value={editFormData.name}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditFormData({ ...editFormData, name: e.target.value })}
                 required
-                maxLength={50}
+                maxLength={40}
+                style={{ border: '1px solid #ccc', borderRadius: '0px' }}
               />
 
+              <label className="block text-sm font-medium text-gray-700 mt-2">
+                Descrição breve
+              </label>
               <FormInput
                 id="description"
                 name="description"
                 type="textarea"
-                placeholder="Descrição"
+                placeholder="Faça uma descrição breve que contextualize sua campanha!"
                 value={editFormData.description}
                 onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setEditFormData({ ...editFormData, description: e.target.value })}
                 required
                 maxLength={500}
+                style={{ border: '1px solid #ccc', borderRadius: '0px' }}
               />
+              <p className="text-xs text-gray-500">
+                {editFormData.description.length}/500 caracteres
+              </p>
 
+              <label className="block text-sm font-medium text-gray-700 mt-2">
+                  Sistema da Campanha
+              </label>
               <FormInput
                 id="system"
                 name="system"
                 type="text"
-                placeholder="Sistema (D&D 5e, Pathfinder, etc.)"
+                placeholder="D&D 5e, Pathfinder, etc."
                 value={editFormData.system}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditFormData({ ...editFormData, system: e.target.value })}
                 required
                 maxLength={40}
+                style={{ border: '1px solid #ccc', borderRadius: '0px' }}
               />
 
               <div className="space-y-1">
-                <label htmlFor="max_players" className="block text-sm font-medium text-gray-700">
+                <label className="block text-sm font-medium text-gray-700 mt-2">
                   Limite de Jogadores
                 </label>
                 <p className="text-sm text-gray-500 mb-1">
@@ -342,27 +356,27 @@ export default function DashboardPage() {
                   required
                   min={1}
                   max={20}
+                  style={{ border: '1px solid #ccc', borderRadius: '0px' }}
                 />
               </div>
 
-              <div className="space-y-1">
-                <label htmlFor="status" className="block text-sm font-medium text-gray-700">
-                  Status da Campanha
-                </label>
-                <select
-                  id="status"
-                  name="status"
-                  value={editFormData.status}
-                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setEditFormData({ ...editFormData, status: e.target.value as 'em_andamento' | 'hiato' | 'concluido' })}
-                  className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
-                >
-                  <option value="em_andamento">Em Andamento</option>
-                  <option value="hiato">Em Hiato</option>
-                  <option value="concluido">Concluído</option>
-                </select>
-              </div>
-
-              <div className="flex justify-end space-x-2">
+              <label className="block text-sm font-medium text-gray-700 mt-2">
+                 Status da Campanha
+              </label>
+              <select
+                id="status"
+                name="status"
+                value={editFormData.status}
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setEditFormData({ ...editFormData, status: e.target.value as 'em_andamento' | 'hiato' | 'concluido' })}
+                className="block w-full pl-3 py-2 border border-gray-300 focus:border-blue-500 sm:text-sm"
+                  
+              >
+                <option value="em_andamento">Em Andamento</option>
+                <option value="hiato">Em Hiato</option>
+                <option value="concluido">Concluído</option>
+              </select>
+              
+              <div className="space-x-3 space-y-3">
                 <Button
                   type="button"
                   variant="outline"
@@ -419,6 +433,23 @@ export default function DashboardPage() {
         onSuccess={loadCampaigns}
       />
 
+      <div className='absolute'>
+        <nav className='fixed bottom-0 left-1/2 transform -translate-x-1/2 px-10 pb-1 pt-2 bg-black rounded-tr-xl rounded-tl-xl '>
+          <div className='text-white flex gap-10'>
+              <span className="material-symbols-rounded" style={{ fontSize: '38px' }}>
+                filter_list
+              </span>
+
+              <span className="material-symbols-rounded" style={{ fontSize: '38px' }}>
+                settings
+              </span>
+
+              <span className="material-symbols-rounded" style={{ fontSize: '38px' }}>
+                account_circle
+              </span>
+          </div>
+        </nav>
+      </div>
     </div>
   )
 }

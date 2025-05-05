@@ -66,7 +66,7 @@ export default function Home() {
             <div className="bg-gray-800 p-6 rounded-lg">
 
               <div className="text-3xl mb-2 flex gap-3 items-center">
-              <span className="material-symbols-outlined">stacks</span>
+              <span className="material-symbols-rounded">stacks</span>
                 <h3 className="text-[19px] font-bold ">Gestão de Campanhas</h3>
               </div>
               <p className="text-gray-300 text-[15px]">
@@ -78,7 +78,7 @@ export default function Home() {
             <div className="bg-gray-800 p-6 rounded-lg">
 
               <div className="text-3xl mb-2 flex gap-3 items-center">
-              <span className="material-symbols-outlined">contract_edit</span>
+              <span className="material-symbols-rounded">contract_edit</span>
                 <h3 className="text-[19px] font-bold">Organize suas Histórias</h3>
               </div>
               <p className="text-gray-300 text-gray-300 text-[15px]">
@@ -90,7 +90,7 @@ export default function Home() {
             <div className="bg-gray-800 p-6 rounded-lg">
 
               <div className="text-3xl mb-2 flex gap-3 items-center">
-              <span className="material-symbols-outlined">build</span>
+              <span className="material-symbols-rounded">build</span>
                 <h3 className="text-[19px] font-bold">Ferramenta simples e intuitiva</h3>
               </div>
               <p className="text-gray-300 text-[15px]">

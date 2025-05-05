@@ -9,17 +9,25 @@ export function PasswordRequirements({ password }: PasswordRequirementsProps) {
 
   return (
     <div className="text-sm space-y-1">
-      <p className="text-gray-600">A senha deve conter:</p>
-      <ul className="list-disc list-inside space-y-1">
-        {requirements.map((req, index: number) => (
-          <li
-            key={index}
-            className={req.regex.test(password) ? "text-green-600" : "text-gray-500"}
-          >
-            {req.text}
-          </li>
-        ))}
+      <p className="text-gray-900">A senha deve conter:</p>
+      <ul className="space-y-1">
+        {requirements.map((req, index: number) => {
+          const isValid = req.regex.test(password)
+          return (
+            <li
+              key={index}
+              className={`flex items-center gap-2 ${
+                isValid ? "text-green-600" : "text-red-600"
+              }`}
+            >
+              <span className="material-symbols-rounded text-sm">
+                {isValid ? "check" : "close"}
+              </span>
+              {req.text}
+            </li>
+          )
+        })}
       </ul>
     </div>
   )
-} 
+}

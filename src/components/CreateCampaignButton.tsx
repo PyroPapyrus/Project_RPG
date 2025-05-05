@@ -94,47 +94,57 @@ export function CreateCampaignButton({ onSuccess }: CreateCampaignButtonProps) {
             
             {error && <ErrorPopup message={error} onClose={() => setError(null)} />}
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="flex flex-col gap-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Nome
+              </label>
               <FormInput
                 id="name"
                 name="name"
                 type="text"
-                placeholder="Nome da Campanha"
+                placeholder="Descent into Avernus, Curse of Strahd, etc."
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 required
-                maxLength={50}
+                maxLength={40}
+                style={{ border: '1px solid #ccc', borderRadius: '0px' }}
               />
 
-              <div className="space-y-1">
-                <FormInput
-                  id="description"
-                  name="description"
-                  type="textarea"
-                  placeholder="Descrição"
-                  value={formData.description}
-                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setFormData({ ...formData, description: e.target.value })}
-                  required
-                  maxLength={500}
-                />
-                <p className="text-xs text-gray-500">
-                  {formData.description.length}/500 caracteres
-                </p>
-              </div>
-
+              <label className="block text-sm font-medium text-gray-700 mt-2">
+                Descrição breve
+              </label>
+              <FormInput
+                id="description"
+                name="description"
+                type="textarea"
+                placeholder="Faça uma descrição breve que contextualize sua campanha!"
+                value={formData.description}
+                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setFormData({ ...formData, description: e.target.value })}
+                required
+                maxLength={500}
+                style={{ border: '1px solid #ccc', borderRadius: '0px' }}
+              />
+              <p className="text-xs text-gray-500">
+                {formData.description.length}/500 caracteres
+              </p>
+              
+              <label className="block text-sm font-medium text-gray-700 mt-2">
+                Sistema da Campanha
+              </label>
               <FormInput
                 id="system"
                 name="system"
                 type="text"
-                placeholder="Sistema (D&D 5e, Pathfinder, etc.)"
+                placeholder="D&D 5e, Pathfinder, etc."
                 value={formData.system}
                 onChange={(e) => setFormData({ ...formData, system: e.target.value })}
                 required
                 maxLength={50}
+                style={{ border: '1px solid #ccc', borderRadius: '0px' }}
               />
 
               <div className="space-y-1">
-                <label htmlFor="max_players" className="block text-sm font-medium text-gray-700">
+                <label className="block text-sm font-medium text-gray-700 mt-2">
                   Limite de Jogadores
                 </label>
                 <p className="text-sm text-gray-500 mb-1">
@@ -157,10 +167,17 @@ export function CreateCampaignButton({ onSuccess }: CreateCampaignButtonProps) {
                   required
                   min={1}
                   max={20}
+                  style={{ border: '1px solid #ccc', borderRadius: '0px' }}
                 />
               </div>
 
-              <div className="flex justify-end space-x-2">
+              <div className="space-y-2 mt-2">
+                <SubmitButton
+                  loading={loading}
+                  loadingText="Criando..."
+                  buttonText="Criar Campanha"
+                />
+
                 <Button
                   type="button"
                   variant="outline"
@@ -169,15 +186,10 @@ export function CreateCampaignButton({ onSuccess }: CreateCampaignButtonProps) {
                     resetForm()
                   }}
                   disabled={loading}
-                >
-                  Cancelar
-                </Button>
-                <SubmitButton
-                  loading={loading}
-                  loadingText="Criando..."
-                  buttonText="Criar Campanha"
-                />
+                  className="w-full text-lg"
+                >Cancelar</Button>
               </div>
+
             </form>
           </div>
         </div>

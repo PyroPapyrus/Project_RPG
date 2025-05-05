@@ -1,4 +1,4 @@
-import { InputHTMLAttributes, TextareaHTMLAttributes, useEffect, useRef } from 'react'
+import { InputHTMLAttributes, TextareaHTMLAttributes, useEffect, useRef, useState } from 'react'
 
 type BaseFormInputProps = {
   id: string;
@@ -9,6 +9,7 @@ type BaseFormInputProps = {
   disabled?: boolean;
   required?: boolean;
   className?: string;
+  showPasswordToggle?: boolean;
 }
 
 type InputProps = BaseFormInputProps & Omit<InputHTMLAttributes<HTMLInputElement>, keyof BaseFormInputProps> & {
@@ -25,6 +26,7 @@ type FormInputProps = InputProps | TextareaProps;
 
 export function FormInput(props: FormInputProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [showPassword, setShowPassword] = useState(false);
 
   const adjustTextareaHeight = () => {
     if (textareaRef.current) {
@@ -64,17 +66,29 @@ export function FormInput(props: FormInputProps) {
     );
   }
 
-  const { onChange, ...inputProps } = props as InputProps;
+  const { onChange, showPasswordToggle, ...inputProps } = props as InputProps;
   return (
-    <div>
+    <div className="relative flex items-center">
       <label htmlFor={inputProps.id} className="sr-only">
         {inputProps.placeholder}
       </label>
       <input
-        className={inputClasses}
-        onChange={onChange}
         {...inputProps}
+        className={inputClasses}
+        type={showPassword ? 'text' : inputProps.type}
+        onChange={onChange}
       />
+      {showPasswordToggle && inputProps.type === 'password' && (
+        <button
+          type="button"
+          onClick={() => setShowPassword(!showPassword)}
+          className="absolute flex right-2 text-gray-500 hover:text-gray-700"
+        >
+          <span className="material-symbols-rounded text-base">
+            {showPassword ? 'visibility' : 'visibility_off'}
+          </span>
+        </button>
+      )}
     </div>
   );
-} 
+}

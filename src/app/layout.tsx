@@ -38,7 +38,7 @@ export default async function RootLayout({
       <link href="https://fonts.googleapis.com/css2?family=Boldonse&display=swap" rel="stylesheet"/>
 
       <link rel="stylesheet" 
-        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,1,0"
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0"
       />
 
       </head>
