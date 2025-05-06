@@ -184,11 +184,11 @@ export default function DashboardPage() {
       <header className="bg-gray-800 text-white py-4">
         <div className="mx-auto px-4 flex justify-between items-center">
           <BackButton />
-          <h1 className="text-2xl font-semibold">
-            {activeTab === 'master' ? 'Minhas Campanhas' : 'Campanhas que Participo'}
-          </h1>
+            <h1 className="text-2xl font-semibold">
+              {activeTab === 'master' ? 'Minhas Campanhas' : 'Campanhas que Participo'}
+            </h1>
           <LogoutButton />
-      </div>
+        </div>
       </header>
 
       <main className="container mx-auto px-4 py-8">
@@ -313,7 +313,7 @@ export default function DashboardPage() {
                 maxLength={500}
                 style={{ border: '1px solid #ccc', borderRadius: '0px' }}
               />
-              <p className="text-xs text-gray-500">
+              <p className="-mt-2 text-xs text-gray-500">
                 {editFormData.description.length}/500 caracteres
               </p>
 

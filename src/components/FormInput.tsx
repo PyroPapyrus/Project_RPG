@@ -41,8 +41,8 @@ export function FormInput(props: FormInputProps) {
     }
   }, [props.value, props.type]);
 
-  const baseClasses = "w-full justify-items-start rounded-r-md px-3 py-2 text-sm";
-  const textareaClasses = `${baseClasses} min-h-[100px] resize-none overflow-hidden ${props.className || ''}`;
+  const baseClasses = "w-full rounded-r-md px-3 py-2 text-sm";
+  const textareaClasses = `${baseClasses} break-word pre-wrap min-h-[100px] resize-none overflow-hidden ${props.className || ''}`;
   const inputClasses = `${baseClasses} ${props.className || ''}`;
 
   if (props.type === 'textarea') {
@@ -50,12 +50,12 @@ export function FormInput(props: FormInputProps) {
     return (
       <div>
         <label htmlFor={textareaProps.id} className="sr-only">
-          
           {textareaProps.placeholder}
         </label>
         <textarea
           ref={textareaRef}
           className={textareaClasses}
+          
           onChange={(e) => {
             onChange(e);
             adjustTextareaHeight();

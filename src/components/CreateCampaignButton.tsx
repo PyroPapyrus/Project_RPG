@@ -122,9 +122,9 @@ export function CreateCampaignButton({ onSuccess }: CreateCampaignButtonProps) {
                 onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setFormData({ ...formData, description: e.target.value })}
                 required
                 maxLength={500}
-                style={{ border: '1px solid #ccc', borderRadius: '0px' }}
+                style={{ border: '1px solid #ccc', borderRadius: '0px'}}
               />
-              <p className="text-xs text-gray-500">
+              <p className="-mt-2 text-xs text-gray-500">
                 {formData.description.length}/500 caracteres
               </p>
               
@@ -139,7 +139,7 @@ export function CreateCampaignButton({ onSuccess }: CreateCampaignButtonProps) {
                 value={formData.system}
                 onChange={(e) => setFormData({ ...formData, system: e.target.value })}
                 required
-                maxLength={50}
+                maxLength={40}
                 style={{ border: '1px solid #ccc', borderRadius: '0px' }}
               />
 

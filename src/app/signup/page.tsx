@@ -85,7 +85,7 @@ export default function SignUpPage() {
   return (
     <div className='bg-gray-900 min-h-screen'>
       <Image
-        src="/images/bg-login.gif"
+        src="/images/bg-login-cadastro.gif"
         alt="RPG Background"
         fill
         className="object-cover opacity-80"
