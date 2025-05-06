@@ -1,6 +1,8 @@
+// src/app/dashboard/page.tsx (Versão com Filtragem e Ordenação no Cliente)
+
 'use client'
 
-import { useEffect, useState, useCallback } from 'react' // Importe useCallback
+import { useEffect, useState, useCallback } from 'react'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { Campaign } from '@/types/campaign'
 import { CreateCampaignButton } from '@/components/CreateCampaignButton'
@@ -12,335 +14,408 @@ import JoinCampaignModal from '@/components/modals/JoinCampaignModal'
 import { CampaignCard } from '@/components/CampaignCard'
 import { BackButton } from '@/components/ui/back-button'
 
-// Importe os novos Modais
-import EditCampaignModal from '@/components/modals/EditCampaignModal'; // <--- Importe o modal de edição
-import ConfirmationModal from '@/components/modals/ConfirmationModal'; // <--- Importe o modal de confirmação
-import { toast } from 'react-toastify'; // Importe o toast
+// Importe o componente CampaignFilter e seus tipos
+import { CampaignFilter, CampaignStatusFilter, CampaignSortBy } from '@/components/CampaignFilter'; // <--- Import CampaignFilter and types
+
+// Importe os outros Modais
+import EditCampaignModal from '@/components/modals/EditCampaignModal';
+import ConfirmationModal from '@/components/modals/ConfirmationModal';
+import { toast } from 'react-toastify';
+
+
+// Defina o tipo para o estado de filtros na página
+interface DashboardFilters {
+  status: CampaignStatusFilter;
+  sortBy: CampaignSortBy;
+}
 
 
 export default function DashboardPage() {
-  const [masterCampaigns, setMasterCampaigns] = useState<Campaign[]>([])
-  const [playerCampaigns, setPlayerCampaigns] = useState<Campaign[]>([])
-  const [loading, setLoading] = useState(true)
+  // Armazena os dados BRUTOS, não filtrados/ordenados diretamente do DB
+  const [rawMasterCampaigns, setRawMasterCampaigns] = useState<Campaign[]>([])
+  const [rawPlayerCampaigns, setRawPlayerCampaigns] = useState<Campaign[]>([])
 
-  // --- ESTADOS PARA EXCLUSÃO E EDIÇÃO (AGORA GERENCIADOS AQUI NA PÁGINA) ---
-  const [campaignToDelete, setCampaignToDelete] = useState<Campaign | null>(null) // Armazena a campanha a ser excluída
-  const [campaignToEdit, setCampaignToEdit] = useState<Campaign | null>(null) // Armazena a campanha a ser editada
-  // --- FIM ESTADOS GERENCIADOS ---
+  // Armazena os dados FILTRADOS e ORDENADOS para exibição na UI
+  const [filteredMasterCampaigns, setFilteredMasterCampaigns] = useState<Campaign[]>([])
+  const [filteredPlayerCampaigns, setFilteredPlayerCampaigns] = useState<Campaign[]>([])
 
+  const [loading, setLoading] = useState(true)
 
-  const [activeTab, setActiveTab] = useState<'master' | 'player'>('master')
-  const [joinModalOpen, setJoinModalOpen] = useState(false)
+  // --- ESTADOS PARA EXCLUSÃO E EDIÇÃO ---
+  const [campaignToDelete, setCampaignToDelete] = useState<Campaign | null>(null)
+  const [campaignToEdit, setCampaignToEdit] = useState<Campaign | null>(null)
+  // --- FIM ESTADOS GERENCIADOS ---
 
-  const router = useRouter()
-  const supabase = createClientComponentClient()
+  const [activeTab, setActiveTab] = useState<'master' | 'player'>('master')
+  const [joinModalOpen, setJoinModalOpen] = useState(false)
 
+  // --- ESTADO PARA GERENCIAR OS FILTROS DA PÁGINA ---
+  // ESTE estado é a fonte de verdade para os filtros
+  const [campaignFilters, setCampaignFilters] = useState<DashboardFilters>({
+    status: 'todos', // Valor padrão inicial
+    sortBy: 'date_desc', // Valor padrão inicial (mais recentes primeiro)
+  });
 
-  // --- FUNÇÃO PARA CARREGAR CAMPANHAS (AGORA OTIMIZADA COM useCallback) ---
-  const loadCampaigns = useCallback(async () => {
-    try {
-      setLoading(true); // Move loading para o início da função de carregamento
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
-         setLoading(false);
-         router.push('/login'); // Redirecionar se não autenticado
-         return;
-      }
-
-      // --- BUSCAR CAMPANHAS DO MESTRE ---
-      const { data: masterData, error: masterError } = await supabase
-        .from('campaigns')
-        .select(`
-          *,
-          players:campaign_players(count)
-        `)
-        .eq('master_id', user.id)
-        .order('created_at');
-
-        if(masterError) {
-             console.error("Erro ao buscar campanhas do mestre:", masterError);
-             // Tratar erro
-        }
-
-        // --- BUSCAR CAMPANHAS DO JOGADOR (usando a view) ---
-        const { data: playerData, error: playerError } = await supabase
-        .from('view_campaign_players_visible') // Usando a view
-        .select(`
-          campaigns:campaign_id (
-            *,
-            players:campaign_players(count)
-          )
-        `)
-        .eq('user_id', user.id);
-
-        if(playerError) {
-            console.error("Erro ao buscar campanhas do jogador:", playerError);
-            // Tratar erro
-        }
+  const router = useRouter()
+  const supabase = createClientComponentClient()
 
 
-      // --- PROCESSAR DADOS ---
-      // Adicionando tratamento para caso os dados sejam null ou undefined
-      const processedMasterData = (masterData || []).map(campaign => ({
-        ...campaign, // Espalha as propriedades existentes
-        players_count: campaign.players?.[0]?.count || 0
-      })) as Campaign[]; // Garante o tipo
+  // --- FUNÇÃO PARA BUSCAR CAMPANHAS (SEMPRE BUSCA TUDO SEM FILTRO/ORDENAÇÃO) ---
+  // Esta função usa as queries que sabemos que funcionam para buscar dados brutos.
+  const fetchRawCampaigns = useCallback(async () => {
+    try {
+      console.log("fetchRawCampaigns chamado");
 
-      // Definindo um tipo mais claro para o resultado da view antes do map
-      type PlayerCampaignRaw = {
-        campaigns: Campaign & {
-          players?: { count: number }[];
+      setLoading(true); // Move loading para o início da função de carregamento
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+         console.error("Usuário não autenticado, redirecionando.");
+         setLoading(false);
+         router.push('/login');
+         return;
+      }
+      console.log("Usuário autenticado:", user.id);
+
+
+      // --- BUSCAR CAMPANHAS DO MESTRE (QUERY ORIGINAL QUE FUNCIONAVA) ---
+      // Sem filtro/ordenação aqui
+      const { data: masterData, error: masterError } = await supabase
+        .from('campaigns')
+        .select(`
+          *,
+          players:campaign_players(count)
+        `)
+        .eq('master_id', user.id); // Filtro de mestre permanece
+
+
+        console.log("Resultado Query Mestre (Raw):", { masterData, masterError });
+
+        if(masterError) {
+             console.error("Erro ao buscar campanhas do mestre:", masterError);
+             toast.error('Erro ao buscar campanhas do mestre.');
+              setLoading(false);
+              return;
+        }
+
+        // Define um tipo para o resultado esperado da query Mestre
+        type MasterCampaignRaw = Campaign & {
+            players?: { count: number }[]; // A relação 'players' com count
         };
-      };
 
-      // --- TRECHO CORRIGIDO PARA PROCESSAR playerData ---
-      const processedPlayerData = ((playerData || []) as unknown as PlayerCampaignRaw[]) // <-- Adicionado 'as unknown' aqui
-        .filter(item => item.campaigns && typeof item.campaigns === 'object' && !Array.isArray(item.campaigns)) // Filtra itens inválidos
-        .map(item => ({
-          ...item.campaigns, // Espalha as propriedades da campanha aninhada
-          players_count: item.campaigns.players?.[0]?.count || 0
-        })) as Campaign[];
-      // --- FIM TRECHO CORRIGIDO ---
+      const processedMasterData = (masterData as unknown as MasterCampaignRaw[] || []).map(campaign => ({
+        ...campaign,
+        players_count: campaign.players?.[0]?.count || 0
+      })) as Campaign[];
 
 
-      setMasterCampaigns(processedMasterData);
-      setPlayerCampaigns(processedPlayerData);
-
-      console.log('Processed Master Data:', processedMasterData); // Logar dados processados
-      console.log('Processed Player Data:', processedPlayerData); // Logar dados processados
-
-    } catch (error) {
-      console.error('Erro ao carregar campanhas (catch geral):', error);
-      toast.error('Ocorreu um erro ao carregar as campanhas.'); // Toast para erro geral
-    } finally {
-      setLoading(false); // Define loading como false no finally
-    }
-  }, [supabase, router]); // Adicionado router como dependência
-
-  // --- USE EFFECT PARA CARREGAR AO MONTAR ---
-  useEffect(() => {
-     loadCampaigns(); // Chama a função de carregamento inicial
-  }, [loadCampaigns]); // Dependência: loadCampaigns
+        // --- BUSCAR CAMPANHAS DO JOGADOR (QUERY ORIGINAL QUE FUNCIONAVA) ---
+        // Sem filtro/ordenação aqui
+        let playerQuery = supabase
+        .from('view_campaign_players_visible') // Usando a view
+        .select(`
+          campaigns:campaign_id (
+            *,
+            players:campaign_players(count)
+          )
+        `)
+        .eq('user_id', user.id); // Filtro de jogador permanece
 
 
-  // --- HANDLER PARA EXCLUIR CAMPANHA (AGORA COM CALLBACK DE CONFIRMAÇÃO) ---
-  // O handler original no CampaignCard agora apenas define campaignToDelete
-  const handleConfirmDeleteCampaign = async () => { // Esta função é chamada pelo ConfirmationModal
-    if (!campaignToDelete) return; // Garante que há uma campanha para deletar
+        const { data: playerData, error: playerError } = await playerQuery;
 
-    try {
-      setLoading(true); // Mostra loading enquanto deleta
-      const { error } = await supabase
-        .from('campaigns')
-        .delete()
-        .eq('id', campaignToDelete.id); // Usa o ID da campanha no estado campaignToDelete
+        console.log("Resultado Query Jogador (Raw):", { playerData, playerError });
 
-      if (error) throw error;
+        if(playerError) {
+            console.error("Erro ao buscar campanhas do jogador:", playerError);
+            toast.error('Erro ao carregar campanhas do jogador.');
+             setLoading(false);
+             return;
+        }
 
-      toast.success(`Campanha "${campaignToDelete.name}" excluída com sucesso.`); // Toast de sucesso
-      // Não precisa mais chamar setDeletingCampaign(null) aqui, o onClose do modal fará isso no finally
-      loadCampaigns(); // Recarrega a lista de campanhas
-    } catch (error: any) {
-      console.error('Erro ao excluir campanha:', error);
-      toast.error(`Erro ao excluir campanha: ${error.message || 'Desconhecido'}`); // Toast de erro
-    } finally {
-      setLoading(false); // Remove loading
-       setCampaignToDelete(null); // Garante que o estado seja limpo (fecha o modal de confirmação)
-    }
-  }
-  // --- FIM HANDLER EXCLUIR ---
+      // --- PROCESSAR DADOS ---
+      // Definindo um tipo mais claro para o resultado da view antes do map
+      type PlayerCampaignRaw = {
+        campaigns: Campaign & {
+          players?: { count: number }[];
+        };
+      };
+
+      // --- TRECHO CORRIGIDO PARA PROCESSAR playerData ---
+      const processedPlayerData = ((playerData as unknown as PlayerCampaignRaw[] || []) as PlayerCampaignRaw[])
+        .filter(item => item.campaigns && typeof item.campaigns === 'object' && !Array.isArray(item.campaigns))
+        .map(item => ({
+          ...item.campaigns,
+          players_count: item.campaigns.players?.[0]?.count || 0
+        })) as Campaign[];
 
 
-  // --- HANDLER PARA CLICAR EM EDITAR CAMPANHA ---
-  const handleEditCampaignClick = (campaign: Campaign) => {
-    setCampaignToEdit(campaign); // Define a campanha a ser editada no estado. Isso abrirá o modal.
-  };
-  // --- FIM HANDLER EDITAR ---
+      // --- Armazenar os dados brutos ---
+      setRawMasterCampaigns(processedMasterData);
+      setRawPlayerCampaigns(processedPlayerData);
 
-// --- HANDLER PARA QUANDO A CAMPANHA FOR ATUALIZADA NO MODAL ---
+      console.log('Dados Brutos do Mestre Buscados:', processedMasterData);
+      console.log('Dados Brutos do Jogador Buscados:', processedPlayerData);
+
+    } catch (error) {
+      console.error('Erro ao carregar campanhas (catch geral):', error);
+      toast.error('Ocorreu um erro ao carregar as campanhas.');
+    } finally {
+      // Define loading false APÓS buscar os dados brutos
+      setLoading(false);
+    }
+  }, [supabase, router]); // Sem dependência de campaignFilters aqui
+
+  // --- Efeito para buscar dados brutos ao montar ---
+  useEffect(() => {
+    fetchRawCampaigns();
+  }, [fetchRawCampaigns]); // Depende da função fetchRawCampaigns
+
+
+  // --- Efeito para filtrar e ordenar dados SEMPRE que filtros ou dados brutos mudam ---
+  useEffect(() => {
+    console.log("Aplicando filtros:", campaignFilters);
+
+    const applyFiltersAndSort = (campaigns: Campaign[]): Campaign[] => {
+      let filtered = campaigns;
+
+      // Aplicar Filtro de Status
+      if (campaignFilters.status !== 'todos') {
+        filtered = filtered.filter(campaign => campaign.status === campaignFilters.status);
+      }
+
+      // Aplicar Ordenação
+      const sorted = [...filtered].sort((a, b) => { // Cria uma cópia antes de ordenar para não modificar o array original
+        if (campaignFilters.sortBy === 'name_asc') {
+          return a.name.localeCompare(b.name);
+        } else if (campaignFilters.sortBy === 'name_desc') {
+          return b.name.localeCompare(a.name);
+        } else if (campaignFilters.sortBy === 'date_asc') {
+          // Converte as datas para números (timestamps) para comparar
+          return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+        } else { // date_desc (Mais recentes primeiro)
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        }
+      });
+
+      return sorted;
+    };
+
+    // Aplica os filtros/ordenação aos dados brutos e atualiza os estados filtrados
+    setFilteredMasterCampaigns(applyFiltersAndSort(rawMasterCampaigns));
+    setFilteredPlayerCampaigns(applyFiltersAndSort(rawPlayerCampaigns));
+
+    console.log("Filtros aplicados. Mestre (filtrado):", filteredMasterCampaigns.length, "Jogador (filtrado):", filteredPlayerCampaigns.length);
+
+
+  }, [campaignFilters, rawMasterCampaigns, rawPlayerCampaigns]); // Dependências: filtros E dados brutos
+
+
+  // HANDLER QUE RECEBE FILTROS DO CampaignFilter - Memoizado e atualiza o estado da página
+  const handleCampaignFilterChange = useCallback((filters: DashboardFilters) => {
+    console.log("Dashboard: handleCampaignFilterChange chamado com filtros:", filters);
+    setCampaignFilters(filters); // <-- ATUALIZA O ESTADO NA PÁGINA PAI. Isso dispara o useEffect acima para filtrar/ordenar.
+    console.log("Dashboard: campaignFilters state updated.");
+  }, []);
+
+
+  // --- HANDLER PARA EXCLUIR CAMPANHA ---
+  const handleConfirmDeleteCampaign = async () => {
+    // ... (código existente da função handleConfirmDeleteCampaign) ...
+    if (!campaignToDelete) return;
+
+    try {
+      setLoading(true);
+      const { error } = await supabase
+        .from('campaigns')
+        .delete()
+        .eq('id', campaignToDelete.id);
+
+      if (error) throw error;
+
+      toast.success(`Campanha "${campaignToDelete.name}" excluída com sucesso.`);
+      fetchRawCampaigns(); // Recarrega os dados BRUTOS após delete
+    } catch (error: any) {
+      console.error('Erro ao excluir campanha:', error);
+      toast.error(`Erro ao excluir campanha: ${error.message || 'Desconhecido'}`);
+    } finally {
+      setLoading(false);
+       setCampaignToDelete(null);
+    }
+  }
+
+
+  // --- HANDLER PARA CLICAR EM EDITAR CAMPANHA ---
+  const handleEditCampaignClick = (campaign: Campaign) => {
+    setCampaignToEdit(campaign);
+  };
+
+  // --- HANDLER PARA QUANDO A CAMPANHA FOR ATUALIZADA ---
   const handleCampaignUpdated = () => {
-       console.log("Dashboard: handleCampaignUpdated chamado."); // Mantenha para debug
-       setCampaignToEdit(null); // <--- ADICIONE ESTA LINHA DE VOLTA! ISSO FECHA O MODAL.
-       console.log("Dashboard: campaignToEdit definido como null."); // Mantenha para debug
-       loadCampaigns(); // Recarrega a lista de campanhas
-       console.log("Dashboard: loadCampaigns chamado."); // Mantenha para debug
-       // O toast de sucesso já está dentro do EditCampaignModal (ou adicione aqui se preferir)
-    };
-    // --- FIM HANDLER CAMPANHA ATUALIZADA ---
+    console.log("Dashboard: handleCampaignUpdated chamado.");
+    setCampaignToEdit(null); // FECHA O MODAL
+    console.log("Dashboard: campaignToEdit definido como null.");
+    fetchRawCampaigns(); // Recarrega os dados BRUTOS após atualização
+    console.log("Dashboard: fetchRawCampaigns chamado após atualização.");
+  };
 
 
-  if (loading) {
-    // Use o estado loading geral para mostrar o spinner enquanto carrega TUDO
-     return (
-      <div className="flex items-center justify-center min-h-screen">
-         <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-gray-900"></div>
-       </div>
-     );
-   }
-
-  // Se não está carregando E não tem campanhas mestre nem jogador, e não tem um erro genérico visível
-  // Pode ser que não esteja autorizado ou não encontrou as campanhas
-  const noCampaignsLoaded = !loading && masterCampaigns.length === 0 && playerCampaigns.length === 0;
-  const potentialAuthError = !loading && !masterCampaigns.length && !playerCampaigns.length; // Indicador simples
+  if (loading) {
+     return (
+      <div className="flex items-center justify-center min-h-screen">
+         <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-gray-900"></div>
+       </div>
+     );
+   }
 
 
-  // Considere se você quer mostrar uma mensagem diferente se o usuário não estiver autorizado
-  // ou se simplesmente não encontrou nenhuma campanha
-   /*
-   if (potentialAuthError && !userId) { // Se não carregou campanhas E não tem userId (deveria ter redirecionado)
-        return (
-            <div className="flex flex-col items-center justify-center min-h-screen">
-                <p className="text-gray-500 mb-4">Acesso não autorizado. Faça login novamente.</p>
-                 <Button onClick={() => router.push('/login')}>
-                   <ArrowLeft className="h-4 w-4 mr-2" />
-                   Ir para Login
-                 </Button>
-            </div>
-        );
-   }
-   */
+  return (
+
+    <div className="bg-gray-100">
+      <header className="bg-gray-800 text-white py-4 shadow-md">
+        <div className="container mx-auto px-4 flex justify-between items-center">
+          <BackButton />
+          <h1 className="text-xl font-semibold">
+            {activeTab === 'master' ? 'Minhas Campanhas' : 'Campanhas que Participo'}
+          </h1>
+          <LogoutButton />
+        </div>
+      </header>
+
+      <main className="container mx-auto px-4 py-8">
+        <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+          <div className="flex space-x-2 sm:space-x-4">
+            <button
+              className={`px-4 py-2 rounded-md flex items-center space-x-2 transition-colors text-sm sm:text-base ${
+                activeTab === 'master'
+                  ? 'bg-gray-700 text-white'
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+              onClick={() => setActiveTab('master')}
+            >
+              <span>Minhas Campanhas</span>
+              <span className={`${
+                activeTab === 'master' ? 'bg-gray-600' : 'bg-gray-300 text-gray-700' // Consistência na cor do badge
+              } px-2 py-0.5 rounded-full text-xs`}> {/* Ajustado tamanho da fonte do badge */}
+                {filteredMasterCampaigns.length} {/* Use filtered count */}
+              </span>
+            </button>
+
+            <button
+              className={`px-4 py-2 rounded-md flex items-center space-x-2 transition-colors text-sm sm:text-base ${
+                activeTab === 'player'
+                  ? 'bg-gray-700 text-white'
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+              onClick={() => setActiveTab('player')}
+            >
+
+              <span>Campanhas que jogo</span>
+              <span className={`${
+                activeTab === 'player' ? 'bg-gray-600' : 'bg-gray-300 text-gray-700' // Consistência na cor do badge
+              } px-2 py-0.5 rounded-full text-xs`}> {/* Ajustado tamanho da fonte do badge */}
+                {filteredPlayerCampaigns.length} {/* Use filtered count */}
+              </span>
+            </button>
+          </div>
+          {activeTab === 'master' ? (
+              // CreateCampaignButton já controla seu próprio modal
+              <CreateCampaignButton onSuccess={fetchRawCampaigns} /> 
+            ) : (
+              <Button // Usando seu componente Button agora
+                onClick={() => setJoinModalOpen(true)}
+                 variant="default" // Exemplo: usar a variante default
+                 className="rounded-full px-4 py-2 text-sm sm:text-base" // Ajustado padding/tamanho da fonte
+              >
+                <Plus className="h-4 w-4 mr-1" /> {/* Ajustado tamanho do ícone */}
+                <span>Entrar em Campanha</span>
+              </Button>
+            )}
+        </div>
+
+        {/* --- RENDERIZAÇÃO DO COMPONENTE DE FILTRO --- */}
+        {/* PASSA O ESTADO 'campaignFilters' COMO PROP PARA O CAMPAIGNFILTER */}
+      <div className="mb-6 max-w-6xl mx-auto">
+           {/* Garanta que CampaignFilter.tsx foi atualizado */}
+           <CampaignFilter
+            onFilterChange={handleCampaignFilterChange} // Handler para notificar o pai
+            filters={campaignFilters} // <-- PASSE O ESTADO campaignFilters COMO PROP AQUI!
+           />
+      </div>
+      {/* --- FIM COMPONENTE DE FILTRO --- */}
 
 
-  return (
-
-    <div className="bg-gray-100 min-h-screen"> {/* Adicionado min-h-screen para ocupar a altura */}
-      <header className="bg-gray-800 text-white py-4 shadow-md"> {/* Adicionado shadow-md */}
-        <div className="container mx-auto px-4 flex justify-between items-center"> {/* Usar container mx-auto */}
-          <BackButton />
-          <h1 className="text-xl font-semibold"> {/* Reduzido tamanho da fonte */}
-            {activeTab === 'master' ? 'Minhas Campanhas' : 'Campanhas que Participo'}
-          </h1>
-          <LogoutButton />
-        </div>
-      </header>
-
-      <main className="container mx-auto px-4 py-8"> {/* Usar container mx-auto */}
-        <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4"> {/* Adicionado gap e flex-col/sm:flex-row */}
-          <div className="flex space-x-2 sm:space-x-4"> {/* Ajustado espaçamento para telas pequenas */}
-            <button
-              className={`px-4 py-2 rounded-md flex items-center space-x-2 transition-colors text-sm sm:text-base ${ // Ajustado padding e tamanho da fonte
-                activeTab === 'master'
-                  ? 'bg-gray-700 text-white'
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-              }`}
-              onClick={() => setActiveTab('master')}
-            >
-              <span>Minhas Campanhas</span>
-              <span className={`${
-                activeTab === 'master' ? 'bg-gray-600' : 'bg-gray-300 text-gray-700' // Consistência na cor do badge
-              } px-2 py-0.5 rounded-full text-xs`}> {/* Ajustado tamanho da fonte do badge */}
-                {masterCampaigns.length}
-              </span>
-            </button>
-
-            <button
-              className={`px-4 py-2 rounded-md flex items-center space-x-2 transition-colors text-sm sm:text-base ${ // Ajustado padding e tamanho da fonte
-                activeTab === 'player'
-                  ? 'bg-gray-700 text-white'
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-              }`}
-              onClick={() => setActiveTab('player')}
-            >
-
-              <span>Campanhas que jogo</span>
-              <span className={`${
-                activeTab === 'player' ? 'bg-gray-600' : 'bg-gray-300 text-gray-700' // Consistência na cor do badge
-              } px-2 py-0.5 rounded-full text-xs`}> {/* Ajustado tamanho da fonte do badge */}
-                {playerCampaigns.length}
-              </span>
-            </button>
-          </div>
-          {activeTab === 'master' ? (
-              // CreateCampaignButton já controla seu próprio modal
-              <CreateCampaignButton onSuccess={loadCampaigns} />
-            ) : (
-              <Button // Usando seu componente Button agora
-                onClick={() => setJoinModalOpen(true)}
-                 variant="default" // Exemplo: usar a variante default
-                 className="rounded-full px-4 py-2 text-sm sm:text-base" // Ajustado padding/tamanho da fonte
-              >
-                <Plus className="h-4 w-4 mr-1" /> {/* Ajustado tamanho do ícone */}
-                <span>Entrar em Campanha</span>
-              </Button>
-            )}
-        </div>
-
-        {/* --- LISTA DE CAMPANHAS --- */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6"> {/* Aumentado para 3 colunas em telas grandes */}
-          {loading ? ( // Mostra loading se o estado loading geral for true
-              <p className="text-gray-500 col-span-full text-center py-8">Carregando campanhas...</p> // Col-span-full para centralizar
-          ) : activeTab === 'master' ? (
-            masterCampaigns.length === 0 ? (
-              <p className="text-gray-500 col-span-full text-center py-8">Você ainda não criou nenhuma campanha.</p> // Col-span-full para centralizar
-            ) : (
-              masterCampaigns.map((campaign) => (
-                <CampaignCard
-                  key={campaign.id}
-                  campaign={campaign}
-                  // Handlers para as ações na CampaignCard
-                  onEdit={handleEditCampaignClick} // <--- Define a campanha a ser editada no estado campaignToEdit
-                  onDelete={setCampaignToDelete} // <--- Define a campanha a ser deletada no estado campaignToDelete
-                />
-              ))
-            )
-          ) : ( // activeTab === 'player'
-            playerCampaigns.length === 0 ? (
-              <p className="text-gray-500 col-span-full text-center py-8">Você ainda não participa de nenhuma campanha.</p> // Col-span-full para centralizar
-            ) : (
-              playerCampaigns.map((campaign) => (
-                <CampaignCard
-                  key={campaign.id}
-                  campaign={campaign}
-                   // Não passa onEdit/onDelete para campanhas de jogador (se essa for a regra)
-                />
-              ))
-            )
-          )}
-        </div>
-         {/* --- FIM LISTA DE CAMPANHAS --- */}
-
-      </main>
-
-      {/* --- MODAL DE EDIÇÃO DE CAMPANHA --- */}
-      {/* Renderiza o modal se campaignToEdit NÃO FOR NULL */}
-      {campaignToEdit && (
-         <EditCampaignModal
-            isOpen={!!campaignToEdit} // Aberto se campaignToEdit não for null
-            onClose={() => setCampaignToEdit(null)} // Fechar modal limpando o estado
-            campaign={campaignToEdit} // Passa a campanha a ser editada
-            onCampaignUpdated={handleCampaignUpdated} // Callback após salvar
-         />
-      )}
-      {/* --- FIM MODAL DE EDIÇÃO --- */}
+        {/* --- LISTA DE CAMPANHAS --- */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6"> {/* Aumentado para 3 colunas em telas grandes */}
+          {loading ? ( // Mostra loading se o estado loading geral for true
+              <p className="text-gray-500 col-span-full text-center py-8">Carregando campanhas...</p> // Col-span-full para centralizar
+          ) : activeTab === 'master' ? (
+            filteredMasterCampaigns.length === 0 ? ( // Usa dados filtrados
+              <p className="text-gray-500 col-span-full text-center py-8">Você ainda não criou nenhuma campanha.</p> // Col-span-full para centralizar
+            ) : (
+              filteredMasterCampaigns.map((campaign) => ( // Usa dados filtrados
+                <CampaignCard
+                  key={campaign.id}
+                  campaign={campaign}
+                  // Handlers para as ações na CampaignCard
+                  onEdit={handleEditCampaignClick}
+                  onDelete={setCampaignToDelete}
+                />
+              ))
+            )
+          ) : ( // activeTab === 'player'
+            filteredPlayerCampaigns.length === 0 ? ( // Usa dados filtrados
+              <p className="text-gray-500 col-span-full text-center py-8">Você ainda não participa de nenhuma campanha.</p> // Col-span-full para centralizar
+            ) : (
+              filteredPlayerCampaigns.map((campaign) => ( // Usa dados filtrados
+                <CampaignCard
+                  key={campaign.id}
+                  campaign={campaign}
+                   // Não passa onEdit/onDelete para campanhas de jogador
+                />
+              ))
+            )
+          )}
+        </div>
+         {/* --- FIM LISTA DE CAMPANHAS --- */}
 
 
-      {/* --- MODAL DE CONFIRMAÇÃO DE EXCLUSÃO --- */}
-      {/* Renderiza o modal se campaignToDelete NÃO FOR NULL */}
-      {campaignToDelete && (
-         <ConfirmationModal
-            isOpen={!!campaignToDelete} // Aberto se campaignToDelete não for null
-            onClose={() => setCampaignToDelete(null)} // Chamado ao cancelar/fechar (limpa estado)
-            message={`Tem certeza que deseja excluir a campanha "${campaignToDelete.name}"? Esta ação não pode ser desfeita. Todas as sessões, notas e dados de jogadores relacionados também serão excluídos!`} // Mensagem específica
-            onConfirm={handleConfirmDeleteCampaign} // Chamado ao confirmar (executa delete)
-            title="Confirmar Exclusão da Campanha" // Título específico
-            confirmButtonText="Excluir Campanha" // Texto específico para o botão de confirmação
-            isConfirmDestructive={true} // Indica que a ação é destrutiva (botão vermelho)
-         />
-      )}
-      {/* --- FIM MODAL CONFIRMAÇÃO --- */}
+      </main>
+
+      {/* --- MODAL DE EDIÇÃO DE CAMPANHA --- */}
+      {campaignToEdit && (
+         <EditCampaignModal
+            isOpen={!!campaignToEdit}
+            onClose={() => setCampaignToEdit(null)}
+            campaign={campaignToEdit}
+            onCampaignUpdated={handleCampaignUpdated} // Chama o handler que busca dados brutos
+         />
+      )}
+      {/* --- FIM MODAL DE EDIÇÃO --- */}
 
 
-      {/* Modal de Entrada em Campanha */}
-      <JoinCampaignModal
-        isOpen={joinModalOpen}
-        onClose={() => setJoinModalOpen(false)}
-        onSuccess={loadCampaigns} // Recarrega campanhas após entrar em uma
-      />
+      {/* --- MODAL DE CONFIRMAÇÃO DE EXCLUSÃO --- */}
+      {campaignToDelete && (
+         <ConfirmationModal
+            isOpen={!!campaignToDelete}
+            onClose={() => setCampaignToDelete(null)}
+            message={`Tem certeza que deseja excluir a campanha "${campaignToDelete.name}"? Esta ação não pode ser desfeita. Todas as sessões, notas e dados de jogadores relacionados também serão excluídos!`}
+            onConfirm={handleConfirmDeleteCampaign} // Chama o handler que busca dados brutos
+            title="Confirmar Exclusão da Campanha"
+            confirmButtonText="Excluir Campanha"
+            isConfirmDestructive={true}
+         />
+      )}
+      {/* --- FIM MODAL CONFIRMAÇÃO --- */}
 
-       {/* Opcional: Renderiza os toasts */}
-       {/* <ToastContainer /> */}
+
+      {/* Modal de Entrada em Campanha */}
+      <JoinCampaignModal
+        isOpen={joinModalOpen}
+        onClose={() => setJoinModalOpen(false)}
+        onSuccess={fetchRawCampaigns} // Chama fetchRawCampaigns ao sucesso
+      />
 
 
-    </div>
-  )
+    </div>
+  )
 }

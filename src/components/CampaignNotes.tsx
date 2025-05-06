@@ -77,7 +77,6 @@ export default function CampaignNotes({ campaignId }: CampaignNotesProps) {
       if (data && data.length > 0 && userId) {
         // Coleta os IDs únicos dos usuários das notas (incluindo você e outros)
         const userIds = Array.from(new Set(data.map(note => note.user_id)));
-        console.log("User IDs das notas (verifique se IDs dos usuários populados estão aqui):", userIds); // Verifique este log
   
         // **Busca os usuários na tabela public.users usando .in()**
         // Esta query agora DEVE retornar dados para os IDs que existem na tabela populada.
@@ -85,8 +84,6 @@ export default function CampaignNotes({ campaignId }: CampaignNotesProps) {
           .from('users') // Query a tabela public.users (com id e username)
           .select('id, username') // Selecionar id e username
           .in('id', userIds); // <--- Filtrar pela coluna 'id' usando a lista de IDs
-  
-        console.log("Dados de usuários buscados (verifique se contém os usuários esperados):", usersData); // **VERIFIQUE ESTE LOG**
   
         if (usersError) {
           console.error("Erro ao buscar nomes dos usuários:", usersError);
@@ -107,8 +104,6 @@ export default function CampaignNotes({ campaignId }: CampaignNotesProps) {
               users: author ? [{ id: author.id, username: author.username }] : null
             };
           });
-  
-          console.log("Notas no state com nomes de usuário mapeados (VERIFIQUE AQUI):", notesWithUserNames); // **VERIFIQUE ESTE LOG FINAL**
           setNotes(notesWithUserNames); // Atualiza o state com as notas mapeadas
         }
       } else {
@@ -242,11 +237,11 @@ export default function CampaignNotes({ campaignId }: CampaignNotesProps) {
                         {note.title}
                         {note.is_private ? " (Privada)" : " (Pública)"}
                             {/* Mostrar quem criou / indicar se é sua */}
-{note.user_id !== userId ? ( // Se a nota NÃO é minha
-  note.users?.[0]?.username && ` por ${note.users?.[0]?.username}` // Mostrar "por [Nome]" se o nome estiver disponível
-) : ( // Se a nota É minha
-  "(Minha Nota)" // Mostrar "(Minha Nota)" (ou remova esta linha se não quiser texto para suas notas)
-)}
+                            {note.user_id !== userId ? ( // Se a nota NÃO é minha
+                              note.users?.[0]?.username && ` por ${note.users?.[0]?.username}` // Mostrar "por [Nome]" se o nome estiver disponível
+                            ) : ( // Se a nota É minha
+                              "(Minha Nota)" // Mostrar "(Minha Nota)" (ou remova esta linha se não quiser texto para suas notas)
+                            )}
                     </h4>
                    <p className="text-sm text-gray-600 whitespace-pre-wrap">{note.content}</p>
                    {note.user_id === userId && (

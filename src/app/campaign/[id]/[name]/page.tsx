@@ -338,7 +338,7 @@ const Page = ({ params }: PageProps) => {
               )}
               {/* --- FIM TRECHO world_story --- */}
 
-               {/* Opcional: Exibir world_story para jogadores (somente leitura) */}
+               {/* Opcional: Exibir world_story para jogado res (somente leitura) */}
                {!isMaster && campaign.world_story && (
                     <div className="mt-8">
                        <h2 className="text-2xl font-semibold mb-4">História do Mundo</h2>
