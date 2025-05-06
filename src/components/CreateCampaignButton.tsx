@@ -8,6 +8,7 @@ import { Plus } from 'lucide-react'
 import { FormInput } from './FormInput'
 import { SubmitButton } from './SubmitButton'
 import { ErrorPopup } from './ErrorPopup'
+import { CloseModalButton } from './ui/close-modal-button'
 
 interface CreateCampaignFormData {
   name: string
@@ -32,6 +33,11 @@ export function CreateCampaignButton({ onSuccess }: CreateCampaignButtonProps) {
   const [loading, setLoading] = useState(false)
   const router = useRouter()
   const supabase = createClientComponentClient()
+
+  const handleClose = () => {
+    setIsModalOpen(false)
+    resetForm()
+  }
 
   const resetForm = () => {
     setFormData({
@@ -90,7 +96,10 @@ export function CreateCampaignButton({ onSuccess }: CreateCampaignButtonProps) {
       {isModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-lg p-6 w-full max-w-md">
-            <h2 className="text-2xl font-bold mb-4">Nova Campanha</h2>
+          <div className='flex justify-between mb-4'>
+            <h2 className="text-2xl font-bold">Nova Campanha</h2>
+            <CloseModalButton onClose={handleClose} />
+          </div>
             
             {error && <ErrorPopup message={error} onClose={() => setError(null)} />}
 

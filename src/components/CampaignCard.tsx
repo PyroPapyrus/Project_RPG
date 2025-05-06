@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 interface CampaignCardProps {
   campaign: Campaign
   onEdit?: (campaign: Campaign) => void
-  onDelete?: (campaignId: string) => void
+  onDelete?: (campaign: Campaign) => void
 }
 
 export function CampaignCard({ campaign, onEdit, onDelete }: CampaignCardProps) {
@@ -50,7 +50,7 @@ export function CampaignCard({ campaign, onEdit, onDelete }: CampaignCardProps) 
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      onDelete(campaign.id);
+                      onDelete(campaign);
                     }}
                     className="text-gray-300 hover:text-red-400"
                   >
