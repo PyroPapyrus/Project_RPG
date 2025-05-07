@@ -8,8 +8,21 @@ interface CampaignCardProps {
   onDelete?: (campaign: Campaign) => void
 }
 
+// Definir o limite de caracteres para a descrição
+const DESCRIPTION_LIMIT = 200; // <--- Constante para o limite de caracteres
+
 export function CampaignCard({ campaign, onEdit, onDelete }: CampaignCardProps) {
   const router = useRouter()
+
+   // Função para obter a descrição limitada
+     const getLimitedDescription = (description: string | null) => {
+        if (!description) return "Sem descrição."; // Retorna um texto padrão se a descrição for nula/vazia
+        if (description.length <= DESCRIPTION_LIMIT) {
+          return description; // Retorna a descrição completa se for menor ou igual ao limite
+        }
+        // Retorna a descrição truncada com reticências
+        return description.substring(0, DESCRIPTION_LIMIT) + "...";
+      };
 
   return (
     <div
@@ -42,6 +55,7 @@ export function CampaignCard({ campaign, onEdit, onDelete }: CampaignCardProps) 
                       onEdit(campaign);
                     }}
                     className="text-gray-300 hover:text-yellow-400"
+                    aria-label={`Editar campanha ${campaign.name}`}
                   >
                     <Pencil className="h-5 w-5" />
                   </button>
@@ -63,10 +77,10 @@ export function CampaignCard({ campaign, onEdit, onDelete }: CampaignCardProps) 
         </div>
       </div>
       
-      <div className="p-4 flex-grow overflow-y-auto">
+      <div className="p-4 flex-grow overflow-y-auto max-h-[150px]">
         <div className="space-y-2">
           <p className="text-gray-600 break-words whitespace-pre-wrap">
-            {campaign.description}
+          {getLimitedDescription(campaign.description)}
           </p>
         </div>
       </div>

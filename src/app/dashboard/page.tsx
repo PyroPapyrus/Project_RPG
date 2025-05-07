@@ -1,3 +1,5 @@
+// src/app/dashboard/page.tsx (Versão com Filtragem e Ordenação no Cliente)
+
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
@@ -33,6 +35,7 @@ interface EditCampaignData {
   max_players: number
   status: 'em_andamento' | 'hiato' | 'concluido'
 }
+
 
 export default function DashboardPage() {
   // Armazena os dados BRUTOS, não filtrados/ordenados diretamente do DB

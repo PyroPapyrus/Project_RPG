@@ -1,11 +1,12 @@
 import { ButtonHTMLAttributes, forwardRef } from 'react'
 import { Slot } from "@radix-ui/react-slot"
-import { cn } from '@/lib/utils'
+import { cn } from '@/lib/utils' // Assumindo que cn vem de um utils que combina classes
 
+// Interface ButtonProps - Adicionando 'destructive' ao tipo do variant
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'default' | 'outline' | 'ghost'
-  size?: 'default' | 'sm' | 'lg'
-  asChild?: boolean
+  variant?: 'default' | 'outline' | 'ghost' | 'destructive' // <--- Adicionado 'destructive' aqui
+  size?: 'default' | 'sm' | 'lg'
+  asChild?: boolean
 }
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
