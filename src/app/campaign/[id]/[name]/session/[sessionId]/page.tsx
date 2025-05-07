@@ -10,7 +10,7 @@ import SessionHeader from '@/components/SessionHeader';
 import SessionPreparation from '@/components/SessionPreparation';
 import SessionSummary from '@/components/SessionSummary';
 import SessionImageUpload from '@/components/SessionImageUpload';
-import { SessionNotes } from '@/components/SessionNotes';
+import SessionNotes from '@/components/SessionNotes';
 import { Button } from '@/components/ui/button';
 
 interface PageProps {
@@ -48,7 +48,7 @@ const SessionPage = ({ params }: PageProps) => {
 
         const { data: campaign } = await supabase
           .from('campaigns')
-          .select('*')
+          .select('master_id')
           .eq('id', session.campaign_id)
           .single();
 
@@ -83,33 +83,44 @@ const SessionPage = ({ params }: PageProps) => {
         goal={sessionData.goal}
       />
 
-
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 mt-6">
         <div className="lg:col-span-3 space-y-6">
-        <SessionPreparation
-          sessionId={sessionData.id}
-          initialPreparation={sessionData.preparation}
-        />
 
-        <SessionSummary
-          initialSummary={sessionData.summary || ''}
-          onSave={async (newSummary) => {
-            const { error } = await supabase
-              .from('sessions')
-              .update({ summary: newSummary })
-              .eq('id', sessionData.id);
+          {/* Visto apenas pelo mestre */}
+          {isMaster && (
+            <SessionPreparation
+              sessionId={sessionData.id}
+              initialPreparation={sessionData.preparation}
+            />
+          )}
 
-            if (!error) {
-              setSessionData({ ...sessionData, summary: newSummary });
+          <SessionSummary
+            initialSummary={sessionData.summary || ''}
+            onSave={
+              isMaster
+                ? async (newSummary) => {
+                    const { error } = await supabase
+                      .from('sessions')
+                      .update({ summary: newSummary })
+                      .eq('id', sessionData.id);
+                    if (!error) {
+                      setSessionData({ ...sessionData, summary: newSummary });
+                    }
+                  }
+                : () => {} // Jogador não salva
             }
-          }}
-        />
+          />
 
-          <SessionImageUpload sessionId={sessionData.id} />
+          {/* Upload visível apenas pelo mestre */}
+          {isMaster && (
+            <SessionImageUpload
+              sessionId={sessionData.id}
+            />
+          )}
         </div>
 
         <div className="lg:col-span-1">
-          <SessionNotes sessionId={sessionData.id} userId={userId} />
+          <SessionNotes sessionId={sessionData.id} />
         </div>
       </div>
     </div>

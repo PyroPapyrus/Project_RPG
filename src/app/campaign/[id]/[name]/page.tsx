@@ -1,154 +1,257 @@
-// src/app/campaign/[id]/[name]/page.tsx
-
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft } from 'lucide-react'
+import CampaignNotes from '@/components/CampaignNotes'
 
-// Tipos (Importe o seu tipo Campaign também)
-import { Campaign } from '@/types/campaign' // Assumindo que você tem este arquivo
-import { Session } from '@/types/session'   // <-- Importa o novo tipo
-
-// Componentes de UI (Importe os que você usa)
+import { Campaign } from '@/types/campaign'
+import { Session } from '@/types/session'
 import { Button } from '@/components/ui/button'
-
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-// Importe um componente de Loading, se tiver um padrão
-// import { LoadingSpinner } from '@/components/ui/loading-spinner'
-
-// Importa o Modal que vamos criar
+import {
+  Card, CardContent, CardDescription, CardFooter,
+  CardHeader, CardTitle
+} from "@/components/ui/card"
 import CreateSessionModal from '@/components/modals/CreateSessionModal'
+import EditSessionModal from '@/components/modals/EditSessionModal';
+import ConfirmationModal from '@/components/modals/ConfirmationModal';
+import { toast } from 'react-toastify'
+import { FormInput } from '@/components/FormInput' // Importe o FormInput
+import { SubmitButton } from '@/components/SubmitButton' // Importe o SubmitButton
+
 
 interface PageProps {
   params: {
-    id: string // campaign UUID
-    name: string // campaign slug/name
+    id: string
+    name: string
   }
 }
 
 const Page = ({ params }: PageProps) => {
-  // Estados existentes
   const [campaign, setCampaign] = useState<Campaign | null>(null)
-  const [loading, setLoading] = useState(true) // Loading geral da página/campanha
+  const [loading, setLoading] = useState(true)
   const [authorized, setAuthorized] = useState(false)
+  const [isMaster, setIsMaster] = useState(false)
+  const [sessions, setSessions] = useState<Session[]>([])
+  const [sessionsLoading, setSessionsLoading] = useState(true)
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
 
-  // Novos Estados
-  const [isMaster, setIsMaster] = useState(false)              // O usuário logado é o mestre?
-  const [sessions, setSessions] = useState<Session[]>([])      // Lista de sessões da campanha
-  const [sessionsLoading, setSessionsLoading] = useState(true) // Loading específico das sessões
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false) // Controla visibilidade do modal de criação
+  // --- ESTADOS PARA EDIÇÃO/EXCLUSÃO DE SESSÃO ---
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [sessionToEdit, setSessionToEdit] = useState<Session | null>(null)
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [sessionToDelete, setSessionToDelete] = useState<Session | null>(null);
+  // --- FIM ESTADOS SESSÃO ---
+
+  // --- NOVOS ESTADOS PARA world_story ---
+  const [worldStory, setWorldStory] = useState<string | null>(null); // Estado para o conteúdo do world_story
+  const [isSavingWorldStory, setIsSavingWorldStory] = useState(false); // Estado para o loading do salvamento
+  const [worldStoryError, setWorldStoryError] = useState<string | null>(null); // Estado para erros
+  // --- FIM NOVOS ESTADOS world_story ---
+
+
+  const [userId, setUserId] = useState<string | null>(null)
 
   const router = useRouter()
-  // Cria o cliente Supabase específico para componentes Client-Side
   const supabase = createClientComponentClient()
 
-  useEffect(() => {
-    const loadData = async () => {
-      setLoading(true);
-      setSessionsLoading(true);
-      setAuthorized(false);
-      setIsMaster(false);
-      setCampaign(null);
-      setSessions([]);
+  const fetchSessions = useCallback(async (campaignId: string) => {
+     setSessionsLoading(true);
+     const { data: sessionsData, error: sessionsError } = await supabase
+         .from('sessions')
+         .select('*')
+         .eq('campaign_id', campaignId)
+         .order('session_date', { ascending: false });
 
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
-          return; // Usuário não logado, sai cedo
-        }
+     if (!sessionsError) {
+         setSessions(sessionsData || []);
+     } else {
+         console.error("Erro ao buscar sessões:", sessionsError);
+         toast.error('Erro ao buscar sessões.');
+         setSessions([]);
+     }
+     setSessionsLoading(false);
+  }, [supabase]);
 
-        // 1. Busca a campanha pelo ID
-        const { data: campaignData, error: campaignError } = await supabase
-          .from('campaigns')
-          .select('*')
-          .eq('id', params.id)
-          .single();
+  // --- FUNÇÃO PARA CARREGAR DADOS INICIAIS ---
+  const loadData = useCallback(async () => {
+    setLoading(true)
+    setAuthorized(false)
+    setIsMaster(false)
+    setCampaign(null)
+    setWorldStory(null); // Limpar worldStory ao carregar novos dados
 
-        if (campaignError || !campaignData) {
-          console.error('Campanha não encontrada ou erro:', campaignError);
-          return; // Campanha não existe ou erro na busca
-        }
-
-        // 2. Validação do slug (opcional, mas bom ter)
-        const expectedSlug = campaignData.name.toLowerCase().replace(/ /g, '-');
-        if (expectedSlug !== params.name) {
-          router.replace(`/campaign/${params.id}/${expectedSlug}`);
-          return; // Redireciona para a URL correta e para a execução atual
-        }
-
-        // 3. Verifica autorização (Mestre ou Jogador)
-        let userIsAuthorized = false;
-        let userIsMaster = false;
-        if (campaignData.master_id === user.id) {
-          // Usuário é o mestre
-          userIsAuthorized = true;
-          userIsMaster = true;
-        } else {
-          // Verifica se o usuário está na tabela 'campaign_players'
-          const { error: playerError, count } = await supabase
-            .from('campaign_players')
-            .select('*', { count: 'exact', head: true }) // Só verifica se existe
-            .eq('campaign_id', params.id)
-            .eq('user_id', user.id);
-
-          if (playerError && playerError.code !== 'PGRST116') { // Ignora erro 'not found'
-            console.error('Erro ao verificar jogador:', playerError);
-          } else if (count && count > 0) {
-            // Usuário é um jogador cadastrado
-            userIsAuthorized = true;
-          }
-        }
-
-        // Atualiza estados de campanha e autorização
-        setCampaign(campaignData);
-        setAuthorized(userIsAuthorized);
-        setIsMaster(userIsMaster); // Define se é o mestre para renderização condicional
-
-        // 4. Se autorizado, busca as sessões da campanha
-        if (userIsAuthorized) {
-          const { data: sessionsData, error: sessionsError } = await supabase
-            .from('sessions')
-            .select('*')
-            .eq('campaign_id', params.id)
-            .order('session_date', { ascending: false }); // Ordena pelas mais recentes
-
-          if (sessionsError) {
-            console.error("Erro ao buscar sessões:", sessionsError);
-            setSessions([]);
-          } else {
-            setSessions(sessionsData || []);
-          }
-        } else {
-           console.log('Usuário não autorizado para ver esta campanha.');
-        }
-
-      } catch (error) {
-        console.error('Erro geral ao carregar dados da campanha:', error);
-        setAuthorized(false); // Garante desautorizado em caso de erro
-      } finally {
-        setLoading(false); // Desativa loading geral
-        setSessionsLoading(false); // Desativa loading das sessões
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+         setLoading(false);
+         router.push('/login');
+         return;
       }
-    };
+      setUserId(user.id)
 
-    loadData();
-  }, [supabase, params.id, params.name, router]); // Dependências do useEffect
+      // Buscar dados da campanha, incluindo world_story
+      const { data: campaignData, error: campaignError } = await supabase
+        .from('campaigns')
+        .select('*') // O '*' deve incluir world_story se a coluna existir
+        .eq('id', params.id)
+        .single()
 
-  // ----- RENDERIZAÇÃO -----
+      if (campaignError || !campaignData) {
+         setLoading(false);
+         toast.error('Campanha não encontrada ou erro ao carregar.');
+         return;
+      }
 
-  // Estado de Loading Inicial (Campanha)
+      const expectedSlug = campaignData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')
+      if (expectedSlug !== params.name && params.name !== campaignData.id) {
+         router.replace(`/campaign/${params.id}/${expectedSlug}`);
+         setLoading(false);
+         return;
+      }
+
+      let userIsAuthorized = false
+      let userIsMaster = false
+      if (campaignData.master_id === user.id) {
+        userIsAuthorized = true
+        userIsMaster = true
+        setWorldStory(campaignData.world_story);
+      } else {
+        const { error: playerError, count } = await supabase
+          .from('campaign_players')
+          .select('user_id', { count: 'exact', head: true })
+          .eq('campaign_id', params.id)
+          .eq('user_id', user.id)
+
+        if (!playerError && count && count > 0) {
+          userIsAuthorized = true
+          setWorldStory(campaignData.world_story);
+        } else if (playerError) {
+            console.error("Erro ao verificar status de jogador:", playerError);
+        }
+      }
+
+      setCampaign(campaignData)
+      setAuthorized(userIsAuthorized)
+      setIsMaster(userIsMaster)
+
+      if (userIsAuthorized) {
+         fetchSessions(campaignData.id);
+      } else {
+         setSessions([]);
+         setSessionsLoading(false);
+      }
+
+    } catch (error) {
+      console.error("Erro ao carregar dados da campanha:", error);
+      toast.error('Ocorreu um erro ao carregar a campanha.');
+      setAuthorized(false);
+    } finally {
+      setLoading(false)
+    }
+  }, [supabase, params.id, params.name, router, fetchSessions]);
+
+  useEffect(() => {
+    loadData()
+  }, [loadData]);
+
+
+  // --- HANDLER PARA CLICAR NO BOTÃO EDITAR SESSÃO ---
+  const handleEditButtonClick = (session: Session) => {
+     setSessionToEdit(session);
+     setIsEditModalOpen(true);
+  };
+  // --- FIM HANDLER EDITAR SESSÃO ---
+
+  // --- HANDLER PARA QUANDO A SESSÃO FOR ATUALIZADA ---
+  const handleSessionUpdated = () => {
+     setIsEditModalOpen(false);
+     setSessionToEdit(null);
+     fetchSessions(params.id);
+     toast.success('Sessão atualizada com sucesso.');
+  };
+  // --- FIM HANDLER SESSÃO ATUALIZADA ---
+
+  // --- HANDLERS PARA CONFIRMAÇÃO DE EXCLUSÃO DE SESSÃO ---
+  const handleDeleteButtonClick = (session: Session) => {
+      setSessionToDelete(session);
+      setIsDeleteConfirmOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+      if (!sessionToDelete || !userId) return;
+
+      setIsDeleteConfirmOpen(false); // Fecha o modal de confirmação
+      setSessionsLoading(true);
+
+      const { error } = await supabase
+        .from('sessions')
+        .delete()
+        .eq('id', sessionToDelete.id);
+
+      setSessionsLoading(false);
+
+      if (error) {
+          console.error("Erro ao excluir sessão:", error);
+          toast.error('Erro ao excluir a sessão.');
+      } else {
+          toast.success('Sessão excluída com sucesso.');
+          setSessionToDelete(null);
+          fetchSessions(params.id);
+      }
+  };
+
+  const handleCancelDelete = () => {
+      setIsDeleteConfirmOpen(false);
+      setSessionToDelete(null);
+  };
+  // --- FIM HANDLERS EXCLUSÃO SESSÃO ---
+
+
+   // --- NOVO HANDLER PARA SALVAR world_story ---
+   const handleSaveWorldStory = async () => {
+       if (!campaign || !isMaster) return; // Só permite salvar se for Mestre e tiver campanha
+
+       setWorldStoryError(null);
+       setIsSavingWorldStory(true);
+
+       try {
+           const { data, error } = await supabase
+               .from('campaigns')
+               .update({ world_story: worldStory }) // Atualiza apenas o campo world_story
+               .eq('id', campaign.id) // Onde o ID é o da campanha atual
+               .select('world_story') // Opcional: Seleciona apenas o campo atualizado de volta
+               .single(); // Espera um único resultado
+
+           if (error) throw error;
+
+           // Opcional: Se quiser garantir que o estado local está com o valor salvo do DB
+           if (data) {
+                setWorldStory(data.world_story);
+           }
+
+           toast.success('História do Mundo salva com sucesso!');
+
+       } catch (error: any) {
+           console.error("Erro ao salvar world_story:", error);
+           setWorldStoryError(error.message || 'Erro ao salvar a História do Mundo.');
+           toast.error('Falha ao salvar a História do Mundo.');
+       } finally {
+           setIsSavingWorldStory(false);
+       }
+   };
+   // --- FIM NOVO HANDLER ---
+
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        {/* Substitua pelo seu componente de LoadingSpinner se tiver */}
         <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-gray-900"></div>
       </div>
-    );
+    )
   }
 
-  // Estado Não Autorizado ou Campanha Não Encontrada
   if (!authorized || !campaign) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen">
@@ -158,22 +261,15 @@ const Page = ({ params }: PageProps) => {
           Voltar para o Dashboard
         </Button>
       </div>
-    );
+    )
   }
 
-  // Estado Autorizado - Renderiza a página da campanha
   return (
-    <> {/* Usa Fragment para permitir renderizar o Modal fora do container principal */}
+    <>
       <div className="container mx-auto px-4 py-8">
-        {/* Cabeçalho da Campanha */}
         <div className="mb-8">
-          <Button
-            variant="ghost"
-            className="mb-4"
-            onClick={() => router.push('/dashboard')}
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Voltar para o Dashboard
+          <Button variant="ghost" className="mb-4" onClick={() => router.push('/dashboard')}>
+            <ArrowLeft className="h-4 w-4 mr-2" /> Voltar para o Dashboard
           </Button>
 
           <div className="flex justify-between items-start">
@@ -182,34 +278,86 @@ const Page = ({ params }: PageProps) => {
               <p className="text-gray-600 mb-1">{campaign.description}</p>
               <p className="text-sm text-gray-500">Sistema: {campaign.system}</p>
               {isMaster && campaign.invite_code && (
-              <div className="mt-4 flex items-center gap-2">
-                <span className="text-sm text-gray-600">Código de Convite:</span>
-                <code className="bg-gray-100 px-2 py-1 rounded font-mono text-blue-700">{campaign.invite_code}</code>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    navigator.clipboard.writeText(campaign.invite_code);
-                    alert('Código copiado para a área de transferência!');
-                  }}
-                >
-                  Copiar
-                </Button>
-              </div>
-            )}
+                <div className="mt-4 flex items-center gap-2">
+                  <span className="text-sm text-gray-600">Código de Convite:</span>
+                  <code className="bg-gray-100 px-2 py-1 rounded font-mono text-blue-700">{campaign.invite_code}</code>
+                  <Button variant="outline" size="sm" onClick={() => {
+                    navigator.clipboard.writeText(campaign.invite_code || '')
+                    toast.info('Código copiado para a área de transferência!');
+                  }}>
+                    Copiar
+                  </Button>
+                </div>
+              )}
 
-              {/* Pode adicionar status, nº de jogadores, etc. aqui */}
+             
+              {/* --- TRECHO PARA world_story (AJUSTADO PARA LAYOUT MELHOR) --- */}
+              {isMaster && ( // Apenas o Mestre pode ver e editar
+                <div className="mt-8">
+                  <h2 className="text-2xl font-semibold mb-4">História do Mundo</h2>
+                  {worldStoryError && <div className="text-red-500 mb-4">{worldStoryError}</div>} {/* Exibe erro */}
+
+                  {/* CONTAINER FLEXBOX/GRID PARA A ÁREA DE TEXTO E BOTÃO */}
+                  {/* Usamos flexbox para alinhar a área de texto e o botão */}
+                  {/* Em telas pequenas (sm), é uma coluna (flex-col) */}
+                  {/* Em telas médias/grandes (md+), é uma linha (md:flex-row) */}
+                  <div className="flex flex-col md:flex-row md:space-x-4">
+
+                      {/* Área de Texto do world_story (ocupa o espaço restante no layout flex) */}
+                      {/* Use w-full para ocupar a largura em telas pequenas */}
+                      <div className="flex-grow w-full">
+                          <FormInput // Use FormInput para a área de texto
+                            id="world_story"
+                            name="world_story"
+                            type="textarea"
+                            placeholder="Escreva a história do mundo da sua campanha aqui..."
+                            value={worldStory || ''} // Usa o estado worldStory, fallback para '' se null
+                            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setWorldStory(e.target.value)}
+                            rows={10} // Define um número inicial de linhas maior (o scroll lidará com o excesso)
+                            // Classes para o scroll na área de texto
+                            className="max-h-[400px] overflow-y-auto w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500" // Ajuste a altura e adicione estilos visuais básicos
+                          />
+                      </div>
+
+
+                      {/* Container para o Botão de Salvar (mantém sua largura) */}
+                      {/* Usamos flex-shrink-0 para evitar que o botão encolha */}
+                      {/* Usamos flex justify-end para alinhar o botão à direita na coluna (em telas pequenas) */}
+                       <div className="mt-4 md:mt-0 flex justify-end md:flex-shrink-0"> {/* mt-4 em telas pequenas, md:mt-0 em telas médias+ */}
+                            <SubmitButton // Botão de salvar com loading
+                              loading={isSavingWorldStory}
+                              loadingText="Salvando..."
+                              buttonText="Salvar História"
+                              onClick={handleSaveWorldStory} // Chama o handler de salvar
+                            />
+                       </div>
+
+                   </div> {/* Fim do container flexbox */}
+
+                </div>
+              )}
+              {/* --- FIM TRECHO world_story --- */}
+
+               {/* Opcional: Exibir world_story para jogado res (somente leitura) */}
+               {!isMaster && campaign.world_story && (
+                    <div className="mt-8">
+                       <h2 className="text-2xl font-semibold mb-4">História do Mundo</h2>
+                       {/* Renderiza o texto como HTML se ele contiver formatação rica futuramente */}
+                       {/* Por enquanto, apenas texto simples */}
+                       <div className="prose max-w-none"> {/* Use classes 'prose' para estilização básica de texto */}
+                           <p>{campaign.world_story}</p>
+                       </div>
+                    </div>
+               )}
+               {/* Fim Opcional */}
+
+
             </div>
-            {/* Área para botões de ação do Mestre sobre a CAMPANHA (ex: Editar Campanha) */}
           </div>
         </div>
 
-               {/* ===== ÁREA PRINCIPAL (Sessões e Futuro Chat) ===== */}
-        {/* Usa Flexbox para criar layout de colunas (lg:flex-row = colunas lado a lado em telas grandes) */}
         <div className="mt-12 border-t pt-8 flex flex-col lg:flex-row gap-8">
-
-          {/* Coluna da Esquerda: Sessões (com scroll) */}
-          {/* Ocupa 2/3 da largura em telas grandes (lg:w-2/3), largura total em telas pequenas */}
+          {/* Coluna de Sessões */}
           <div className="w-full lg:w-2/3">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-semibold">Sessões da Campanha</h2>
@@ -220,70 +368,48 @@ const Page = ({ params }: PageProps) => {
               )}
             </div>
 
-            {/* Container da Lista com Altura Máxima e Scroll */}
-            {/* Defina uma altura máxima adequada (ex: max-h-[70vh] ou max-h-[600px]) */}
-            {/* overflow-y-auto adiciona scroll vertical apenas quando necessário */}
-            <div className="max-h-[70vh] overflow-y-auto pr-2"> {/* pr-2 para dar espaço para a barra de rolagem */}
+            <div className="max-h-[70vh] overflow-y-auto pr-2">
               {sessionsLoading ? (
                 <div className="flex justify-center items-center h-32">
-                <p className="text-gray-500">Carregando sessões...</p>
+                  <p className="text-gray-500">Carregando sessões...</p>
                 </div>
               ) : sessions.length === 0 ? (
                 <div className="flex justify-center items-center h-32">
-                   <p className="text-gray-500">Ainda não há sessões registradas para esta campanha.</p>
+                  <p className="text-gray-500">Ainda não há sessões registradas para esta campanha.</p>
                 </div>
               ) : (
                 <div className="space-y-4">
                   {sessions.map((session) => (
-                    <Card key={session.id} className="w-full overflow-hidden">
-                      <CardHeader className="pb-4"> {/* Ajustado padding */}
-                        {/* Nome e Data */}
-                        <CardTitle className="text-lg font-semibold text-gray-800">{session.name}</CardTitle> {/* Ajustado estilo do título */}
+                    <Card key={session.id}>
+                      <CardHeader className="pb-4">
+                        <CardTitle className="text-lg font-semibold text-gray-800">{session.name}</CardTitle>
                         <CardDescription className="text-sm text-gray-500 pt-1">
                           Data: {new Date(session.session_date).toLocaleDateString('pt-BR', {
-                            year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
+                            year: 'numeric', month: 'long', day: 'numeric'
                           })}
                         </CardDescription>
                       </CardHeader>
-
-                      {/* O CardContent pode ser omitido se não houver conteúdo principal aqui */}
-                      {/* Ou usado para algo muito breve, ex: */}
-                      {/* <CardContent className="pt-0 pb-4">
-                        <p className="text-sm text-gray-600 italic">
-                          {session.description.substring(0, 70)}... {/* Exemplo de snippet
-                        </p>
-                      </CardContent> */}
-
-                      <CardFooter className="flex flex-wrap justify-between items-center gap-2 pt-4 border-t bg-gray-50/50"> {/* Adicionada borda superior */}
-                        {/* Status do Relatório (Indicador Simples) */}
+                      <CardFooter className="flex flex-wrap justify-between items-center gap-2 pt-4 border-t bg-gray-50/50">
                         <div>
-                          {session.report ? (
-                            <span className="text-xs font-medium text-blue-700">Relatório disponível</span>
+                          {session.goal ? (
+                            <span className="text-xs font-medium text-blue-700">{session.goal}</span>
                           ) : (
                             <span className="text-xs text-gray-400">Sem relatório</span>
                           )}
                         </div>
-
-                        {/* Botões de Ação */}
                         <div className="space-x-2 flex-shrink-0">
-                          {/* BOTÃO DE NAVEGAÇÃO */}
-                          <Button
-                             variant="outline"
-                             size="sm"
-                             onClick={() => router.push(`/campaign/${params.id}/${params.name}/session/${session.id}`)} // <-- NAVEGAÇÃO
-                          >
-                              Ver Detalhes
+                          <Button variant="outline" size="sm" onClick={() => router.push(`/campaign/${params.id}/${params.name}/session/${session.id}`)}>
+                            Ver Detalhes
                           </Button>
                           {isMaster && (
                             <>
-                              {/* Botão Editar (funcionalidade futura) */}
-                              <Button variant="outline" size="sm" onClick={() => alert(`Editar Sessão ID: ${session.id}`)}>Editar</Button>
-                              {/* Botão Excluir (funcionalidade futura) */}
+                              <Button variant="outline" size="sm" onClick={() => handleEditButtonClick(session)}>
+                                Editar
+                              </Button>
                               <Button
-                                variant="outline"
                                 size="sm"
                                 className="border-red-500 text-red-500 hover:bg-red-100 hover:text-red-700"
-                                onClick={() => alert(`Excluir Sessão ID: ${session.id}`)} // Adicionar confirmação real depois
+                                onClick={() => handleDeleteButtonClick(session)}
                               >
                                 Excluir
                               </Button>
@@ -295,48 +421,55 @@ const Page = ({ params }: PageProps) => {
                   ))}
                 </div>
               )}
-            </div> {/* Fim do container com scroll */}
-          </div> {/* Fim da Coluna da Esquerda (Sessões) */}
+            </div>
+          </div>
 
-          {/* Coluna da Direita: Placeholder para o Chat Futuro */}
-          {/* Ocupa 1/3 da largura em telas grandes (lg:w-1/3), some ou fica abaixo em telas pequenas */}
-          {/* Você pode ocultar isso (hidden lg:block) ou deixar visível para desenvolvimento */}
-          <div className="w-full lg:w-1/3 border-l pl-8 hidden lg:block"> {/* hidden lg:block = some em telas pequenas */}
-             <h2 className="text-2xl font-semibold mb-6">Chat da Campanha</h2>
-             <div className="h-[70vh] bg-gray-100 rounded flex items-center justify-center">
-                <p className="text-gray-400 italic">O chat aparecerá aqui</p>
-             </div>
-          </div> {/* Fim da Coluna da Direita (Chat) */}
+          {/* COLUNA DE NOTAS DA CAMPANHA */}
+          <div className="w-full lg:w-1/3 border-l pl-8 hidden lg:block"> {/* Adicionado hidden lg:block para esconder em telas pequenas */}
+            <h2 className="text-2xl font-semibold mb-6">Notas da Campanha</h2>
+            {campaign && userId && (
+              <CampaignNotes campaignId={campaign.id} />
+            )}
+          </div>
+        </div>
+      </div>
 
-        </div> {/* Fim da Área Principal Flexbox/Grid */}
-
-
-        {/* Adicionar outras seções aqui (Jogadores, Chat, etc.) no futuro */}
-
-      </div> {/* Fim do container principal */}
-
-
-      {/* Renderização do Modal de Criação (Fora do container principal para sobrepor tudo) */}
-      {/* Só renderiza se a campanha existir e o usuário for o mestre */}
+      {/* MODAL DE CRIAÇÃO DE SESSÃO */}
       {campaign && isMaster && (
-         <CreateSessionModal
-            // Controle de visibilidade
-            isOpen={isCreateModalOpen}
-            // Função para fechar o modal (passada para o componente filho)
-            onClose={() => setIsCreateModalOpen(false)}
-            // Passa o ID da campanha atual para o modal saber onde criar a sessão
-            campaignId={campaign.id}
-            // Função Callback: O que fazer quando uma sessão for criada com sucesso
-            onSessionCreated={(newSession) => {
-                // Adiciona a nova sessão ao início da lista no estado local
-                // Isso atualiza a UI sem precisar recarregar a página
-                setSessions(prevSessions => [newSession, ...prevSessions]);
-                // O modal já deve se fechar sozinho ao chamar onClose internamente
-            }}
+        <CreateSessionModal
+          isOpen={isCreateModalOpen}
+          onClose={() => setIsCreateModalOpen(false)}
+          campaignId={campaign.id}
+          onSessionCreated={(newSession) =>
+            setSessions(prev => [newSession, ...prev])
+          }
+        />
+      )}
+
+      {/* MODAL DE EDIÇÃO DE SESSÃO */}
+      {campaign && isMaster && sessionToEdit && (
+         <EditSessionModal
+            isOpen={!!isEditModalOpen} // Use o estado booleano para controlar
+            onClose={() => { setIsEditModalOpen(false); setSessionToEdit(null); }}
+            session={sessionToEdit}
+            onSessionUpdated={handleSessionUpdated}
          />
       )}
-    </> // Fim do Fragment
-  );
+
+      {/* MODAL DE CONFIRMAÇÃO DE EXCLUSÃO DE SESSÃO */}
+      {isDeleteConfirmOpen && sessionToDelete && (
+         <ConfirmationModal
+            isOpen={!!isDeleteConfirmOpen} // Use o estado booleano para controlar
+            onClose={() => { setIsDeleteConfirmOpen(false); setSessionToDelete(null); }}
+            message={`Tem certeza que deseja excluir a sessão "${sessionToDelete.name}"? Esta ação não pode ser desfeita.`}
+            onConfirm={handleConfirmDelete}
+            title="Confirmar Exclusão da Sessão" // Título específico
+            confirmButtonText="Excluir Sessão" // Texto específico
+            isConfirmDestructive={true}
+         />
+      )}
+    </>
+  )
 }
 
-export default Page;
+export default Page

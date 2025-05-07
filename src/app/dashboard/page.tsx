@@ -57,7 +57,7 @@ export default function DashboardPage() {
   // ESTE estado é a fonte de verdade para os filtros
   const [campaignFilters, setCampaignFilters] = useState<DashboardFilters>({
     status: 'todos', // Valor padrão inicial
-    sortBy: 'date_desc', // Valor padrão inicial (mais recentes primeiro)
+    sortBy: 'date_asc', // Valor padrão inicial (mais recentes primeiro)
   });
 
   const router = useRouter()
@@ -263,7 +263,7 @@ export default function DashboardPage() {
 
   return (
 
-    <div className="bg-gray-100">
+    <div className="min-h-screen">
       <header className="bg-gray-800 text-white py-4">
         <div className="mx-auto px-4 flex justify-between items-center">
           <BackButton />
@@ -274,11 +274,11 @@ export default function DashboardPage() {
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8">
-        <div className="flex justify-between items-center mb-6 max-w-6xl mx-auto">
+      <main className="mx-auto pt-8">
+        <div className="flex justify-between items-center max-w-6xl mx-auto">
           <div className="flex space-x-4">
             <button 
-              className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-colors ${
+              className={`shadow-xl shadow-black/20 px-4 py-2 rounded-lg flex items-center gap-2 transition-colors ${
                 activeTab === 'master' 
                   ? 'bg-gray-700 text-white' 
                   : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
@@ -294,7 +294,7 @@ export default function DashboardPage() {
             </button>
 
             <button 
-              className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-colors ${
+              className={`shadow-xl shadow-black/20 px-4 py-2 rounded-lg flex items-center gap-2 transition-colors ${
                 activeTab === 'player' 
                   ? 'bg-gray-700 text-white' 
                   : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
@@ -324,7 +324,7 @@ export default function DashboardPage() {
 
         {/* --- RENDERIZAÇÃO DO COMPONENTE DE FILTRO --- */}
         {/* PASSA O ESTADO 'campaignFilters' COMO PROP PARA O CAMPAIGNFILTER */}
-      <div className="max-w-6xl mx-auto">
+      <div className="max-w-6xl mx-auto -mt-5">
            {/* Garanta que CampaignFilter.tsx foi atualizado */}
            <CampaignFilter
             onFilterChange={handleCampaignFilterChange} // Handler para notificar o pai
@@ -332,12 +332,30 @@ export default function DashboardPage() {
            />
       </div>
       {/* --- FIM COMPONENTE DE FILTRO --- */}
+        
+      {/* --- RENDERIZAÇÃO DOS CARDS DE CAMPANHA --- */}
+      {activeTab === 'master' && filteredMasterCampaigns.length === 0 && (
+        <div className="max-w-6xl mx-auto">
+          <p className="text-gray-700 text-center">
+            Você ainda não criou nenhuma campanha.
+          </p>
+        </div>
+      )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-6xl mx-auto">
-          {activeTab === 'master' ? (
-            filteredMasterCampaigns.length === 0 ? (
-              <p className="text-gray-500 col-span-2 text-center py-8">Você ainda não criou nenhuma campanha.</p>
-            ) : (
+      {activeTab === 'player' && filteredPlayerCampaigns.length === 0 && (
+        <div className="max-w-6xl mx-auto">
+          <p className="text-gray-700 text-center">
+            Você ainda não participa de nenhuma campanha.
+          </p>
+        </div>
+      )}
+
+      {/* Cards Container - Only rendered when there are campaigns */}
+      {((activeTab === 'master' && filteredMasterCampaigns.length > 0) || 
+        (activeTab === 'player' && filteredPlayerCampaigns.length > 0)) && (
+        <div className='bg-gray-500 pt-5 pb-30 -mt-3 pb-16 -mb-6 min-h-[calc(96vh-225px)]'>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-6xl mx-auto">
+            {activeTab === 'master' ? (
               filteredMasterCampaigns.map((campaign) => (
                 <CampaignCard
                   key={campaign.id}
@@ -346,21 +364,17 @@ export default function DashboardPage() {
                   onDelete={setCampaignToDelete}
                 />
               ))
-            )
-          ) : (
-            filteredPlayerCampaigns.length === 0 ? (
-              <p className="text-gray-500 col-span-2 text-center py-8">Você ainda não participa de nenhuma campanha.</p>
             ) : (
               filteredPlayerCampaigns.map((campaign) => (
                 <CampaignCard
                   key={campaign.id}
                   campaign={campaign}
-                  // Não passa onEdit/onDelete para campanhas de jogador
                 />
               ))
-            )
-          )}
+            )}
+          </div>
         </div>
+      )}
       </main>
 
       {/* --- MODAL DE EDIÇÃO DE CAMPANHA --- */}

@@ -4,6 +4,7 @@ interface SubmitButtonProps {
   loadingText?: string;
   buttonText: string;
   isValid?: boolean;
+  onClick?: () => void;
 }
 
 export function SubmitButton({
@@ -11,12 +12,14 @@ export function SubmitButton({
   disabled = false,
   loadingText = "Carregando...",
   buttonText,
-  isValid = true
+  isValid = true,
+  onClick
 }: SubmitButtonProps) {
   return (
     <button
       type="submit"
       disabled={loading || disabled || !isValid}
+      onClick={onClick}
       className={`relative w-full py-2 text-lg rounded-md text-white bg-indigo-600 
         hover:bg-indigo-700 transition-all duration-200
         ${(!isValid || disabled) ? 'opacity-50 cursor-not-allowed' : 'hover:opacity-90'}`}

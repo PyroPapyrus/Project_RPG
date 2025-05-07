@@ -24,7 +24,6 @@ export default function ConfirmationModal({
   title = "Confirmar Ação", // Valor padrão para o título
   cancelButtonText = "Cancelar", // Valor padrão para o texto do botão Cancelar
   confirmButtonText = "Confirmar", // Valor padrão para o texto do botão Confirmar
-  isConfirmDestructive = false, // Padrão: botão de confirmação não é destrutivo
 }: ConfirmationModalProps) {
 
   // Se não estiver aberto, não renderiza nada
@@ -63,7 +62,6 @@ export default function ConfirmationModal({
           {/* Botão Confirmar */}
           <Button
             // Condicionalmente aplica a variante destrutiva (vermelha)
-            variant={isConfirmDestructive ? "destructive" : "default"} // Certifique-se que sua Button component tem variante "destructive"
             onClick={onConfirm} // Chama a função de confirmação
           >
             {confirmButtonText}
