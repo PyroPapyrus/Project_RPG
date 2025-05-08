@@ -10,12 +10,11 @@ import { Campaign } from '@/types/campaign'
 import { Session } from '@/types/session'
 import { Button } from '@/components/ui/button'
 import {
-  Card, CardContent, CardDescription, CardFooter,
-  CardHeader, CardTitle
-} from "@/components/ui/card"
+  Card, CardDescription, CardFooter,CardHeader, CardTitle} from "@/components/ui/card"
 import CreateSessionModal from '@/components/modals/CreateSessionModal'
 import EditSessionModal from '@/components/modals/EditSessionModal';
 import ConfirmationModal from '@/components/modals/ConfirmationModal';
+import EditWorldStoryModal from '@/components/modals/EditWorldStoryModal';
 import { toast } from 'react-toastify'
 import { FormInput } from '@/components/FormInput' // Importe o FormInput
 import { SubmitButton } from '@/components/SubmitButton' // Importe o SubmitButton
@@ -44,10 +43,8 @@ const Page = ({ params }: PageProps) => {
   const [sessionToDelete, setSessionToDelete] = useState<Session | null>(null);
   // --- FIM ESTADOS SESSÃO ---
 
-  // --- NOVOS ESTADOS PARA world_story ---
-  const [worldStory, setWorldStory] = useState<string | null>(null); // Estado para o conteúdo do world_story
-  const [isSavingWorldStory, setIsSavingWorldStory] = useState(false); // Estado para o loading do salvamento
-  const [worldStoryError, setWorldStoryError] = useState<string | null>(null); // Estado para erros
+  // --- ESTADO PARA world_story ---
+    const [isWorldStoryModalOpen, setIsWorldStoryModalOpen] = useState(false);
   // --- FIM NOVOS ESTADOS world_story ---
 
 
@@ -80,7 +77,6 @@ const Page = ({ params }: PageProps) => {
     setAuthorized(false)
     setIsMaster(false)
     setCampaign(null)
-    setWorldStory(null); // Limpar worldStory ao carregar novos dados
 
     try {
       const { data: { user } } = await supabase.auth.getUser()
@@ -94,7 +90,7 @@ const Page = ({ params }: PageProps) => {
       // Buscar dados da campanha, incluindo world_story
       const { data: campaignData, error: campaignError } = await supabase
         .from('campaigns')
-        .select('*') // O '*' deve incluir world_story se a coluna existir
+        .select('*') // O '*' deve incluir world_story
         .eq('id', params.id)
         .single()
 
@@ -116,7 +112,6 @@ const Page = ({ params }: PageProps) => {
       if (campaignData.master_id === user.id) {
         userIsAuthorized = true
         userIsMaster = true
-        setWorldStory(campaignData.world_story);
       } else {
         const { error: playerError, count } = await supabase
           .from('campaign_players')
@@ -126,7 +121,6 @@ const Page = ({ params }: PageProps) => {
 
         if (!playerError && count && count > 0) {
           userIsAuthorized = true
-          setWorldStory(campaignData.world_story);
         } else if (playerError) {
             console.error("Erro ao verificar status de jogador:", playerError);
         }
@@ -173,6 +167,7 @@ const Page = ({ params }: PageProps) => {
   };
   // --- FIM HANDLER SESSÃO ATUALIZADA ---
 
+
   // --- HANDLERS PARA CONFIRMAÇÃO DE EXCLUSÃO DE SESSÃO ---
   const handleDeleteButtonClick = (session: Session) => {
       setSessionToDelete(session);
@@ -209,40 +204,19 @@ const Page = ({ params }: PageProps) => {
   // --- FIM HANDLERS EXCLUSÃO SESSÃO ---
 
 
-   // --- NOVO HANDLER PARA SALVAR world_story ---
-   const handleSaveWorldStory = async () => {
-       if (!campaign || !isMaster) return; // Só permite salvar se for Mestre e tiver campanha
-
-       setWorldStoryError(null);
-       setIsSavingWorldStory(true);
-
-       try {
-           const { data, error } = await supabase
-               .from('campaigns')
-               .update({ world_story: worldStory }) // Atualiza apenas o campo world_story
-               .eq('id', campaign.id) // Onde o ID é o da campanha atual
-               .select('world_story') // Opcional: Seleciona apenas o campo atualizado de volta
-               .single(); // Espera um único resultado
-
-           if (error) throw error;
-
-           // Opcional: Se quiser garantir que o estado local está com o valor salvo do DB
-           if (data) {
-                setWorldStory(data.world_story);
-           }
-
-           toast.success('História do Mundo salva com sucesso!');
-
-       } catch (error: any) {
-           console.error("Erro ao salvar world_story:", error);
-           setWorldStoryError(error.message || 'Erro ao salvar a História do Mundo.');
-           toast.error('Falha ao salvar a História do Mundo.');
-       } finally {
-           setIsSavingWorldStory(false);
-       }
-   };
-   // --- FIM NOVO HANDLER ---
-
+    // --- NOVO HANDLER PARA ATUALIZAR world_story APÓS SALVAR NO MODAL ---
+  const handleWorldStorySaved = (updatedWorldStory: string | null) => {
+        // Atualiza o estado da campanha com o novo world_story
+        if (campaign) {
+            setCampaign({
+                ...campaign,
+                world_story: updatedWorldStory // Usa o conteúdo retornado/salvo
+            });
+        }
+        setIsWorldStoryModalOpen(false); // Fecha o modal
+    };
+    // --- FIM NOVO HANDLER ---
+  
 
   if (loading) {
     return (
@@ -291,65 +265,30 @@ const Page = ({ params }: PageProps) => {
               )}
 
              
-              {/* --- TRECHO PARA world_story (AJUSTADO PARA LAYOUT MELHOR) --- */}
-              {isMaster && ( // Apenas o Mestre pode ver e editar
-                <div className="mt-8">
-                  <h2 className="text-2xl font-semibold mb-4">História do Mundo</h2>
-                  {worldStoryError && <div className="text-red-500 mb-4">{worldStoryError}</div>} {/* Exibe erro */}
+  {/* --- TRECHO PARA world_story (AGORA UM BOTÃO QUE ABRE O MODAL) --- */}
+              {isMaster && ( // Apenas o Mestre pode ver o botão de editar
+                <div className="mt-8">
+                  <h2 className="text-2xl font-semibold mb-4">História do Mundo</h2>
+                  {/* Botão que abre o modal de edição */}
+                  <Button variant="outline" onClick={() => setIsWorldStoryModalOpen(true)}>
+                    Editar História do Mundo
+                  </Button>
+                </div>
+              )}
+              {/* --- FIM TRECHO world_story (BOTÃO) --- */}
 
-                  {/* CONTAINER FLEXBOX/GRID PARA A ÁREA DE TEXTO E BOTÃO */}
-                  {/* Usamos flexbox para alinhar a área de texto e o botão */}
-                  {/* Em telas pequenas (sm), é uma coluna (flex-col) */}
-                  {/* Em telas médias/grandes (md+), é uma linha (md:flex-row) */}
-                  <div className="flex flex-col md:flex-row md:space-x-4">
-
-                      {/* Área de Texto do world_story (ocupa o espaço restante no layout flex) */}
-                      {/* Use w-full para ocupar a largura em telas pequenas */}
-                      <div className="flex-grow w-full">
-                          <FormInput // Use FormInput para a área de texto
-                            id="world_story"
-                            name="world_story"
-                            type="textarea"
-                            placeholder="Escreva a história do mundo da sua campanha aqui..."
-                            value={worldStory || ''} // Usa o estado worldStory, fallback para '' se null
-                            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setWorldStory(e.target.value)}
-                            rows={10} // Define um número inicial de linhas maior (o scroll lidará com o excesso)
-                            // Classes para o scroll na área de texto
-                            className="max-h-[400px] overflow-y-auto w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500" // Ajuste a altura e adicione estilos visuais básicos
-                          />
-                      </div>
-
-
-                      {/* Container para o Botão de Salvar (mantém sua largura) */}
-                      {/* Usamos flex-shrink-0 para evitar que o botão encolha */}
-                      {/* Usamos flex justify-end para alinhar o botão à direita na coluna (em telas pequenas) */}
-                       <div className="mt-4 md:mt-0 flex justify-end md:flex-shrink-0"> {/* mt-4 em telas pequenas, md:mt-0 em telas médias+ */}
-                            <SubmitButton // Botão de salvar com loading
-                              loading={isSavingWorldStory}
-                              loadingText="Salvando..."
-                              buttonText="Salvar História"
-                              onClick={handleSaveWorldStory} // Chama o handler de salvar
-                            />
-                       </div>
-
-                   </div> {/* Fim do container flexbox */}
-
-                </div>
-              )}
-              {/* --- FIM TRECHO world_story --- */}
-
-               {/* Opcional: Exibir world_story para jogado res (somente leitura) */}
-               {!isMaster && campaign.world_story && (
-                    <div className="mt-8">
-                       <h2 className="text-2xl font-semibold mb-4">História do Mundo</h2>
-                       {/* Renderiza o texto como HTML se ele contiver formatação rica futuramente */}
-                       {/* Por enquanto, apenas texto simples */}
-                       <div className="prose max-w-none"> {/* Use classes 'prose' para estilização básica de texto */}
-                           <p>{campaign.world_story}</p>
-                       </div>
-                    </div>
-               )}
-               {/* Fim Opcional */}
+               {/* Exibir world_story para todos (somente leitura) */}
+                {/* Removemos a condição !isMaster para que todos vejam */}
+               {campaign.world_story && ( // Exibe se houver conteúdo
+                    <div className={`mt-8 ${isMaster ? 'hidden md:block' : ''}`}> {/* Opcional: esconder para mestre em telas grandes se quiser que ele use SÓ o modal */}
+                       {/* <h2 className="text-2xl font-semibold mb-4">História do Mundo</h2> REMOVIDO - título já está acima do botão*/}
+                       {/* Renderiza o texto */}
+                       <div className="prose max-w-none"> {/* Use classes 'prose' para estilização básica de texto */}
+                           <p>{campaign.world_story}</p>
+                       </div>
+                    </div>
+               )}
+               {/* Fim Exibição world_story */}
 
 
             </div>
@@ -468,6 +407,19 @@ const Page = ({ params }: PageProps) => {
             isConfirmDestructive={true}
          />
       )}
+
+       {/* --- MODAL DE EDIÇÃO DE WORLD_STORY --- */}
+       {campaign && isMaster && ( // Só renderiza se houver campanha e for Mestre
+          <EditWorldStoryModal
+              isOpen={isWorldStoryModalOpen} // Controlado pelo novo estado
+              onClose={() => setIsWorldStoryModalOpen(false)} // Fecha definindo o estado como falso
+              campaignId={campaign.id} // Passa o ID da campanha
+              initialWorldStory={campaign.world_story} // Passa o conteúdo atual do world_story
+              onSaveSuccess={handleWorldStorySaved} // Chama o handler quando salvar no modal
+          />
+      )}
+      {/* --- FIM MODAL --- */}
+
     </>
   )
 }

@@ -17,6 +17,7 @@ export default function SignUpPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
+    const [username, setUsername] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
@@ -30,6 +31,13 @@ export default function SignUpPage() {
     setLoading(true)
 
     try {
+      if (!username.trim()) {
+        throw new Error("O nome de usuário é obrigatório.");
+    }
+      // Opcional: Adicionar validações para formato/caracteres do username aqui, se necessário.
+      // Ex: verificar se tem espaços, caracteres especiais não permitidos, tamanho mínimo/máximo.
+
+
       if (!passwordValidation.isValid) {
         throw new Error("A senha não atende aos requisitos mínimos.")
       }
@@ -44,6 +52,9 @@ export default function SignUpPage() {
         password,
         options: {
           emailRedirectTo: `${window.location.origin}/auth/callback`,
+          data: {
+            username: username, 
+          }
         },
       })
 
@@ -80,7 +91,9 @@ export default function SignUpPage() {
     }
   }
   
-  const isFormValid = email.trim() !== '' && password.trim() !== '';
+  
+     const isFormValid = email.trim() !== '' && password.trim() !== '' && confirmPassword.trim() !== '' && username.trim() !== '';
+
 
   return (
     <div className='bg-gray-900 min-h-screen'>
@@ -116,8 +129,33 @@ export default function SignUpPage() {
             <p className='mt-3'>Crie sua conta</p>
           </div>
 
+        
+
           <form className="space-y-4" onSubmit={handleSubmit}>
             <div className="space-y-2">
+
+              {/* --- PASSO 1: ADICIONAR CAMPO USERNAME NO FORMULÁRIO --- */}
+              <div className='bg-white border shadow-md border-gray-300 rounded-md flex items-center'>
+                <span className="material-symbols-rounded px-2" style={{ fontSize: '20px' }}>
+                   person  {/* Ícone para username/perfil */}
+                </span>
+                <div className='flex-1'>
+                  <FormInput
+                    id="username" // ID único
+                    name="username" // Nome para o formulário
+                    type="text" // Tipo texto
+                    placeholder="Nome de usuário" // Placeholder
+                    value={username} // Estado conectado
+                    onChange={(e) => setUsername(e.target.value)} // Atualiza o estado
+                    disabled={loading}
+                    required // Torna o campo obrigatório\
+                    maxLength={20}
+                  />
+                </div>
+              </div>
+              {/* --- FIM CAMPO USERNAME --- */}
+
+
 
               <div className='bg-white border shadow-md border-gray-300 rounded-md flex items-center'>
                 <span className="material-symbols-rounded px-2" style={{ fontSize: '20px' }}>
