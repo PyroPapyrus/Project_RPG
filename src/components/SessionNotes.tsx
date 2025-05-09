@@ -31,6 +31,8 @@ interface SessionNotesProps {
   // userId: string;
 }
 
+type NoteFilter = 'all' | 'mine' | 'public_others';
+
 // Recebe apenas sessionId como prop
 export default function SessionNotes({ sessionId }: SessionNotesProps) {
   // Usar useSessionContext para obter o cliente Supabase e a sessão
@@ -43,6 +45,8 @@ export default function SessionNotes({ sessionId }: SessionNotesProps) {
   // Inicializar newNote
   const [newNote, setNewNote] = useState({ title: '', content: '', is_private: true, session_id: sessionId, campaign_id: null as string | null });
   const [loading, setLoading] = useState(false);
+   const [updatingPrivateStatus, setUpdatingPrivateStatus] = useState<string | null>(null);
+  const [filter, setFilter] = useState<NoteFilter>('all');
 
   // Resetar newNote e buscar notas quando o sessionId ou o userId mudar (usuário loga/desloga)
   useEffect(() => {
@@ -196,6 +200,64 @@ export default function SessionNotes({ sessionId }: SessionNotesProps) {
     }
   };
 
+   // --- HANDLER: Alternar o status de privacidade de uma nota ---
+ // Permite que o autor de uma nota a torne pública ou privada.
+ const handleTogglePrivate = async (note: Note) => {
+  // Só o autor pode alterar a privacidade da nota
+  if (!userId || note.user_id !== userId) return;
+
+  setUpdatingPrivateStatus(note.id); // Indica qual nota está sendo atualizada visualmente
+
+  const newPrivateStatus = !note.is_private; // Inverte o status atual
+
+  try {
+    // Envia a atualização do status de privacidade para o Supabase
+    // A RLS deve garantir que apenas o autor possa atualizar o campo is_private.
+    const { data, error } = await supabaseClient
+      .from('notes')
+      .update({ is_private: newPrivateStatus }) // Atualiza apenas o campo is_private
+      .eq('id', note.id) // Onde o ID corresponde à nota
+      .eq('user_id', userId) // Garante que só o autor atualiza (redundante com RLS, mas seguro)
+      .select('id, is_private') // Opcional: Retorna o ID e o novo status privado
+      .single(); // Espera um único resultado
+
+    if (error) throw error; // Lança erro para ser pego pelo catch
+
+    // Atualiza o estado local das notas imediatamente para feedback rápido na UI
+    setNotes(prevNotes =>
+      prevNotes.map(n =>
+        // Encontra a nota atualizada pelo ID e cria um novo objeto com o novo status privado
+        n.id === note.id ? { ...n, is_private: newPrivateStatus } : n
+      )
+    );
+
+    toast.success(`Nota "${note.title}" tornada ${newPrivateStatus ? 'privada' : 'pública'}.`);
+
+  } catch (error: any) {
+    console.error("Erro ao alternar privacidade da nota:", error);
+    toast.error('Erro ao alternar a privacidade da nota.');
+  } finally {
+    setUpdatingPrivateStatus(null); // Reseta o estado de atualização visual
+  }
+};
+
+  const filteredNotes = notes.filter(note => {
+    // Lógica de filtragem:
+    // Inclui se o filtro for 'all'
+    // OU inclui se o filtro for 'mine' E a nota for do usuário logado
+    // OU inclui se o filtro for 'public_others' E a nota for pública E não for do usuário logado
+    if (!userId) return false; // Garante que só filtra se houver usuário
+  
+    const filterCondition = (
+       (filter === 'all') ||
+       (filter === 'mine' && note.user_id === userId) ||
+       (filter === 'public_others' && !note.is_private && note.user_id !== userId)
+    );
+  
+    return filterCondition;
+  });
+
+
   // Não renderizar nada ou mostrar mensagem enquanto o usuário não estiver carregado
   if (!user) {
     return <p>Carregando usuário ou redirecionando para login...</p>; // Ou um spinner/loading state
@@ -206,7 +268,35 @@ export default function SessionNotes({ sessionId }: SessionNotesProps) {
       <div>
         <h2 className="text-lg font-bold mb-2">Notas da Sessão</h2> {/* Título para Notas de Sessão */}
         <div className="space-y-2">
-          {notes.map((note) => (
+          <div className="flex items-center space-x-4 mb-6"> {/* Container flexbox para alinhar os botões horizontalmente */}
+            <span className="text-sm font-medium text-gray-700">Mostrar:</span>
+            {/* Botão "Todas" */}
+            <Button
+                variant={filter === 'all' ? 'default' : 'outline'} // Altera aparência se ativo
+                size="sm" // Tamanho pequeno
+                onClick={() => setFilter('all')} // Atualiza o estado do filtro para 'all'
+            >
+                Todas
+            </Button>
+            {/* Botão "Minhas Notas" */}
+            <Button
+                variant={filter === 'mine' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setFilter('mine')}
+                disabled={!userId} // Desabilita se não houver userId
+            >
+                Minhas Notas
+            </Button>
+            {/* Botão "Públicas (Outros)" */}
+            <Button
+                variant={filter === 'public_others' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setFilter('public_others')}
+            >
+                Públicas (Outros)
+            </Button>
+  </div>
+          {filteredNotes.map((note) => (
             <div key={note.id} className="border rounded p-3">
               {editingNote?.id === note.id ? (
                 <>
@@ -230,19 +320,47 @@ export default function SessionNotes({ sessionId }: SessionNotesProps) {
                 <>
                   {/* Exibir título, visibilidade e nome do autor */}
                   <h4 className="font-semibold text-gray-800">
-                    {note.title} {note.is_private ? "(Privada)" : "(Pública)"}
-                    {/* Lógica para mostrar o nome do autor, similar ao CampaignNotes */}
-                    {/* Se a nota NÃO é minha, e o nome do autor está disponível, mostre "por [Nome]" */}
-                     {note.user_id !== userId ? (
-                         note.users?.[0]?.username && ` por ${note.users?.[0]?.username}`
-                     ) : (
-                         "(Minha Nota)" // Ou null, ou "" se não quiser texto para suas notas
-                     )}
+                       <div className="flex items-center gap-2"> {/* Alinha título e ícone */}
+                        <span className="text-lg font-semibold text-gray-800">{note.title}</span>
+                        {/* Ícone de Cadeado: trancado para privada, aberto para pública */}
+                        {note.is_private ? (
+                         <span className="material-symbols-rounded text-sm text-gray-500" title="Nota Privada">lock</span>
+                        ) : (
+                         <span className="material-symbols-rounded text-sm text-green-600" title="Nota Pública">lock_open</span>
+                        )}
+                      </div>
+                          {/* Exibe "(Minha Nota)" se for do usuário logado, ou "por [Nome do Autor]" se for de outro */}
+                          {note.user_id === userId ? (
+                            <span className="text-sm text-blue-600 font-normal">(Minha Nota)</span>
+                          ) : (
+                            note.users?.[0]?.username && ( // Verifica se há dados de usuário e username
+                              <span className="text-sm text-gray-600 font-normal">
+                                {' por '}
+                                {note.users[0].username}
+                              </span>
+                           )
+                          )}
                   </h4>
                   <p className="text-sm text-gray-600 whitespace-pre-wrap">{note.content}</p>
                   {/* Botões de Editar/Excluir aparecem apenas para notas do usuário logado */}
                   {note.user_id === userId && (
                     <div className="flex justify-end mt-2 space-x-2">
+                       {/* Botão para alternar privacidade */}
+                       <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleTogglePrivate(note)}
+                            disabled={updatingPrivateStatus === note.id} // Desabilita durante a atualização
+                        >
+                            {updatingPrivateStatus === note.id ? (
+                                'Atualizando...'
+                            ) : note.is_private ? (
+                                'Tornar Pública'
+                            ) : (
+                                'Tornar Privada'
+                            )}
+                        </Button>
+                        {/* --- FIM BOTÃO ALTERNAR PRIVACIDADE --- */}
                       <Button variant="outline" size="sm" onClick={() => setEditingNote(note)}>Editar</Button>
                       <Button variant="outline" size="sm" onClick={() => handleDelete(note.id)}>Excluir</Button>
                     </div>
@@ -251,6 +369,17 @@ export default function SessionNotes({ sessionId }: SessionNotesProps) {
               )}
             </div>
           ))}
+          {filteredNotes.length === 0 && (
+              <p className="text-gray-500 text-center mt-4">
+                  {filter === 'all' ? (
+                      'Ainda não há notas para esta sessão que você possa visualizar.' // Mensagem para filtro 'Todas'
+                  ) : filter === 'mine' ? (
+                      'Você ainda não adicionou notas para esta sessão.' // Mensagem para filtro 'Minhas Notas'
+                  ) : ( // filtro 'public_others'
+                      'Não há notas públicas de outros usuários nesta sessão.' // Mensagem para filtro 'Públicas (Outros)'
+                  )}
+              </p>
+          )}
         </div>
       </div>
 
