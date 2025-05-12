@@ -21,11 +21,12 @@ import { CampaignFilter, CampaignStatusFilter, CampaignSortBy } from '@/componen
 import EditCampaignModal from '@/components/modals/EditCampaignModal';
 import ConfirmationModal from '@/components/modals/ConfirmationModal';
 import { toast } from 'react-toastify';
+import Image from 'next/image'
 
 // Defina o tipo para o estado de filtros na página
 interface DashboardFilters {
-    status: CampaignStatusFilter;
-    sortBy: CampaignSortBy;
+  status: CampaignStatusFilter;
+  sortBy: CampaignSortBy;
   }
 
 interface EditCampaignData {
@@ -38,80 +39,79 @@ interface EditCampaignData {
 
 
 export default function DashboardPage() {
-  // Armazena os dados BRUTOS, não filtrados/ordenados diretamente do DB
-  const [rawMasterCampaigns, setRawMasterCampaigns] = useState<Campaign[]>([])
-  const [rawPlayerCampaigns, setRawPlayerCampaigns] = useState<Campaign[]>([])
+  // Armazena os dados BRUTOS, não filtrados/ordenados diretamente do DB
+  const [rawMasterCampaigns, setRawMasterCampaigns] = useState<Campaign[]>([])
+  const [rawPlayerCampaigns, setRawPlayerCampaigns] = useState<Campaign[]>([])
 
-  // Armazena os dados FILTRADOS e ORDENADOS para exibição na UI
-  const [filteredMasterCampaigns, setFilteredMasterCampaigns] = useState<Campaign[]>([])
-  const [filteredPlayerCampaigns, setFilteredPlayerCampaigns] = useState<Campaign[]>([])
+  // Armazena os dados FILTRADOS e ORDENADOS para exibição na UI
+  const [filteredMasterCampaigns, setFilteredMasterCampaigns] = useState<Campaign[]>([])
+  const [filteredPlayerCampaigns, setFilteredPlayerCampaigns] = useState<Campaign[]>([])
 
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(true)
 
-  // --- ESTADOS PARA EXCLUSÃO E EDIÇÃO ---
-  const [campaignToDelete, setCampaignToDelete] = useState<Campaign | null>(null)
-  const [campaignToEdit, setCampaignToEdit] = useState<Campaign | null>(null)
-  // --- FIM ESTADOS GERENCIADOS ---
+  // --- ESTADOS PARA EXCLUSÃO E EDIÇÃO ---
+  const [campaignToDelete, setCampaignToDelete] = useState<Campaign | null>(null)
+  const [campaignToEdit, setCampaignToEdit] = useState<Campaign | null>(null)
+  // --- FIM ESTADOS GERENCIADOS ---
 
-  const [activeTab, setActiveTab] = useState<'master' | 'player'>('master')
-  const [joinModalOpen, setJoinModalOpen] = useState(false)
+  const [activeTab, setActiveTab] = useState<'master' | 'player'>('master')
+  const [joinModalOpen, setJoinModalOpen] = useState(false)
 
-  // --- ESTADO PARA GERENCIAR OS FILTROS DA PÁGINA ---
-  // ESTE estado é a fonte de verdade para os filtros
-  const [campaignFilters, setCampaignFilters] = useState<DashboardFilters>({
-    status: 'todos', // Valor padrão inicial
-    sortBy: 'date_asc', // Valor padrão inicial (mais recentes primeiro)
-  });
+  // --- ESTADO PARA GERENCIAR OS FILTROS DA PÁGINA ---
+  // ESTE estado é a fonte de verdade para os filtros
+  const [campaignFilters, setCampaignFilters] = useState<DashboardFilters>({
+    status: 'todos', // Valor padrão inicial
+    sortBy: 'date_asc', // Valor padrão inicial (mais recentes primeiro)
+  });
 
-  const router = useRouter()
-  const supabase = createClientComponentClient()
+  const router = useRouter()
+  const supabase = createClientComponentClient()
 
   // --- FUNÇÃO PARA BUSCAR CAMPANHAS (SEMPRE BUSCA TUDO SEM FILTRO/ORDENAÇÃO) ---
-  // Esta função usa as queries que sabemos que funcionam para buscar dados brutos.
-  const fetchRawCampaigns = useCallback(async () => {
-    try {
-      console.log("fetchRawCampaigns chamado");
+  // Esta função usa as queries que sabemos que funcionam para buscar dados brutos.
+  const fetchRawCampaigns = useCallback(async () => {
+    try {
+    console.log("fetchRawCampaigns chamado");
 
-      setLoading(true); // Move loading para o início da função de carregamento
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
-         console.error("Usuário não autenticado, redirecionando.");
-         setLoading(false);
-         router.push('/login');
-         return;
-      }
-      console.log("Usuário autenticado:", user.id);
-
-
-      // --- BUSCAR CAMPANHAS DO MESTRE (QUERY ORIGINAL QUE FUNCIONAVA) ---
-      // Sem filtro/ordenação aqui
-      const { data: masterData, error: masterError } = await supabase
-        .from('campaigns')
-        .select(`
-          *,
-          players:campaign_players(count)
-        `)
-        .eq('master_id', user.id); // Filtro de mestre permanece
+    setLoading(true); // Move loading para o início da função de carregamento
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      console.error("Usuário não autenticado, redirecionando.");
+      setLoading(false);
+      router.push('/login');
+        return;
+    }
+    console.log("Usuário autenticado:", user.id);
 
 
-        console.log("Resultado Query Mestre (Raw):", { masterData, masterError });
+  // --- BUSCAR CAMPANHAS DO MESTRE (QUERY ORIGINAL QUE FUNCIONAVA) ---
+  // Sem filtro/ordenação aqui
+  const { data: masterData, error: masterError } = await supabase
+    .from('campaigns')
+    .select(`
+      *,
+      players:campaign_players(count)
+    `)  
+    .eq('master_id', user.id); // Filtro de mestre permanece
 
-        if(masterError) {
-             console.error("Erro ao buscar campanhas do mestre:", masterError);
-             toast.error('Erro ao buscar campanhas do mestre.');
-              setLoading(false);
-              return;
-        }
+  console.log("Resultado Query Mestre (Raw):", { masterData, masterError });
+
+    if(masterError) {
+      console.error("Erro ao buscar campanhas do mestre:", masterError);
+      toast.error('Erro ao buscar campanhas do mestre.');
+        setLoading(false);
+          return;
+    } 
 
         // Define um tipo para o resultado esperado da query Mestre
         type MasterCampaignRaw = Campaign & {
             players?: { count: number }[]; // A relação 'players' com count
         };
 
-      const processedMasterData = (masterData as unknown as MasterCampaignRaw[] || []).map(campaign => ({
-        ...campaign,
-        players_count: campaign.players?.[0]?.count || 0
-      })) as Campaign[];
+    const processedMasterData = (masterData as unknown as MasterCampaignRaw[] || []).map(campaign => ({
+     ...campaign,
+      players_count: campaign.players?.[0]?.count || 0
+    })) as Campaign[];
 
 
         // --- BUSCAR CAMPANHAS DO JOGADOR (QUERY ORIGINAL QUE FUNCIONAVA) ---
@@ -266,7 +266,8 @@ export default function DashboardPage() {
 
   return (
 
-    <div className="min-h-screen">
+    <div className="bg-[url(/images/bg-campanhas.jpeg)] bg-no-repeat bg-fixed bg-cover min-h-screen">
+
       <header className="bg-gray-800 text-white py-4">
         <div className="mx-auto px-4 flex justify-between items-center">
           <BackButton />
@@ -326,84 +327,83 @@ export default function DashboardPage() {
         </div>
 
         {/* --- RENDERIZAÇÃO DO COMPONENTE DE FILTRO --- */}
-        {/* PASSA O ESTADO 'campaignFilters' COMO PROP PARA O CAMPAIGNFILTER */}
-      <div className="max-w-6xl mx-auto -mt-5">
-           {/* Garanta que CampaignFilter.tsx foi atualizado */}
-           <CampaignFilter
-            onFilterChange={handleCampaignFilterChange} // Handler para notificar o pai
-            filters={campaignFilters} // <-- PASSE O ESTADO campaignFilters COMO PROP AQUI!
-           />
-      </div>
-      {/* --- FIM COMPONENTE DE FILTRO --- */}
+        {/* PASSA O ESTADO 'campaignFilters' COMO PROP PARA O CAMPAIGNFILTER */}
+        {/* Garanta que CampaignFilter.tsx foi atualizado */}
+        <CampaignFilter
+          onFilterChange={handleCampaignFilterChange} // Handler para notificar o pai
+          filters={campaignFilters} // <-- PASSE O ESTADO campaignFilters COMO PROP AQUI!
+        />
         
-      {/* --- RENDERIZAÇÃO DOS CARDS DE CAMPANHA --- */}
-      {activeTab === 'master' && filteredMasterCampaigns.length === 0 && (
-        <div className="max-w-6xl mx-auto">
-          <p className="text-gray-700 text-center">
-            Você ainda não criou nenhuma campanha.
-          </p>
-        </div>
-      )}
-
-      {activeTab === 'player' && filteredPlayerCampaigns.length === 0 && (
-        <div className="max-w-6xl mx-auto">
-          <p className="text-gray-700 text-center">
-            Você ainda não participa de nenhuma campanha.
-          </p>
-        </div>
-      )}
-
-      {/* Cards Container - Only rendered when there are campaigns */}
-      {((activeTab === 'master' && filteredMasterCampaigns.length > 0) || 
-        (activeTab === 'player' && filteredPlayerCampaigns.length > 0)) && (
-        <div className='bg-gray-500 pt-5 pb-30 -mt-3 pb-16 -mb-6 min-h-[calc(96vh-225px)]'>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-6xl mx-auto">
-            {activeTab === 'master' ? (
-              filteredMasterCampaigns.map((campaign) => (
-                <CampaignCard
-                  key={campaign.id}
-                  campaign={campaign}
-                  onEdit={handleEditCampaignClick}
-                  onDelete={setCampaignToDelete}
-                />
-              ))
-            ) : (
-              filteredPlayerCampaigns.map((campaign) => (
-                <CampaignCard
-                  key={campaign.id}
-                  campaign={campaign}
-                />
-              ))
-            )}
+        {/* --- FIM COMPONENTE DE FILTRO --- */}
+          
+        {/* --- RENDERIZAÇÃO DOS CARDS DE CAMPANHA --- */}
+        {activeTab === 'master' && filteredMasterCampaigns.length === 0 && (
+          <div className="max-w-6xl mt-20 bg-gray-500/20 backdrop-blur-sm mx-auto rounded-lg p-4 shadow-lg justify-items-center">
+            <p className="text-white text-center font-bold text-2xl text-shadow">
+              Você ainda não criou nenhuma campanha.
+            </p>
           </div>
-        </div>
-      )}
+        )}
+
+        {activeTab === 'player' && filteredPlayerCampaigns.length === 0 && (
+          <div className="max-w-6xl mt-20 bg-gray-500/20 backdrop-blur-sm mx-auto rounded-lg p-4 shadow-lg justify-items-center">
+            <p className="text-white text-center font-bold text-2xl text-shadow">
+              Você ainda não participa de nenhuma campanha.
+            </p>
+          </div>
+        )}
+
+        {/* Cards Container - Only rendered when there are campaigns */}
+        {((activeTab === 'master' && filteredMasterCampaigns.length > 0) || 
+          (activeTab === 'player' && filteredPlayerCampaigns.length > 0)) && (
+          <div className='bg-gray-500/50 backdrop-blur-sm mt-5 pt-6 pb-[65px] min-h-[calc(100vh-164px)]'>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-6xl mx-auto">
+              {activeTab === 'master' ? (
+                filteredMasterCampaigns.map((campaign) => (
+                  <CampaignCard
+                    key={campaign.id}
+                    campaign={campaign}
+                    onEdit={handleEditCampaignClick}
+                    onDelete={setCampaignToDelete}
+                  />
+                ))
+              ) : (
+                filteredPlayerCampaigns.map((campaign) => (
+                  <CampaignCard
+                    key={campaign.id}
+                    campaign={campaign}
+                  />
+                ))
+              )}
+            </div>
+          </div>
+        )}
       </main>
 
       {/* --- MODAL DE EDIÇÃO DE CAMPANHA --- */}
-      {campaignToEdit && (
-         <EditCampaignModal
-            isOpen={!!campaignToEdit}
-            onClose={() => setCampaignToEdit(null)}
-            campaign={campaignToEdit}
-            onCampaignUpdated={handleCampaignUpdated} // Chama o handler que busca dados brutos
-         />
-      )}
-      {/* --- FIM MODAL DE EDIÇÃO --- */}
+      {campaignToEdit && (
+        <EditCampaignModal
+          isOpen={!!campaignToEdit}
+          onClose={() => setCampaignToEdit(null)}
+          campaign={campaignToEdit}
+          onCampaignUpdated={handleCampaignUpdated} // Chama o handler que busca dados brutos
+        />
+      )}
+      {/* --- FIM MODAL DE EDIÇÃO --- */}
 
-{/* --- MODAL DE CONFIRMAÇÃO DE EXCLUSÃO --- */}
-      {campaignToDelete && (
-         <ConfirmationModal
-            isOpen={!!campaignToDelete}
-            onClose={() => setCampaignToDelete(null)}
-            message={`Tem certeza que deseja excluir a campanha "${campaignToDelete.name}"? Esta ação não pode ser desfeita. Todas as sessões, notas e dados de jogadores relacionados também serão excluídos!`}
-            onConfirm={handleConfirmDeleteCampaign} // Chama o handler que busca dados brutos
-            title="Confirmar Exclusão da Campanha"
-            confirmButtonText="Excluir Campanha"
-            isConfirmDestructive={true}
-         />
-      )}
-      {/* --- FIM MODAL CONFIRMAÇÃO --- */}
+      {/* --- MODAL DE CONFIRMAÇÃO DE EXCLUSÃO --- */}
+      {campaignToDelete && (
+        <ConfirmationModal
+          isOpen={!!campaignToDelete}
+          onClose={() => setCampaignToDelete(null)}
+          message={`Tem certeza que deseja excluir a campanha "${campaignToDelete.name}"? Esta ação não pode ser desfeita. Todas as sessões, notas e dados de jogadores relacionados também serão excluídos!`}
+          onConfirm={handleConfirmDeleteCampaign} // Chama o handler que busca dados brutos
+          title="Confirmar Exclusão da Campanha"
+          confirmButtonText="Excluir Campanha"
+          isConfirmDestructive={true}
+        />
+      )}
+      {/* --- FIM MODAL CONFIRMAÇÃO --- */}
       
       {/* Modal de Entrada em Campanha */}
       <JoinCampaignModal
@@ -412,23 +412,23 @@ export default function DashboardPage() {
         onSuccess={fetchRawCampaigns} // Chama fetchRawCampaigns ao sucesso
       />
 
-    {/*<div className='absolute'>
-        <nav className='flex fixed bottom-[235px] right-[200px] px-4 py-5 bg-black rounded-[25px] shadow-md'>
-          <div className='text-white flex flex-col gap-10'>
-              <span className="material-symbols-rounded" style={{ fontSize: '45px' }}>
-                filter_list
-              </span>
+      {/*<div className='absolute'>
+          <nav className='flex fixed bottom-[235px] right-[200px] px-4 py-5 bg-black rounded-[25px] shadow-md'>
+            <div className='text-white flex flex-col gap-10'>
+                <span className="material-symbols-rounded" style={{ fontSize: '45px' }}>
+                  filter_list
+                </span>
 
-              <span className="material-symbols-rounded" style={{ fontSize: '45px' }}>
-                settings
-              </span>
+                <span className="material-symbols-rounded" style={{ fontSize: '45px' }}>
+                  settings
+                </span>
 
-              <span className="material-symbols-rounded" style={{ fontSize: '45px' }}>
-                account_circle
-              </span>
-          </div>
-        </nav>
-      </div>*/}
+                <span className="material-symbols-rounded" style={{ fontSize: '45px' }}>
+                  account_circle
+                </span>
+            </div>
+          </nav>
+        </div>*/}
 
       <div className='absolute'>
         <nav className='fixed bottom-0 left-1/2 transform -translate-x-1/2 px-10 pb-1 pt-2 bg-black rounded-tr-xl rounded-tl-xl '>

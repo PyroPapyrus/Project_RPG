@@ -57,38 +57,40 @@ export function CampaignFilter({ onFilterChange, filters }: CampaignFilterProps)
 
   // --- UI do Componente de Filtro ---
   return (
-    <div className="flex justify-self-start gap-2 py-1">
-      {/* Dropdown para Filtrar por Status */}
-      <div className="bg-gray-700 flex px-5 py-2 gap-3 rounded-md items-center shadow-lg">
-        <label className="text-md font-medium text-white">Status</label>
-        <select
-          id="campaign-status-filter"
-          value={filters.status}
-          onChange={handleStatusChange}
-          className="block w-full pl-2 pr-2 py-1 text-sm rounded-sm"
-        >
-            <option value="todos">Todos</option>
-            <option value="em_andamento">Em Andamento</option>
-            <option value="hiato">Em Hiato</option>
-            <option value="concluido">Concluído</option>
-        </select>
-      </div>
+    <div className="absolute grid gap-2 z-50">
+        <div className='fixed left-6 top-[450px] space-y-2'>
+            {/* Dropdown para Filtrar por Status */}
+            <div className="flex bg-white px-5 py-2 gap-2 rounded-md items-center shadow-lg">
+                <label className="text-md font-bold text-black">Status:</label>
+                <select
+                    id="campaign-status-filter"
+                    value={filters.status}
+                    onChange={handleStatusChange}
+                    className="block pl-2 pr-2 py-1 text-md rounded-sm border"
+                >
+                    <option value="todos">Todos</option>
+                    <option className='bg-green-100 text-green-600' value="em_andamento">Em Andamento</option>
+                    <option className='bg-yellow-100 text-yellow-600' value="hiato">Em Hiato</option>
+                    <option className='bg-red-100 text-red-600' value="concluido">Concluído</option>
+                </select>
+            </div>
 
-      {/* Dropdown para Ordenar por */}
-      <div className="bg-gray-700 flex px-5 gap-3 rounded-md items-center shadow-lg whitespace-nowrap">
-        <label className="text-md font-medium text-white">Ordenar por</label>
-        <select
-          id="campaign-sort-by"
-          value={filters.sortBy}
-          onChange={handleSortByChange}
-          className="block w-full pl-2 pr-2 py-1 text-sm rounded-sm"
-        >
-            <option value="date_asc">Mais Antigas</option>
-            <option value="date_desc">Mais Recentes</option>
-            <option value="name_asc">Nome (A-Z)</option>
-            <option value="name_desc">Nome (Z-A)</option>
-        </select>
-      </div>
+            {/* Dropdown para Ordenar por */}
+            <div className="flex bg-white px-5 py-2 gap-[3px] rounded-md items-center shadow-lg">
+                <label className="text-md font-bold text-black">Ordem:</label>
+                <select
+                id="campaign-sort-by"
+                value={filters.sortBy}
+                onChange={handleSortByChange}
+                className="block pl-2 pr-[18px] py-1 text-md rounded-sm border"
+                >
+                    <option value="date_asc">Mais Antigas</option>
+                    <option value="date_desc">Mais Recentes</option>
+                    <option value="name_asc">Nome (A-Z)</option>
+                    <option value="name_desc">Nome (Z-A)</option>
+                </select>
+            </div>
+        </div>
     </div>
   );
 }

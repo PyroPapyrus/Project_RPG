@@ -8,27 +8,14 @@ interface CampaignCardProps {
   onDelete?: (campaign: Campaign) => void
 }
 
-// Definir o limite de caracteres para a descrição
-const DESCRIPTION_LIMIT = 200; // <--- Constante para o limite de caracteres
-
 export function CampaignCard({ campaign, onEdit, onDelete }: CampaignCardProps) {
   const router = useRouter()
-
-   // Função para obter a descrição limitada
-     const getLimitedDescription = (description: string | null) => {
-        if (!description) return "Sem descrição."; // Retorna um texto padrão se a descrição for nula/vazia
-        if (description.length <= DESCRIPTION_LIMIT) {
-          return description; // Retorna a descrição completa se for menor ou igual ao limite
-        }
-        // Retorna a descrição truncada com reticências
-        return description.substring(0, DESCRIPTION_LIMIT) + "...";
-      };
 
   return (
     <div
       className="bg-white rounded-lg shadow-md overflow-hidden cursor-pointer transition-transform hover:scale-[1.02] h-[355px] flex flex-col w-full"
       onClick={() => router.push(`/campaign/${campaign.id}/sessions`)}
-    >
+      >
       <div className="bg-gray-800 text-white p-4">
         <div className="flex flex-wrap justify-between items-start gap-2">
           <h3 className="text-xl font-semibold break-words max-w-[60%]">{campaign.name}</h3>
@@ -55,7 +42,6 @@ export function CampaignCard({ campaign, onEdit, onDelete }: CampaignCardProps) 
                       onEdit(campaign);
                     }}
                     className="text-gray-300 hover:text-yellow-400"
-                    aria-label={`Editar campanha ${campaign.name}`}
                   >
                     <Pencil className="h-5 w-5" />
                   </button>
@@ -77,10 +63,10 @@ export function CampaignCard({ campaign, onEdit, onDelete }: CampaignCardProps) 
         </div>
       </div>
       
-      <div className="p-4 flex-grow overflow-y-auto max-h-[150px]">
+      <div className="p-4 flex-grow overflow-y-auto">
         <div className="space-y-2">
           <p className="text-gray-600 break-words whitespace-pre-wrap">
-          {getLimitedDescription(campaign.description)}
+            {campaign.description}
           </p>
         </div>
       </div>
