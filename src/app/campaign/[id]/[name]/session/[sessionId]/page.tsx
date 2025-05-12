@@ -109,6 +109,7 @@ const SessionPage = ({ params }: PageProps) => {
                   }
                 : () => {} // Jogador não salva
             }
+            isMaster={isMaster}
           />
 
           {/* Upload visível apenas pelo mestre */}
