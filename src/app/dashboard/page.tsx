@@ -412,24 +412,6 @@ export default function DashboardPage() {
         onSuccess={fetchRawCampaigns} // Chama fetchRawCampaigns ao sucesso
       />
 
-    {/*<div className='absolute'>
-        <nav className='flex fixed bottom-[235px] right-[200px] px-4 py-5 bg-black rounded-[25px] shadow-md'>
-          <div className='text-white flex flex-col gap-10'>
-              <span className="material-symbols-rounded" style={{ fontSize: '45px' }}>
-                filter_list
-              </span>
-
-              <span className="material-symbols-rounded" style={{ fontSize: '45px' }}>
-                settings
-              </span>
-
-              <span className="material-symbols-rounded" style={{ fontSize: '45px' }}>
-                account_circle
-              </span>
-          </div>
-        </nav>
-      </div>*/}
-
       <div className='absolute'>
         <nav className='fixed bottom-0 left-1/2 transform -translate-x-1/2 px-10 pb-1 pt-2 bg-black rounded-tr-xl rounded-tl-xl '>
           <div className='text-white flex gap-10'>
@@ -441,7 +423,10 @@ export default function DashboardPage() {
                 settings
               </span>
 
-              <span className="material-symbols-rounded" style={{ fontSize: '40px' }}>
+              <span className="material-symbols-rounded" style={{ fontSize: '40px' }}
+              onClick={() => {
+                router.push('/profile'); // <-- REDIRECIONA PARA profile
+              }}>
                 account_circle
               </span>
           </div>
