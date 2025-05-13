@@ -205,17 +205,17 @@ const Page = ({ params }: PageProps) => {
 
 
     // --- NOVO HANDLER PARA ATUALIZAR world_story APÓS SALVAR NO MODAL ---
-  const handleWorldStorySaved = (updatedWorldStory: string | null) => {
-        // Atualiza o estado da campanha com o novo world_story
-        if (campaign) {
-            setCampaign({
-                ...campaign,
-                world_story: updatedWorldStory // Usa o conteúdo retornado/salvo
-            });
-        }
-        setIsWorldStoryModalOpen(false); // Fecha o modal
-    };
-    // --- FIM NOVO HANDLER ---
+  const handleWorldStorySaved = (updatedWorldStory: string | null) => {
+      // Atualiza o estado da campanha com o novo world_story
+      if (campaign) {
+        setCampaign({
+          ...campaign,
+          world_story: updatedWorldStory // Usa o conteúdo retornado/salvo
+        });
+      }
+      setIsWorldStoryModalOpen(false); // Fecha o modal
+    };
+    // --- FIM NOVO HANDLER ---
   
 
   if (loading) {
@@ -265,30 +265,30 @@ const Page = ({ params }: PageProps) => {
               )}
 
              
-  {/* --- TRECHO PARA world_story (AGORA UM BOTÃO QUE ABRE O MODAL) --- */}
-              {isMaster && ( // Apenas o Mestre pode ver o botão de editar
-                <div className="mt-8">
-                  <h2 className="text-2xl font-semibold mb-4">História do Mundo</h2>
-                  {/* Botão que abre o modal de edição */}
-                  <Button variant="outline" onClick={() => setIsWorldStoryModalOpen(true)}>
-                    Editar História do Mundo
-                  </Button>
-                </div>
-              )}
-              {/* --- FIM TRECHO world_story (BOTÃO) --- */}
+      {/* --- TRECHO PARA world_story (AGORA UM BOTÃO QUE ABRE O MODAL) --- */}
+      {isMaster && ( // Apenas o Mestre pode ver o botão de editar
+       <div className="mt-8">
+        <h2 className="text-2xl font-semibold mb-4">História do Mundo</h2>
+        {/* Botão que abre o modal de edição */}
+        <Button variant="outline" onClick={() => setIsWorldStoryModalOpen(true)}>
+         Editar História do Mundo
+        </Button>
+       </div>
+      )}
+      {/* --- FIM TRECHO world_story (BOTÃO) --- */}
 
-               {/* Exibir world_story para todos (somente leitura) */}
-                {/* Removemos a condição !isMaster para que todos vejam */}
-               {campaign.world_story && ( // Exibe se houver conteúdo
-                    <div className={`mt-8 ${isMaster ? 'hidden md:block' : ''}`}> {/* Opcional: esconder para mestre em telas grandes se quiser que ele use SÓ o modal */}
-                       {/* <h2 className="text-2xl font-semibold mb-4">História do Mundo</h2> REMOVIDO - título já está acima do botão*/}
-                       {/* Renderiza o texto */}
-                       <div className="prose max-w-none"> {/* Use classes 'prose' para estilização básica de texto */}
-                           <p>{campaign.world_story}</p>
-                       </div>
-                    </div>
-               )}
-               {/* Fim Exibição world_story */}
+      {/* Exibir world_story para todos (somente leitura) */}
+      {/* Removemos a condição !isMaster para que todos vejam */}
+       {campaign.world_story && ( // Exibe se houver conteúdo
+          <div className={`mt-8 ${isMaster ? 'hidden md:block' : ''}`}> {/* Opcional: esconder para mestre em telas grandes se quiser que ele use SÓ o modal */}
+           {/* <h2 className="text-2xl font-semibold mb-4">História do Mundo</h2> REMOVIDO - título já está acima do botão*/}
+           {/* Renderiza o texto */}
+           <div className="prose max-w-none"> {/* Use classes 'prose' para estilização básica de texto */}
+             <p>{campaign.world_story}</p>
+           </div>
+          </div>
+       )}
+       {/* Fim Exibição world_story */}
 
 
             </div>
