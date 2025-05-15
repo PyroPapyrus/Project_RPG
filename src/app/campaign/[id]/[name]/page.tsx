@@ -16,6 +16,7 @@ import EditSessionModal from '@/components/modals/EditSessionModal';
 import ConfirmationModal from '@/components/modals/ConfirmationModal';
 import EditWorldStoryModal from '@/components/modals/EditWorldStoryModal';
 import { toast } from 'react-toastify'
+import LeaveCampaignButton from '@/components/LeaveCampaignButton'; 
 import { FormInput } from '@/components/FormInput' // Importe o FormInput
 import { SubmitButton } from '@/components/SubmitButton' // Importe o SubmitButton
 
@@ -263,6 +264,18 @@ const Page = ({ params }: PageProps) => {
                   </Button>
                 </div>
               )}
+
+      {authorized && !isMaster && campaign && userId && (
+          <LeaveCampaignButton
+              campaignId={campaign.id}
+              campaignName={campaign.name}
+              userId={userId}
+              isMaster={isMaster} // Passa o estado isMaster
+              authorized={authorized} // Passa o estado authorized
+              // Se quisesse um callback, passaria aqui: onLeaveSuccess={handleSomethingAfterLeave}
+          />
+      )}
+
 
              
       {/* --- TRECHO PARA world_story (AGORA UM BOTÃO QUE ABRE O MODAL) --- */}
