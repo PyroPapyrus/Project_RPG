@@ -3,6 +3,7 @@
 'use client'; // Garante que é um componente cliente
 
 import { Button } from '@/components/ui/button'; // Importe o seu componente Button
+import { CloseModalButton } from '../ui/close-modal-button';
 
 // Interface de Props para o Modal de Confirmação
 interface ConfirmationModalProps {
@@ -34,15 +35,15 @@ export default function ConfirmationModal({
   // Renderização do Modal
   return (
     // Fundo escuro fixo que ocupa toda a tela e centraliza o conteúdo
-    <div className="fixed inset-0 z-50 bg-black bg-opacity-60 flex items-center justify-center p-4 transition-opacity duration-300 ease-in-out">
+    <div className="fixed inset-0 z-50 bg-black bg-opacity-60 flex items-center justify-center p-4 transition-opacity duration-300 x`">
       {/* Container do Conteúdo do Modal */}
       <div className="bg-white rounded-lg p-6 w-full max-w-sm shadow-xl transform transition-all duration-300 ease-in-out scale-100">
         {/* Cabeçalho do Modal */}
-        <div className="flex justify-between items-center mb-4">
+        <div className="flex justify-between items-center pb-3 mb-3 border-b-2">
           {/* Título do Modal */}
-          <h3 className="text-lg font-bold text-gray-800">{title}</h3>
+          <h3 className="text-xl font-bold text-gray-800">{title}</h3>
           {/* Botão de Fechar (opcional, chama onClose) */}
-          {/* Você pode adicionar um ícone 'X' aqui */}
+          <CloseModalButton onClose={onClose} />
         </div>
 
         {/* Corpo do Modal: a mensagem de confirmação */}
@@ -51,11 +52,12 @@ export default function ConfirmationModal({
         </div>
 
         {/* Rodapé do Modal: Botões de Ação */}
-        <div className="flex justify-end space-x-3">
+        <div className="flex flex-col space-y-2">
           {/* Botão Cancelar */}
           <Button
             variant="outline" // Use a variante apropriada
             onClick={onClose} // Chama a função para fechar/cancelar
+            className='w-full'
           >
             {cancelButtonText}
           </Button>
@@ -63,6 +65,7 @@ export default function ConfirmationModal({
           <Button
             // Condicionalmente aplica a variante destrutiva (vermelha)
             onClick={onConfirm} // Chama a função de confirmação
+            className='bg-red-600 text-white hover:bg-red-800' // Estilo do botão
           >
             {confirmButtonText}
           </Button>

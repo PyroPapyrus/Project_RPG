@@ -190,13 +190,13 @@ export default function EditSessionModal({
           {/* Campo Descrição */}
           <div className="space-y-1">
             <label htmlFor="edit_session_goal" className="block text-sm font-medium text-gray-700">
-              Descrição breve / Sinopse
+              Resumo Objetivo
             </label>
             <FormInput
-              id="edit_session_goal" // ID único
+              id="edit_session_goal" // ID único 
               name="goal" // Usar 'goal'
               type="textarea"
-              placeholder="O que se espera que aconteça? Qual foi o marco dessa sessão?"
+              placeholder="Faça um resumo objetivo do que você pretende atingir nesta sessão. O que se espera que aconteça? (Os aventureiros se encontram no vilarejo de Ritamor. Sua missão é encontrar o que está fazendo as pessoas desaparecerem)"
               value={formData.goal}
               onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setFormData({ ...formData, goal: e.target.value })}
               required
@@ -207,7 +207,7 @@ export default function EditSessionModal({
           {/* Campo Data e Hora */}
           <div className="space-y-1">
             <label htmlFor="edit_session_date" className="block text-sm font-medium text-gray-700">
-              Data e Hora da Sessão
+              Data da Sessão
             </label>
             <FormInput
               id="edit_session_date" // ID único

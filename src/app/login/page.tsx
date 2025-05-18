@@ -65,7 +65,7 @@ export default function LoginPage() {
       {error && <ErrorPopup message={error} onClose={() => setError(null)} />}
       <header className='bg-gray-800/30 shadow-md relative flex justify-center items-center'>
         <div className='absolute left-4'>
-          <BackButton />
+          <BackButton href='/'/>
         </div>
 
         <a href="/">

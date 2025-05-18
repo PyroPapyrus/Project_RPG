@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { FormInput } from '@/components/FormInput';
 import { SubmitButton } from '@/components/SubmitButton';
 import { ErrorPopup } from '@/components/ErrorPopup';
+import { CloseModalButton } from '../ui/close-modal-button';
 
 interface EditWorldStoryModalProps {
   isOpen: boolean; // Controla a visibilidade do modal
@@ -90,9 +91,7 @@ export default function EditWorldStoryModal({
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-2xl font-bold text-gray-800">Editar História do Mundo</h2>
           {/* Botão de Fechar */}
-          <Button variant="ghost" size="sm" onClick={onClose} aria-label="Fechar">
-            ✕
-          </Button>
+          <CloseModalButton onClose={onClose} />
         </div>
 
         {/* Popup de Erro */}
@@ -102,14 +101,14 @@ export default function EditWorldStoryModal({
         {/* Usamos um form para que o SubmitButton funcione corretamente, mesmo com um textarea */}
         <form onSubmit={handleSave} className="space-y-5 mt-4">
           <div className="space-y-1">
-            <label htmlFor="world_story_modal" className="block text-sm font-medium text-gray-700 sr-only"> {/* sr-only: esconde visualmente mas mantém para leitores de tela */}
+            <label className="block text-sm font-medium text-gray-700 sr-only"> {/* sr-only: esconde visualmente mas mantém para leitores de tela */}
                Conteúdo da História do Mundo
             </label>
             <FormInput
               id="world_story_modal"
               name="world_story_modal"
               type="textarea" // Define como textarea
-              placeholder="Escreva a história do mundo da sua campanha aqui..."
+              placeholder="Escreva aqui a história/contextualização do mundo da sua campanha"
               value={worldStory || ''} // Usa o estado interno
               onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setWorldStory(e.target.value)} // Atualiza o estado interno
               rows={15} // Define um número de linhas para o textarea

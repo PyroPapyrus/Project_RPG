@@ -114,20 +114,20 @@ export default function DashboardPage() {
     })) as Campaign[];
 
 
-        // --- BUSCAR CAMPANHAS DO JOGADOR (QUERY ORIGINAL QUE FUNCIONAVA) ---
-        // Sem filtro/ordenação aqui
-        let playerQuery = supabase
-        .from('view_campaign_players_visible') // Usando a view
-        .select(`
-          campaigns:campaign_id (
-            *,
-            players:campaign_players(count)
-          )
-        `)
-        .eq('user_id', user.id); // Filtro de jogador permanece
+    // --- BUSCAR CAMPANHAS DO JOGADOR (QUERY ORIGINAL QUE FUNCIONAVA) ---
+    // Sem filtro/ordenação aqui
+    let playerQuery = supabase
+      .from('view_campaign_players_visible') // Usando a view
+      .select(`
+        campaigns:campaign_id (
+          *,
+          players:campaign_players(count)
+          )
+      `)  
+      .eq('user_id', user.id); // Filtro de jogador permanece
 
 
-        const { data: playerData, error: playerError } = await playerQuery;
+    const { data: playerData, error: playerError } = await playerQuery;
 
         console.log("Resultado Query Jogador (Raw):", { playerData, playerError });
 
@@ -270,7 +270,7 @@ export default function DashboardPage() {
 
       <header className="bg-gray-800 text-white py-4">
         <div className="mx-auto px-4 flex justify-between items-center">
-          <BackButton />
+          <BackButton href='/'/>
             <h1 className="text-2xl font-semibold">
               {activeTab === 'master' ? 'Minhas Campanhas' : 'Campanhas que Participo'}
             </h1>
@@ -398,7 +398,7 @@ export default function DashboardPage() {
           onClose={() => setCampaignToDelete(null)}
           message={`Tem certeza que deseja excluir a campanha "${campaignToDelete.name}"? Esta ação não pode ser desfeita. Todas as sessões, notas e dados de jogadores relacionados também serão excluídos!`}
           onConfirm={handleConfirmDeleteCampaign} // Chama o handler que busca dados brutos
-          title="Confirmar Exclusão da Campanha"
+          title="DESEJA EXCLUIR A CAMPANHA?"
           confirmButtonText="Excluir Campanha"
           isConfirmDestructive={true}
         />

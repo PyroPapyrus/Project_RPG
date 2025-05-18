@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'; // Componentes de UI (Shadcn/ui
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'react-toastify'; // Para notificações
+import { Plus } from 'lucide-react';
 
 // Define a estrutura de um objeto Note (Nota de Campanha ou Sessão)
 interface Note {
@@ -273,175 +274,174 @@ export default function CampaignNotes({ campaignId }: CampaignNotesProps) {
 
  // --- RENDERIZAÇÃO PRINCIPAL ---
  return (
-    <div className="space-y-4"> {/* Container principal com espaçamento vertical */}
-     <div> {/* Seção de exibição e filtro das notas */}
-      <h2 className="text-lg font-bold mb-2">Notas da Campanha</h2> {/* Título da seção */}
-  
-          {/* --- BOTÕES DE FILTRO --- */}
-          {/* Container flexbox para alinhar os botões horizontalmente */}
-          <div className="flex items-center space-x-4 mb-6">
-              <span className="text-sm font-medium text-gray-700">Mostrar:</span>
-              {/* Botão "Todas" */}
-              <Button
-                  variant={filter === 'all' ? 'default' : 'outline'} // Altera aparência se ativo
-                  size="sm" // Tamanho pequeno
-                  onClick={() => setFilter('all')} // Atualiza o estado do filtro
-              >
-                  Todas
-              </Button>
-              {/* Botão "Minhas Notas" */}
-              <Button
-                  variant={filter === 'mine' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setFilter('mine')}
-                  disabled={!userId} // Desabilita se não houver userId
-              >
-                  Minhas Notas
-              </Button>
-              {/* Botão "Públicas (Outros)" */}
-              <Button
-                  variant={filter === 'public_others' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setFilter('public_others')}
-              >
-                  Públicas (Outros)
-              </Button>
+    <div className="space-y-4 mb-4"> {/* Container principal com espaçamento vertical */}
+      <div> {/* Seção de exibição e filtro das notas */}
+        
+          {/* --- DIV COM SELECT DE FILTRO --- */}
+          <div className="flex px-4 justify-between rounded items-center gap-2 my-2">
+            <select
+              className="h-9 rounded-md bg-gray-200 px-2 text-cyan-500 text-sm"
+              value={filter}
+              onChange={(e) => setFilter(e.target.value as NoteFilter)}
+            >
+              <option value="all">Todas as Notas</option>
+              <option value="mine">Minhas Notas</option>
+              <option value="public_others">Públicas (Outros)</option>
+            </select>
+            {/* Botão para adicionar a nota */}
+            <Button 
+              className='gap-2 text-sm'
+              onClick={handleAddNote}
+              disabled={loading}>
+              {loading ? 'Adicionando...' : 'Adicionar Anotação'}
+              <Plus className="h-5 w-5" />
+            </Button>
           </div>
-          {/* --- FIM BOTÕES DE FILTRO --- */}
+        {/* --- FIM DE DIV COM SELECT DE FILTRO --- */}
+
+        {/* --- SEÇÃO: Adicionar Nova Nota --- */}
+        <div className="mx-8 px-4 text-black py-2 rounded bg-gray-700"> 
+          <div className='justify-between flex'>
+            <h3 className="font-semibold mb-1 text-white">Nova Nota de Campanha</h3> {/* Título da seção */}
+            {/* Ícone de Cadeado: trancado para privada, aberto para pública */}
+            {newNote.is_private ? (
+              <span className="material-symbols-rounded text-red-600" title="Nota Privada">lock</span>
+                ) : (
+              <span className="material-symbols-rounded text-green-500" title="Nota Pública">lock_open</span>
+            )}
+          </div>
+          
+          {/* Input para o título */}
+          <Textarea
+            placeholder="Título/nome da nota"
+            className="mb-2 resize-none min-h-[40px] overflow-hidden"
+            value={newNote.title}
+            onChange={(e) => setNewNote({ ...newNote, title: e.target.value })}
+            maxLength={60}
+          />
+          {/* Textarea para o conteúdo */}
+          <Textarea
+            placeholder="Conteúdo da nota"
+            className="mb-2 resize-none"
+            value={newNote.content}
+            onChange={(e) => setNewNote({ ...newNote, content: e.target.value })}
+          />
+          {/* Checkbox para definir privacidade */}
+          <div className="bg-black text-white px-2 py-1 rounded-sm justify-self-start flex items-center space-x-1 mb-1">
+            <input
+              id="is_private_campaign"
+              type="checkbox"
+              checked={newNote.is_private}
+              onChange={(e) => setNewNote({ ...newNote, is_private: e.target.checked })}
+            />
+            <label htmlFor="is_private_campaign" className="text-sm">Privada</label>
+          </div>
+        </div> {/* Fim da Seção Adicionar Nova Nota */}
   
         {/* Container que lista as notas (filtradas) */}
-        <div className="space-y-2"> {/* Espaçamento vertical entre os cards de nota */}
+        <div className="space-y-2 mt-3 text-black"> {/* Espaçamento vertical entre os cards de nota */}
           {/* Mapeia o array de notas FILTRADAS para renderizar cada nota */}
           {filteredNotes.map((note) => (
             /* Card individual da nota */
-              <div key={note.id} className="border rounded p-3"> {/* Usa o ID da nota como key */}
-                {/* Renderiza o modo de edição se a nota atual for a que está sendo editada */}
-                {editingNote?.id === note.id ? (
-                  // --- MODO EDIÇÃO ---
-                  <> {/* Fragmento para agrupar elementos */}
-                     <Input
-                      className="mb-2"
-                      value={editingNote.title}
-                      onChange={(e) => setEditingNote({ ...editingNote, title: e.target.value })}
-                      placeholder="Título"
-                     />
-                     <Textarea
-                      className="mb-2"
-                      value={editingNote.content}
-                      onChange={(e) => setEditingNote({ ...editingNote, content: e.target.value })}
-                      placeholder="Conteúdo da nota"
-                     />
+            <div key={note.id} className="bg-gray-600 rounded p-3 mx-5"> {/* Usa o ID da nota como key */}
+              {/* Renderiza o modo de edição se a nota atual for a que está sendo editada */}
+              {editingNote?.id === note.id ? (
+                // --- MODO EDIÇÃO ---
+                <> {/* Fragmento para agrupar elementos */}
+                  <Input
+                    className="mb-2"
+                    value={editingNote.title}
+                    onChange={(e) => setEditingNote({ ...editingNote, title: e.target.value })}
+                    placeholder="Título"
+                    maxLength={40}
+                  />
+                  <Textarea
+                    className="mb-2"
+                    value={editingNote.content}
+                    onChange={(e) => setEditingNote({ ...editingNote, content: e.target.value })}
+                    placeholder="Conteúdo da nota"
+                  />
                      <div className="flex justify-end space-x-2"> {/* Botões de salvar/cancelar */}
                       <Button onClick={handleEdit}>Salvar</Button>
                       <Button variant="outline" onClick={() => setEditingNote(null)}>Cancelar</Button>
                      </div>
-                    </> /* Fim do Fragmento */
-               ) : (
+                </> /* Fim do Fragmento */
+                ) : (
                 // --- MODO VISUALIZAÇÃO ---
-                 <> {/* Fragmento para agrupar elementos */}
+                <> {/* Fragmento para agrupar elementos */}
                   {/* Título da nota e ícone de privacidade */}
-                  <h4 className="font-semibold text-gray-800">
-                       <div className="flex items-center gap-2"> {/* Alinha título e ícone */}
-                        <span className="text-lg font-semibold text-gray-800">{note.title}</span>
+                  <h4 className="font-semibold text-white border-b-2">
+                    <div className="flex items-center justify-between"> 
+                      <span className="text-lg -mb-2 font-semibold overflow-hidden overflow-wrap-break-word break-words max-w-full">
+                        {note.title}
+                      </span>
                         {/* Ícone de Cadeado: trancado para privada, aberto para pública */}
                         {note.is_private ? (
-                         <span className="material-symbols-rounded text-sm text-gray-500" title="Nota Privada">lock</span>
-                        ) : (
-                         <span className="material-symbols-rounded text-sm text-green-600" title="Nota Pública">lock_open</span>
-                        )}
-                      </div>
-                          {/* Exibe "(Minha Nota)" se for do usuário logado, ou "por [Nome do Autor]" se for de outro */}
-                          {note.user_id === userId ? (
-                            <span className="text-sm text-blue-600 font-normal">(Minha Nota)</span>
+                          <span className="material-symbols-rounded text-red-600" title="Nota Privada">lock</span>
                           ) : (
-                            note.users?.[0]?.username && ( // Verifica se há dados de usuário e username
-                              <span className="text-sm text-gray-600 font-normal">
-                                {' por '}
-                                {note.users[0].username}
-                              </span>
-                           )
-                          )}
-                      </h4>
-                  {/* Conteúdo da nota, preserva quebras de linha */}
-                  <p className="text-sm text-gray-600 whitespace-pre-wrap">{note.content}</p>
-                    {/* Botões de ação (Alternar Privacidade, Editar, Excluir) - visíveis apenas para o autor */}
-                   {note.user_id === userId && (
-                     <div className="flex justify-end mt-2 space-x-2">
-                       {/* Botão para alternar privacidade */}
-                       <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleTogglePrivate(note)}
-                            disabled={updatingPrivateStatus === note.id} // Desabilita durante a atualização
-                        >
-                            {updatingPrivateStatus === note.id ? (
-                                'Atualizando...'
-                            ) : note.is_private ? (
-                                'Tornar Pública'
-                            ) : (
-                                'Tornar Privada'
-                            )}
-                        </Button>
-                        {/* --- FIM BOTÃO ALTERNAR PRIVACIDADE --- */}
-                        <Button variant="outline" size="sm" onClick={() => setEditingNote(note)}>Editar</Button>
-                        <Button variant="outline" size="sm" onClick={() => handleDelete(note.id)}>Excluir</Button>
-                      </div>
+                          <span className="material-symbols-rounded text-green-500" title="Nota Pública">lock_open</span>
+                        )}
+                    </div>
+                      {/* Exibe "(Minha Nota)" se for do usuário logado, ou "por [Nome do Autor]" se for de outro */}
+                      {note.user_id === userId ? (
+                        <span className="text-sm text-blue-600 font-normal">Minha Nota</span>
+                        ) : (
+                        note.users?.[0]?.username && ( // Verifica se há dados de usuário e username
+                          <span className="text-sm text-yellow-500 font-normal">
+                            {' por '}
+                            {note.users[0].username}
+                          </span>
+                        )
                       )}
-                     </> /* Fim do Fragmento */
-                   )} {/* Fim da Lógica Condicional Modo Edição/Visualização */}
-                </div> /* Fim do Card individual da nota */
-               ))} {/* Fim do Mapeamento de filteredNotes */}
+                  </h4>
 
-                {/* Mensagem exibida quando a lista filtrada está vazia */}
-                {filteredNotes.length === 0 && (
-                  <p className="text-gray-500 text-center mt-4">
-                    {filter === 'all' ? (
-                      'Ainda não há notas para esta campanha que você possa visualizar.' // Mensagem para filtro 'Todas'
-                    ) : filter === 'mine' ? (
-                      'Você ainda não adicionou notas para esta campanha.' // Mensagem para filtro 'Minhas Notas'
-                    ) : ( // filtro 'public_others'
-                      'Não há notas públicas de outros usuários nesta campanha.' // Mensagem para filtro 'Públicas (Outros)'
+                  {/* Conteúdo da nota, preserva quebras de linha */}
+                  <p className="text-sm text-white whitespace-pre-wrap">{note.content}</p>
+                    {/* Botões de ação (Alternar Privacidade, Editar, Excluir) - visíveis apenas para o autor */}
+                    {note.user_id === userId && (
+                      <div className="flex justify-end mt-2 space-x-2">
+                        {/* Botão para alternar privacidade */}
+                        <Button
+                          className='bg-black rounded hover:bg-gray-500 text-white'
+                          size="sm"
+                          onClick={() => handleTogglePrivate(note)}
+                          disabled={updatingPrivateStatus === note.id} // Desabilita durante a atualização
+                        >
+                          {updatingPrivateStatus === note.id ? (
+                            'Atualizando...'
+                          ) : note.is_private ? (
+                            'Tornar Pública'
+                          ) : (
+                            'Tornar Privada'
+                          )}
+                        </Button>
+
+                        {/* --- FIM BOTÃO ALTERNAR PRIVACIDADE --- */}
+                        <Button className='bg-black rounded hover:bg-gray-500 text-yellow-500' size="sm" onClick={() => setEditingNote(note)}>Editar</Button>
+                        <Button className='bg-black rounded hover:bg-gray-500 text-red-600' size="sm" onClick={() => handleDelete(note.id)}>Excluir</Button>
+                      </div>
                     )}
-                  </p>
-                )}
+                </> /* Fim do Fragmento */
+              )} {/* Fim da Lógica Condicional Modo Edição/Visualização */}
 
-           </div> {/* Fim do Container que lista as notas */}
-         </div> {/* Fim da Seção de exibição e filtro */}
+            </div> /* Fim do Card individual da nota */
+          ))} {/* Fim do Mapeamento de filteredNotes */}
 
+          {/* Mensagem exibida quando a lista filtrada está vazia */}
+          {filteredNotes.length === 0 && (
+            <p className="text-gray-500 text-center mt-4">
+              {filter === 'all' ? (
+                'Ainda não há notas para esta campanha que você possa visualizar.' // Mensagem para filtro 'Todas'
+              ) : filter === 'mine' ? (
+                'Você ainda não adicionou notas para esta campanha.' // Mensagem para filtro 'Minhas Notas'
+              ) : ( // filtro 'public_others'
+                'Não há notas públicas de outros usuários nesta campanha.' // Mensagem para filtro 'Públicas (Outros)'
+              )}
+            </p>
+          )}
+        </div> {/* Fim do Container que lista as notas */}
 
-          {/* --- SEÇÃO: Adicionar Nova Nota --- */}
-          <div className="border-t pt-4"> {/* Linha superior e espaçamento */}
-          <h3 className="font-semibold mb-2">Nova Nota de Campanha</h3> {/* Título da seção */}
-          {/* Input para o título */}
-          <Input
-          placeholder="Título"
-          className="mb-2"
-          value={newNote.title}
-          onChange={(e) => setNewNote({ ...newNote, title: e.target.value })}
-          />
-          {/* Textarea para o conteúdo */}
-        <Textarea
-          placeholder="Conteúdo"
-          className="mb-2"
-          value={newNote.content}
-          onChange={(e) => setNewNote({ ...newNote, content: e.target.value })}
-          />
-          {/* Checkbox para definir privacidade */}
-          <div className="flex items-center space-x-2 mb-2">
-          <input
-            id="is_private_campaign"
-            type="checkbox"
-            checked={newNote.is_private}
-            onChange={(e) => setNewNote({ ...newNote, is_private: e.target.checked })}
-          />
-          <label htmlFor="is_private_campaign" className="text-sm">Privada</label>
-          </div>
-          {/* Botão para adicionar a nota */}
-          <Button onClick={handleAddNote} disabled={loading}>
-          {loading ? 'Adicionando...' : 'Adicionar Nota de Campanha'}
-          </Button>
-        </div> {/* Fim da Seção Adicionar Nova Nota */}
-
-        </div> // Fim do Container Principal
+      </div> {/* Fim da Seção de exibição e filtro */}
+    </div> // Fim do Container Principal
  );
 }
