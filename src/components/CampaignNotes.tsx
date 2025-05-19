@@ -278,9 +278,9 @@ export default function CampaignNotes({ campaignId }: CampaignNotesProps) {
       <div> {/* Seção de exibição e filtro das notas */}
         
           {/* --- DIV COM SELECT DE FILTRO --- */}
-          <div className="flex px-4 justify-between rounded items-center gap-2 my-2">
+          <div className="flex px-4 rounded items-center justify-center gap-2 my-2">
             <select
-              className="h-9 rounded-md bg-gray-200 px-2 text-cyan-500 text-sm"
+              className="rounded-md justify-self-start items-start bg-gray-200 h-10 px-4 py-2 text-cyan-500 text-sm"
               value={filter}
               onChange={(e) => setFilter(e.target.value as NoteFilter)}
             >
