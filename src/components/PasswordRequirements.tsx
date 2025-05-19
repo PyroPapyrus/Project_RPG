@@ -8,8 +8,8 @@ export function PasswordRequirements({ password }: PasswordRequirementsProps) {
   const { requirements } = usePasswordValidation(password)
 
   return (
-    <div className="text-sm space-y-1">
-      <p className="text-gray-900">A senha deve conter:</p>
+    <div className="text-sm">
+      
       <ul className="space-y-1">
         {requirements.map((req, index: number) => {
           const isValid = req.regex.test(password)

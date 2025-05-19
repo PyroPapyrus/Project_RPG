@@ -441,7 +441,10 @@ export default function DashboardPage() {
                 settings
               </span>
 
-              <span className="material-symbols-rounded" style={{ fontSize: '40px' }}>
+              <span className="material-symbols-rounded cursor-pointer" style={{ fontSize: '40px' }}
+                onClick={() => {
+                  router.push('/profile'); // <-- REDIRECIONA PARA profile
+                }}>
                 account_circle
               </span>
           </div>

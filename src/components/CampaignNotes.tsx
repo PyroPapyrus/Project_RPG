@@ -429,7 +429,7 @@ export default function CampaignNotes({ campaignId }: CampaignNotesProps) {
 
           {/* Mensagem exibida quando a lista filtrada está vazia */}
           {filteredNotes.length === 0 && (
-            <p className="text-gray-500 text-center mt-4">
+            <p className="text-white text-center mt-8">
               {filter === 'all' ? (
                 'Ainda não há notas para esta campanha que você possa visualizar.' // Mensagem para filtro 'Todas'
               ) : filter === 'mine' ? (

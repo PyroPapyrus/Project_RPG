@@ -215,8 +215,10 @@ export default function SignUpPage() {
           
             </div>
 
-            <PasswordRequirements password={password} />
-
+            <div className='space-y-1'>
+              <p className="px-1 text-black text-sm">A senha deve conter:</p>
+              <PasswordRequirements password={password} />
+            </div>
             {error && <ErrorPopup message={error} onClose={() => setError(null)} />}
             {success && (
               <FeedbackMessage

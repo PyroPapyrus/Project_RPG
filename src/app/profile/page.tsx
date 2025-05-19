@@ -322,26 +322,11 @@ if (isLoadingSession || isLoadingProfile) {
 
   // --- RENDERIZAÇÃO PRINCIPAL COM ESTILOS DO LOGIN ---
   return (
-    // Container principal com background e altura mínima
-    <div className='bg-gray-900 min-h-screen relative'> {/* Adicionado relative para posicionar a imagem */}
-      {/* Imagem de background */}
-      <Image
-        src="/images/bg-login-cadastro.gif" // Verifique o caminho correto da sua imagem
-        alt="RPG Background"
-        fill // Preenche o container pai
-        className="object-cover opacity-80" // Ajuste a opacidade conforme preferir
-        priority // Carrega essa imagem com prioridade
-      />
-
-      {/* Cabeçalho com logo e botão voltar */}
-      <header className='bg-gray-800/30 shadow-md relative flex justify-center items-center z-10'> {/* z-10 para garantir que fique acima do background */}
+    <div className='min-h-screen bg-gray-900'>
+      {/* Header */}
+      <header className='bg-gray-800 shadow-md relative flex justify-center items-center z-10'>
         <div className='absolute left-4 top-1/2 transform -translate-y-1/2'> {/* Posiciona o botão voltar */}
-          {/* Botão que volta para as Campanhas (agora usando Button customizado) */}
-          {/* Removi a classe 'mb-4' que não faz sentido em posicionamento absoluto e horizontal */}
-          <Button variant="ghost" onClick={() => router.push('/dashboard')}> {/* Usando variant="ghost" ou "link" */}
-             {/* Ajuste o nome do componente de ícone se não for ArrowLeft do lucide-react */}
-             <ArrowLeft className="h-4 w-4 mr-2" /> Voltar para as Campanhas
-          </Button>
+          <BackButton href="/dashboard"/>
         </div>
 
         {/* Logo que linka para a página inicial (ajuste o href se necessário) */}
@@ -354,205 +339,200 @@ if (isLoadingSession || isLoadingProfile) {
         </Link>
       </header>
 
-      {/* Container principal centralizado com o card de conteúdo */}
-      {/* min-h-[calc(100vh-HEADER_HEIGHT)] ajusta a altura para que o card fique no centro da área restante */}
-      {/* Ajuste HEADER_HEIGHT para a altura real do seu cabeçalho (ex: se header tem altura de 16 = h-16 -> 4rem) */}
-      {/* A classe 'min-h-[calc(100vh-4rem)]' garante que este div ocupe o espaço vertical restante */}
-      <div className="text-center relative flex justify-center items-center min-h-[calc(100vh-4rem)] px-4 py-8"> {/* Adicionado padding e px */}
-        {/* Card translúcido para o conteúdo do perfil */}
-        <div className="bg-gray-200/60 backdrop-blur-sm rounded-lg shadow-md p-8 w-full max-w-xl z-10"> {/* z-10 para ficar acima do background */}
-          <div className='text-center mb-6'>
-            <h2 className="text-3xl font-bold text-gray-800">
-              Meu Perfil
-            </h2>
-            {/* Você pode adicionar uma descrição aqui se quiser */}
-            {/* <p className='mt-2 text-gray-700'>Gerencie suas informações de usuário.</p> */}
-          </div>
-
-          {/* Conteúdo do perfil (seções de email, senha, username) */}
-          {/* Usei a classe 'space-y-6' para dar espaçamento entre as seções principais */}
-          <div className="space-y-6 text-left"> {/* Alinhe o texto dos labels à esquerda */}
-
-            {/* Seção de Informações de Acesso (Email) */}
-            <div>
-              <h3 className="text-lg font-semibold mb-2 text-gray-800">Informações de Acesso</h3>
-              <div className="flex flex-col space-y-2">
-                <div>
-                  <Label htmlFor="email">Email:</Label>
-                  {isEditingEmail ? (
-                    <div className="flex flex-col space-y-1 mt-1">
-                      <div className="flex items-center space-x-2">
-                        <Input
-                          id="email"
-                          className="flex-grow"
-                          type="email"
-                          value={editedEmail}
-                          onChange={(e) => setEditedEmail(e.target.value)}
-                          disabled={isSavingEmail}
-                        />
-                        <Button onClick={handleSaveEmail} disabled={isSavingEmail}>
-                          {isSavingEmail ? 'Salvando...' : 'Salvar'}
-                        </Button>
-                        <Button variant="outline" onClick={handleCancelEmail} disabled={isSavingEmail}>
-                          Cancelar
-                        </Button>
-                      </div>
-                      {emailError && (
-                        <p className="text-red-600 text-sm">{emailError}</p>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="flex items-center space-x-2 mt-1">
-                      <p className="text-gray-900">{user.email}</p>
-                      {!isOAuthUser && !isChangingPassword && !isEditingUsername && (
-                        <Button
-                          variant="link"
-                          className="p-0 h-auto text-sm"
-                          onClick={handleEditEmail}
-                        >
-                          Mudar Email
-                        </Button>
-                      )}
-                    </div>
-                  )}
-                </div>
+      <div className="mx-auto max-w-4xl py-5">
+        <div className="h-full bg-gray-800 rounded-xl shadow-2xl">
+          {/* Profile Header */}
+          <div className="relative">
+            {/* Banner Background */}
+            <div className="h-20 bg-gradient-to-r from-cyan-500 to-blue-700"></div>
+            
+            {/* Profile Info Overlay */}
+            <div className="absolute -bottom-16 left-8 flex items-end space-x-4">
+              {/* Avatar Circle */}
+              <div className="h-24 w-24 rounded-full bg-gray-700 border-4 border-gray-800 flex items-center justify-center">
+                <span className="material-symbols-rounded text-4xl text-gray-400">
+                  person
+                </span>
               </div>
             </div>
+          </div>
 
-            {/* --- SEÇÃO PARA MUDAR SENHA --- */}
-            {!isOAuthUser && !isEditingEmail && !isEditingUsername ? (
-              <div>
-                <h3 className="text-lg font-semibold mb-2 text-gray-800">Mudar Senha</h3>
-                {isChangingPassword ? (
-                  <div className="flex flex-col space-y-3 mt-1">
-                    {/* Campo Senha Atual */}
+          {/* Main Content */}
+          <div className="mt-20 px-8 pb-8">
+            {/* Username Section */}
+            <div className="space-y-6 bg-gray-700/50 rounded-lg p-6">
+              <div className="border-b border-gray-600 pb-4">
+                <h3 className="text-xl font-semibold text-white mb-4">Detalhes do Perfil</h3>
+                {userProfile ? (
+                  <div className="space-y-4">
                     <div>
-                      <Label htmlFor="current-password">Senha Atual:</Label>
-                      <Input
-                        id="current-password"
-                        type="password"
-                        value={currentPassword}
-                        onChange={(e) => setCurrentPassword(e.target.value)}
-                        disabled={isSavingPassword}
-                        className="mt-1"
-                      />
-                    </div>
-
-                    {/* Campo Nova Senha */}
-                    <div>
-                      <Label htmlFor="new-password">Nova Senha:</Label>
-                      <Input
-                        id="new-password"
-                        type="password"
-                        value={newPassword}
-                        onChange={(e) => setNewPassword(e.target.value)}
-                        disabled={isSavingPassword}
-                        className="mt-1"
-                      />
-                      <div className="mt-2">
-                        {/* Componente de requisitos de senha */}
-                        <PasswordRequirements password={newPassword} />
-                      </div>
-                    </div>
-
-                    {/* Campo Confirmar Nova Senha */}
-                    <div>
-                      <Label htmlFor="confirm-new-password">Confirmar Nova Senha:</Label>
-                      <Input
-                        id="confirm-new-password"
-                        type="password"
-                        value={confirmNewPassword}
-                        onChange={(e) => setConfirmNewPassword(e.target.value)}
-                        disabled={isSavingPassword}
-                        className="mt-1"
-                      />
-                    </div>
-
-                    {/* Mensagem de Erro Inline para Senha */}
-                    {passwordError && (
-                      <p className="text-red-600 text-sm">{passwordError}</p>
-                    )}
-
-                    {/* Botões Salvar e Cancelar Mudança de Senha */}
-                    <div className="flex space-x-2 mt-2">
-                      <Button onClick={handleChangePassword} disabled={isSavingPassword}>
-                        {isSavingPassword ? 'Mudando...' : 'Mudar Senha'}
-                      </Button>
-                      <Button variant="outline" onClick={handleTogglePasswordChange} disabled={isSavingPassword}>
-                        Cancelar
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  // BOTÃO PARA EXIBIR FORMULÁRIO DE MUDANÇA DE SENHA
-                  <Button
-                    variant="link"
-                    className="p-0 h-auto text-sm mt-1"
-                    onClick={handleTogglePasswordChange}
-                  >
-                    Mudar Senha
-                  </Button>
-                )}
-              </div>
-            ) : null}
-            {/* --- FIM SEÇÃO MUDAR SENHA --- */}
-
-
-            {/* Seção de Detalhes do Perfil (Username) */}
-            <div>
-              <h3 className="text-lg font-semibold mb-2 text-gray-800">Detalhes do Perfil</h3>
-              {userProfile ? (
-                <div className="flex flex-col space-y-2">
-                  <div>
-                    <Label htmlFor="username">Username:</Label>
-                    {isEditingUsername ? (
-                      <div className="flex items-center space-x-2 mt-1">
-                        <Input
-                          id="username"
-                          className="flex-grow"
-                          value={editedUsername}
-                          onChange={(e) => setEditedUsername(e.target.value)}
-                          disabled={isSavingUsername}
-                        />
-                        <Button onClick={handleSaveUsername} disabled={isSavingUsername}>
-                          {isSavingUsername ? 'Salvando...' : 'Salvar'}
-                        </Button>
-                        <Button variant="outline" onClick={handleCancelUsername} disabled={isSavingUsername}>
-                          Cancelar
-                        </Button>
-                      </div>
-                    ) : (
-                      <div className="flex items-center space-x-2 mt-1">
-                        <p className="text-gray-900">{username || 'Nenhum username definido'}</p>
-                        {userProfile && !isChangingPassword && !isEditingEmail && (
+                      <Label className="text-gray-300">Nome de usuário</Label>
+                      {isEditingUsername ? (
+                        <div className="flex items-center justify-between mt-1 p-3 bg-gray-800 rounded-lg gap-2">
+                          <div className="flex-1 bg-gray-800 rounded-lg overflow-hidden">
+                            <Input
+                              id="username"
+                              className="border-0 bg-transparent text-white"
+                              value={editedUsername}
+                              onChange={(e) => setEditedUsername(e.target.value)}
+                              disabled={isSavingUsername}
+                            />
+                          </div>
+                          <Button 
+                            onClick={handleSaveUsername} 
+                            disabled={isSavingUsername}
+                            className="bg-cyan-600 hover:bg-cyan-700"
+                          >
+                            {isSavingUsername ? 'Salvando...' : 'Salvar'}
+                          </Button>
+                          <Button variant="outline" onClick={handleCancelUsername} disabled={isSavingUsername}>
+                            Cancelar
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-between mt-1 p-3 bg-gray-800 rounded-lg">
+                          <span className="text-white">{username || 'Nenhum username definido'}</span>
                           <Button
-                            variant="link"
-                            className="p-0 h-auto text-sm"
+                            variant="ghost"
+                            className="text-cyan-400 hover:text-cyan-300"
                             onClick={() => {
+                              if (isEditingEmail || isChangingPassword) return;
                               setIsEditingUsername(true);
                               setEditedUsername(username);
                             }}
+                            disabled={isEditingEmail || isChangingPassword}
                           >
                             Editar
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+
+              {/* Email Section with Edit Form */}
+              <div className="border-b border-gray-600 pb-4">
+                <h3 className="text-xl font-semibold text-white mb-4">Informações de Acesso</h3>
+                <div className="space-y-4">
+                  <div>
+                    <Label className="text-gray-300">Email</Label>
+                    {isEditingEmail ? (
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between mt-1 p-3 bg-gray-800 rounded-lg gap-2">
+                          <div className="flex-1 bg-gray-800 rounded-lg overflow-hidden">
+                            <Input
+                              type="email"
+                              value={editedEmail}
+                              onChange={(e) => setEditedEmail(e.target.value)}
+                              className="border-0 bg-transparent text-white"
+                              disabled={isSavingEmail}
+                            />
+                          </div>
+                          <Button 
+                            onClick={handleSaveEmail}
+                            disabled={isSavingEmail}
+                            className="bg-cyan-600 hover:bg-cyan-700"
+                          >
+                            {isSavingEmail ? 'Salvando...' : 'Salvar'}
+                          </Button>
+                          <Button variant="outline" onClick={handleCancelEmail} disabled={isSavingEmail}>
+                            Cancelar
+                          </Button>
+                        </div>
+                        {emailError && <p className="text-red-500 text-sm">{emailError}</p>}
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-between mt-1 p-3 bg-gray-800 rounded-lg">
+                        <span className="text-white">{user?.email}</span>
+                        {!isOAuthUser && (
+                          <Button
+                            variant="ghost"
+                            className="text-cyan-400 hover:text-cyan-300"
+                            onClick={handleEditEmail}
+                            disabled={isEditingUsername || isChangingPassword}
+                          >
+                            Mudar Email
                           </Button>
                         )}
                       </div>
                     )}
                   </div>
-                  {/* Outros campos do perfil público (ex: avatar) virão aqui */}
-                  <LogoutButton />
                 </div>
-              ) : (
-                <p className="text-red-600">Não foi possível carregar os detalhes do perfil.</p>
+              </div>
+
+              {/* Password Section with Change Form */}
+              {!isOAuthUser && (
+                <div className="border-b border-gray-600 pb-4">
+                  <h3 className="text-xl font-semibold text-white mb-4">Segurança</h3>
+                  {isChangingPassword ? (
+                    <div className="space-y-4">
+                      <div>
+                        <Label className="text-gray-300">Senha Atual</Label>
+                        <Input
+                          value={currentPassword}
+                          onChange={(e) => setCurrentPassword(e.target.value)}
+                          className="bg-gray-800 border-0 text-white mt-1 px-3"
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-gray-300">Nova Senha</Label>
+                        <Input
+                          isPassword
+                          value={newPassword}
+                          onChange={(e) => setNewPassword(e.target.value)}
+                          className="bg-gray-800 border-0 text-white mt-1 px-3"
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-gray-300">Confirmar Nova Senha</Label>
+                        <Input
+                          isPassword
+                          value={confirmNewPassword}
+                          onChange={(e) => setConfirmNewPassword(e.target.value)}
+                          className="bg-gray-800 border-0 text-white mt-1 px-3"
+                        />
+                      </div>
+                      {passwordError && <p className="text-red-500 text-sm">{passwordError}</p>}
+                      
+                      <div className='space-y-1'>
+                        <p className="px-1 text-gray-300 text-sm">A senha deve conter:</p>
+                        <PasswordRequirements password={newPassword} />
+                      </div>
+                      <div className="flex justify-end space-x-2 mt-4">
+                        <Button
+                          onClick={handleChangePassword}
+                          disabled={isSavingPassword}
+                          className="bg-cyan-600 hover:bg-cyan-700"
+                        >
+                          {isSavingPassword ? 'Salvando...' : 'Salvar Nova Senha'}
+                        </Button>
+                        <Button variant="outline" onClick={handleTogglePasswordChange} disabled={isSavingPassword}>
+                          Cancelar
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <Button
+                      variant="outline"
+                      className="text-cyan-400 border-cyan-400 hover:bg-cyan-400/10"
+                      onClick={handleTogglePasswordChange}
+                      disabled={isEditingUsername || isEditingEmail}
+                    >
+                      Alterar Senha
+                    </Button>
+                  )}
+                </div>
               )}
+
+              {/* Logout Section */}
+              <div className="pt-4">
+                <LogoutButton />
+              </div>
             </div>
-            
-            {/* Você pode adicionar outras seções aqui, como avatar, etc. */}
-
-          </div> {/* Fim do div space-y-6 (conteúdo do card) */}
-
-        </div> {/* Fim do card translúcido */}
-      </div> {/* Fim do container principal centralizado */}
-    </div> // Fim do container principal com background
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
