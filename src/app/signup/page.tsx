@@ -17,7 +17,7 @@ export default function SignUpPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
-    const [username, setUsername] = useState('')
+  const [username, setUsername] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
@@ -45,6 +45,26 @@ export default function SignUpPage() {
       if (password !== confirmPassword) {
         throw new Error("As senhas não coincidem.")
       }
+
+      // --- INÍCIO DA VERIFICAÇÃO DE UNICIDADE DO USERNAME ---
+      const { data: existingUser, error: usernameCheckError } = await supabase
+        .from('users') // Nome da sua tabela de perfis
+        .select('username')
+        .eq('username', username.trim()) // Verifica se o username já existe
+        .maybeSingle(); // Retorna no máximo um registro ou null
+
+      if (usernameCheckError && usernameCheckError.code !== 'PGRST116') { // PGRST116 é o código para 'no rows', que queremos ignorar
+        console.error('Erro ao verificar a disponibilidade do nome de usuário:', usernameCheckError);
+        throw new Error("Ocorreu um erro ao verificar o nome de usuário. Tente novamente.");
+      }
+
+      if (existingUser) {
+        // Se existingUser não for nulo, significa que o nome de usuário já existe
+        throw new Error("Este nome de usuário já está em uso. Por favor, escolha outro.");
+      }
+      // --- FIM DA VERIFICAÇÃO DE UNICIDADE DO USERNAME ---
+
+
 
       // Tentar criar o usuário
       const { data, error } = await supabase.auth.signUp({
@@ -222,7 +242,7 @@ export default function SignUpPage() {
             {error && <ErrorPopup message={error} onClose={() => setError(null)} />}
             {success && (
               <FeedbackMessage
-                message="Conta criada com sucesso! Redirecionando para o login..."
+                message="Valide a criação pelo email! Redirecionando para o login..."
                 type="success"
               />
             )}
