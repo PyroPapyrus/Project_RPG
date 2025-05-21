@@ -12,6 +12,7 @@ import SessionSummary from '@/components/SessionSummary';
 import SessionImageUpload from '@/components/SessionImageUpload';
 import SessionNotes from '@/components/SessionNotes';
 import { Button } from '@/components/ui/button';
+import SessionImageViewer from '@/components/SessionImageViewer';
 
 interface PageProps {
   params: {
@@ -33,7 +34,11 @@ const SessionPage = ({ params }: PageProps) => {
   useEffect(() => {
     const fetchSession = async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+            if (!user) {
+        // Redirecionar para login se não estiver logado
+        router.push('/login');
+        return;
+      }
 
       setUserId(user.id);
 
@@ -55,20 +60,23 @@ const SessionPage = ({ params }: PageProps) => {
         if (campaign && campaign.master_id === user.id) {
           setIsMaster(true);
         }
+      }else {
+        console.error('Erro ao buscar sessão:', error);
+        // Tratar erro: sessão não encontrada ou erro na busca
       }
 
       setLoading(false);
     };
 
     fetchSession();
-  }, [params.sessionId]);
+  }, [params.sessionId, router, supabase]);
 
   if (loading) {
     return <div className="p-8">Carregando...</div>;
   }
 
   if (!sessionData) {
-    return <div className="p-8">Sessão não encontrada.</div>;
+    return <div className="p-8">Sessão não encontrada ou acesso negado.</div>;
   }
 
   return (
@@ -118,7 +126,15 @@ const SessionPage = ({ params }: PageProps) => {
               sessionId={sessionData.id}
             />
           )}
+
+        {/* NOVO: Componente para exibir imagens, visível para mestre e jogador */}
+          <SessionImageViewer
+            sessionId={sessionData.id}
+            isMaster={isMaster}
+            userId={userId} // Passe o ID do usuário para o viewer
+          />
         </div>
+
 
         <div className="lg:col-span-1">
           <SessionNotes sessionId={sessionData.id} />

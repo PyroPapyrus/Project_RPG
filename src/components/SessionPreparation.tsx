@@ -15,15 +15,15 @@ interface SessionPreparationProps {
 
 export default function SessionPreparation({ sessionId, initialPreparation = '' }: SessionPreparationProps) {
   const supabase = createClientComponentClient();
-  const [preparation, setPreparation] = useState(initialPreparation);
+  const [preparation, setPreparation] = useState(initialPreparation || '');
   const [loading, setLoading] = useState(false);
   const [savedPreparation, setSavedPreparation] = useState(initialPreparation);
 
   useEffect(() => {
-    setPreparation(initialPreparation);
+    setPreparation(initialPreparation || '');
     setSavedPreparation(initialPreparation);
   }, [initialPreparation]);
-
+  
   const handleSave = async () => {
     setLoading(true);
     const { error } = await supabase

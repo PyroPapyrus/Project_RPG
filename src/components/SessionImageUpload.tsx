@@ -13,9 +13,6 @@ interface SessionImageUploadProps {
   sessionId: string;
 }
 
-// Esta constante pode ficar fora do componente se quiser
-const EDGE_FUNCTION_NAME = 'upload-session-image';
-
 export default function SessionImageUpload({ sessionId }: SessionImageUploadProps) {
   const supabase = createClientComponentClient();
   // Adicione esta linha para obter a sessão usando o hook useSession
@@ -52,64 +49,54 @@ export default function SessionImageUpload({ sessionId }: SessionImageUploadProp
 
     for (let i = 0; i < images.length; i++) {
       const image = images[i];
-      const file = image.file;
 
-      if (!file) {
+      const imageBase64String = image.data_url;
+
+      if (!imageBase64String) { // Verifica se a string Base64 existe
         hasError = true;
-        toast.error(`Arquivo inválido para a imagem no índice ${i}`);
+        toast.error(`Dados da imagem inválidos para a imagem no índice ${i}`);
         continue;
       }
 
-      // Prepara os dados para enviar para a Edge Function usando FormData
-      const formData = new FormData();
-      formData.append('file', file);
-      // Agora 'sessionId' (prop), 'descriptions', 'privacies' (estado) estão acessíveis
-      formData.append('sessionId', sessionId);
-      formData.append('description', descriptions[i]);
-      formData.append('isPrivate', String(privacies[i]));
-
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/${EDGE_FUNCTION_NAME}`, {
-          method: 'POST',
-          headers: {
-            // 'session.access_token' agora está acessível
-            'Authorization': `Bearer ${session.access_token}`,
-          },
-          body: formData,
-        });
+        // Agora, insira diretamente no Supabase DB
+        const { data, error } = await supabase
+          .from('session_images')
+          .insert({
+            session_id: sessionId,
+            image_base64: imageBase64String, // Nova coluna para o Base64
+            description: descriptions[i],
+            is_private: privacies[i],
+          });
 
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.details || errorData.error || `Erro na Edge Function: Status ${response.status}`);
+        if (error) {
+          throw new Error(error.message || `Erro ao salvar imagem no banco de dados: ${error.code}`);
         }
 
-        const result = await response.json();
-        console.log(`Upload e salvamento via Edge Function bem-sucedido para ${file.name}:`, result);
-        toast.success(`Imagem ${file.name} enviada com sucesso!`);
+        console.log(`Inserção da imagem Base64 bem-sucedida para imagem no índice ${i}:`, data);
+        toast.success(`Imagem ${i + 1} enviada com sucesso!`);
 
       } catch (error: any) {
-        toast.error(`Erro ao enviar imagem ${file.name}: ${error.message}`);
-        console.error(`Erro ao chamar Edge Function para ${file.name}:`, error);
-        hasError = true;
+          toast.error(`Erro ao enviar imagem ${i + 1}: ${error.message}`);
+          console.error(`Erro ao salvar imagem Base64 no Supabase DB para imagem no índice ${i}:`, error);
+          hasError = true;
       }
     }
 
     if (!hasError) {
-      // 'setImages', 'setDescriptions', 'setPrivacies' estão acessíveis
       setImages([]);
       setDescriptions([]);
       setPrivacies([]);
+      toast.success("Todas as imagens foram enviadas com sucesso!");
     } else {
-      toast.info("Algumas imagens falharam ao enviar. Verifique o console do navegador e os logs da Edge Function para detalhes.");
+      toast.info("Algumas imagens falharam ao enviar. Verifique o console do navegador para detalhes.");
     }
 
-    setUploading(false); // 'setUploading' está acessível
+    setUploading(false);
   };
 
-
   return (
-    // O restante do seu JSX que usa onChange, handleUpload, images, uploading etc.
-    // pode permanecer o mesmo.
+
     <div className="bg-white rounded-lg shadow p-4 mt-6">
       <h3 className="text-lg font-semibold mb-2">Imagens da Sessão</h3>
       <ImageUploading
