@@ -47,28 +47,23 @@ export default function EditSessionModal({
   // Efeito para popular o formulário quando a prop 'session' mudar (ou quando o modal abrir)
   useEffect(() => {
     if (session) {
-      // Ao editar, os dados vêm do Supabase como ISO string (e pode incluir milissegundos e Z)
-      // O input type="datetime-local" espera o formato YYYY-MM-DDTHH:mm
-      // Precisamos converter a ISO string do Supabase para o formato local necessário pelo input
-      const dateObj = new Date(session.session_date);
-      // Formata a data para YYYY-MM-DD
-      const year = dateObj.getFullYear();
-      const month = (dateObj.getMonth() + 1).toString().padStart(2, '0'); // Meses são 0-indexed
-      const day = dateObj.getDate().toString().padStart(2, '0');
-      const datePart = `${year}-${month}-${day}`;
 
-      // Formata a hora para HH:mm
-      const hours = dateObj.getHours().toString().padStart(2, '0');
-      const minutes = dateObj.getMinutes().toString().padStart(2, '0');
-      const timePart = `${hours}:${minutes}`;
-
-      const formattedDateTimeLocal = `${datePart}T${timePart}`;
-
+      let formattedDate = '';
+      if (session.session_date) { // Verifica se a data da sessão existe
+        const dateObj = new Date(session.session_date);
+        // Garante que a data é válida antes de formatar
+        if (!isNaN(dateObj.getTime())) {
+          const year = dateObj.getFullYear();
+          const month = (dateObj.getMonth() + 1).toString().padStart(2, '0');
+          const day = dateObj.getDate().toString().padStart(2, '0');
+          formattedDate = `${year}-${month}-${day}`; // Formato YYYY-MM-DD para input type="date"
+        }
+      }
 
       setFormData({
         name: session.name,
         goal: session.goal,
-        session_date: formattedDateTimeLocal // Define a data formatada no estado
+        session_date: formattedDate // Define a data formatada no estado
       });
       setError(null); // Limpa erros anteriores ao abrir para editar
     } else {
@@ -89,8 +84,8 @@ export default function EditSessionModal({
     }
 
     // Validação básica (mesma do criar)
-    if (!formData.name || !formData.goal || !formData.session_date) {
-      setError("Todos os campos são obrigatórios.");
+    if (!formData.name) {
+      setError("Não é possível deixar o campo nome vazio.");
       return;
     }
 
@@ -98,16 +93,19 @@ export default function EditSessionModal({
     setLoading(true);
 
     try {
-      // Converte a data/hora local do input (YYYY-MM-DDTHH:mm) de volta para ISO String UTC para o Supabase
-      const dateObject = new Date(formData.session_date);
-       // Nota: Date() com YYYY-MM-DDTHH:mm é interpretado como local, mas toISOString() converte para UTC.
-       // Supabase armazena timestamp with time zone. Se você quer que a hora salva reflita a hora local do usuário,
-       // pode precisar de lógica mais avançada ou salvar a timezone junto.
-       // Para simplicidade, usaremos a conversão direta para ISO, o que é comum.
-      if (isNaN(dateObject.getTime())) {
-         throw new Error("Formato de data inválido.");
+
+      let isoDateString: string | null = null;
+      if (formData.session_date) { // Se a data foi fornecida no input
+        const dateObject = new Date(`${formData.session_date}T00:00:00`); // Adiciona T00:00:00 para tratar como início do dia local
+        if (isNaN(dateObject.getTime())) {
+            throw new Error("Formato de data inválido.");
+        }
+        isoDateString = dateObject.toISOString(); // Converte para ISO (UTC)
       }
-      const isoDateString = dateObject.toISOString();
+
+      // Se goal for string vazia, enviará null para o banco.
+      const finalGoal = formData.goal || null;
+
 
 
       // --- LÓGICA DE ATUALIZAÇÃO ---
@@ -115,7 +113,7 @@ export default function EditSessionModal({
         .from('sessions')
         .update({ // Use .update() em vez de .insert()
           name: formData.name,
-          goal: formData.goal,
+          goal: finalGoal,
           session_date: isoDateString, // Data convertida
           // Outros campos da sessão que podem ser editados seriam adicionados aqui
         })
@@ -190,7 +188,7 @@ export default function EditSessionModal({
           {/* Campo Descrição */}
           <div className="space-y-2">
             <label className="block text-sm font-medium text-gray-700">
-              Resumo Objetivo
+              Resumo Objetivo (Opcional)
             </label>
             <FormInput
               id="edit_session_goal" // ID único 
@@ -199,29 +197,27 @@ export default function EditSessionModal({
               placeholder="Faça um resumo objetivo do que você pretende atingir nesta sessão. O que se espera que aconteça? (Ex: Os aventureiros se encontram no vilarejo de Ritamor. Sua missão é encontrar o que está fazendo as pessoas desaparecerem)"
               value={formData.goal}
               onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setFormData({ ...formData, goal: e.target.value })}
-              required
               rows={4}
               maxLength={500}
               style={{ border: '1px solid #ccc', borderRadius: '0px' }}
             />
           </div>
           <p className="-mt-4 text-xs text-gray-500">
-            {formData.goal.length}/300 caracteres
+            {(formData.goal || "").length}/300 caracteres
           </p>
 
           {/* Campo Data e Hora */}
           <div className="space-y-2">
             <label htmlFor="edit_session_date" className="block text-sm font-medium text-gray-700">
-              Data da Sessão
+              Data da Sessão (Opcional)
             </label>
             <FormInput
               id="edit_session_date" // ID único
               name="session_date" // Usar 'session_date'
-              type="datetime-local"
+              type="date"
               placeholder=""
               value={formData.session_date}
               onChange={(e) => setFormData({ ...formData, session_date: e.target.value })}
-              required
               style={{ border: '1px solid #ccc', borderRadius: '0px' }}
             />
           </div>
