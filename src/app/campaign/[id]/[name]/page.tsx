@@ -12,8 +12,7 @@ import { type Session } from '@/types/session'
 
 // Importar outros componentes/ícones
 import { Button } from '@/components/ui/button'
-import {
-  Card, CardDescription, CardFooter,CardHeader, CardTitle} from "@/components/ui/card"
+import {Card, CardDescription, CardFooter,CardHeader, CardTitle} from "@/components/ui/card"
 import CreateSessionModal from '@/components/modals/CreateSessionModal'
 import EditSessionModal from '@/components/modals/EditSessionModal';
 import ConfirmationModal from '@/components/modals/ConfirmationModal';
@@ -33,56 +32,58 @@ interface CampaignWithPlayerCount extends CampaignBase {
 // --- FIM NOVO TIPO ---
 
 interface PageProps {
-  params: {
-    id: string
-    name: string
-  }
+ params: {
+  id: string
+  name: string
+ }
 }
 
 const Page = ({ params }: PageProps) => {
   // Mude o tipo do estado 'campaign' para o novo tipo com contagem
-  const [campaign, setCampaign] = useState<CampaignWithPlayerCount | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [authorized, setAuthorized] = useState(false)
-  const [isMaster, setIsMaster] = useState(false)
-  const [sessions, setSessions] = useState<Session[]>([])
-  const [sessionsLoading, setSessionsLoading] = useState(true)
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
+ const [campaign, setCampaign] = useState<CampaignWithPlayerCount | null>(null)
+ const [loading, setLoading] = useState(true)
+ const [authorized, setAuthorized] = useState(false)
+ const [isMaster, setIsMaster] = useState(false)
+ const [sessions, setSessions] = useState<Session[]>([])
+ const [sessionsLoading, setSessionsLoading] = useState(true)
+ const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
 
-  // --- ESTADOS PARA EDIÇÃO/EXCLUSÃO DE SESSÃO ---
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
-  const [sessionToEdit, setSessionToEdit] = useState<Session | null>(null)
-  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
-  const [sessionToDelete, setSessionToDelete] = useState<Session | null>(null);
-  // --- FIM ESTADOS SESSÃO ---
+ // --- ESTADOS PARA EDIÇÃO/EXCLUSÃO DE SESSÃO ---
+ const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+ const [sessionToEdit, setSessionToEdit] = useState<Session | null>(null)
+ const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+ const [sessionToDelete, setSessionToDelete] = useState<Session | null>(null);
+ // --- FIM ESTADOS SESSÃO ---
 
-  // --- ESTADO PARA world_story ---
-  const [isWorldStoryModalOpen, setIsWorldStoryModalOpen] = useState(false);
-  // --- FIM NOVOS ESTADOS world_story ---
+ // --- ESTADO PARA world_story ---
+ const [isWorldStoryModalOpen, setIsWorldStoryModalOpen] = useState(false);
+ // --- FIM NOVOS ESTADOS world_story ---
 
 
-  const [userId, setUserId] = useState<string | null>(null)
+ const [userId, setUserId] = useState<string | null>(null)
 
-  const router = useRouter()
-  const supabase = createClientComponentClient()
+ const router = useRouter()
+ const supabase = createClientComponentClient()
 
-  const fetchSessions = useCallback(async (campaignId: string) => {
-     setSessionsLoading(true);
-     const { data: sessionsData, error: sessionsError } = await supabase
-         .from('sessions')
-         .select('*')
-         .eq('campaign_id', campaignId)
-         .order('session_date', { ascending: false });
+ const fetchSessions = useCallback(async (campaignId: string) => {
+  setSessionsLoading(true);
+  const { data: sessionsData, error: sessionsError } = await supabase
+    .from('sessions')
+    .select('*')
+    .eq('campaign_id', campaignId)
+    .order('session_date', { ascending: false })
+    .order('created_at', { ascending: false });
 
-     if (!sessionsError) {
-         setSessions(sessionsData || []);
-     } else {
-         console.error("Erro ao buscar sessões:", sessionsError);
-         toast.error('Erro ao buscar sessões.');
-         setSessions([]);
-     }
-     setSessionsLoading(false);
-  }, [supabase]);
+
+  if (!sessionsError) {
+    setSessions(sessionsData || []);
+  } else {
+    console.error("Erro ao buscar sessões:", sessionsError);
+    toast.error('Erro ao buscar sessões.');
+    setSessions([]);
+  }
+  setSessionsLoading(false);
+ }, [supabase]);
 
   // --- FUNÇÃO PARA CARREGAR DADOS INICIAIS (COM CONTAGEM DE JOGADORES) ---
   const loadData = useCallback(async () => {

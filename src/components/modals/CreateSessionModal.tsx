@@ -25,7 +25,7 @@ interface CreateSessionModalProps {
 interface CreateSessionFormData {
   name: string;
   goal: string;
-  session_date: string; // Input type="datetime-local" trabalha bem com string YYYY-MM-DDTHH:mm
+  session_date: string;
 }
 
 export default function CreateSessionModal({
@@ -70,8 +70,8 @@ export default function CreateSessionModal({
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     // Validação básica
-    if (!formData.name || !formData.goal || !formData.session_date) {
-      setError("Todos os campos são obrigatórios.");
+    if (!formData.name) {
+      setError("A sessão precisa ter ao menos o nome para ser criada.");
       return;
     }
 
@@ -80,11 +80,20 @@ export default function CreateSessionModal({
 
     try {
       // Converte a data/hora local do input para ISO String UTC para o Supabase
-      const dateObject = new Date(formData.session_date);
-      if (isNaN(dateObject.getTime())) {
-        throw new Error("Formato de data inválido.");
+      let finalSessionDate: string;
+      if (formData.session_date) {
+        // Se a data foi fornecida, processa como antes
+        const dateObject = new Date(`${formData.session_date}T00:00:00`);
+        if (isNaN(dateObject.getTime())) {
+          throw new Error("Formato de data inválido.");
+        }
+        finalSessionDate = dateObject.toISOString();
+      } else {
+        // Se a data não foi fornecida, usa a data e hora atual
+        finalSessionDate = new Date().toISOString();
       }
-      const isoDateString = dateObject.toISOString();
+
+
 
       // Insere na tabela 'sessions'
       const { data, error: insertError } = await supabase
@@ -93,8 +102,8 @@ export default function CreateSessionModal({
           {
             campaign_id: campaignId,     // ID da campanha vindo das props
             name: formData.name,
-            goal: formData.goal,
-            session_date: isoDateString, // Data convertida
+            goal: formData.goal || null,
+            session_date: finalSessionDate, // Data convertida
           }
         ])
         .select() // Pede para retornar o registro que foi criado
@@ -110,7 +119,7 @@ export default function CreateSessionModal({
         throw new Error("Não foi possível obter os dados da sessão criada.");
       }
 
-      // Sucesso!
+
       onSessionCreated(data as Session); // Chama o callback passando a nova sessão
       resetFormAndClose(); // Fecha o modal e limpa o formulário
 
@@ -118,16 +127,16 @@ export default function CreateSessionModal({
       console.error("Erro ao criar sessão:", err);
       setError(err.message || "Ocorreu um erro inesperado.");
     } finally {
-      setLoading(false); // Garante que o loading termine
+      setLoading(false);
     }
   };
 
-  // Se não estiver aberto, não renderiza nada
+
   if (!isOpen) {
     return null;
   }
 
-  // Renderização do Modal (baseada na estrutura do seu CreateCampaignButton)
+
   return (
     <div className="fixed inset-0 z-50 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50">
       <div className="bg-white rounded-lg p-6 w-full max-w-lg shadow-xl">
@@ -155,11 +164,8 @@ export default function CreateSessionModal({
               placeholder="Ex: O Ataque dos Goblins"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              required
               maxLength={100}
               style={{ border: '1px solid #ccc', borderRadius: '0px' }}
-              
-              // label="Nome da Sessão" <-- REMOVIDO
             />
           </div>
           <p className="-mt-2 text-xs text-gray-500">
@@ -169,40 +175,37 @@ export default function CreateSessionModal({
           <div className="space-y-2"> {/* Agrupa label e input */}
             {/* Campo Descrição */}
             <label className="block text-sm font-medium text-gray-700">
-              Resumo Objetivo
+              Resumo Objetivo (Opcional)
             </label>
             <FormInput
-              id="session_goal" // ID para o htmlFor
+              id="session_goal"
               name="session_goal"
               type="textarea"
               placeholder="Faça um resumo objetivo do que você pretende atingir nesta sessão. O que se espera que aconteça? (Ex: Os aventureiros se encontram no vilarejo de Ritamor. Sua missão é encontrar o que está fazendo as pessoas desaparecerem)"
               value={formData.goal}
               onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setFormData({ ...formData, goal: e.target.value })}
-              required
               rows={4}
               maxLength={300}
               style={{ border: '1px solid #ccc', borderRadius: '0px' }}
-              // label="Descrição / Objetivos" <-- REMOVIDO
             />
           </div>
           <p className="-mt-4 text-xs text-gray-500">
-            {formData.goal.length}/300 caracteres
+            {(formData.goal || "").length}/300 caracteres
           </p>
       
 
           {/* Campo Data e Hora */}
-          <div className="space-y-2"> {/* Agrupa label e input */}
-            <label className="block text-sm font-medium text-gray-700">
-              Data da Sessão
+          <div className="space-y-2">
+            <label htmlFor="session_date" className="block text-sm font-medium text-gray-700">
+              Data da Sessão (Opcional)
             </label>
             <FormInput
-              id="session_date" // ID para o htmlFor
+              id="session_date" 
               name="session_date"
-              type="datetime-local"
-              placeholder="" // <--- ADICIONADO placeholder obrigatório (string vazia)
+              type="date"
+              placeholder=""
               value={formData.session_date}
               onChange={(e) => setFormData({ ...formData, session_date: e.target.value })}
-              required
               style={{ border: '1px solid #ccc', borderRadius: '0px' }}
             />
           </div>
