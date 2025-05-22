@@ -64,6 +64,9 @@ export default function DashboardPage() {
     sortBy: 'date_asc', // Valor padrão inicial (mais recentes primeiro)
   });
 
+  // First add a state for controlling filter visibility
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+
   const router = useRouter()
   const supabase = createClientComponentClient()
 
@@ -266,7 +269,7 @@ export default function DashboardPage() {
 
   return (
 
-    <div className="bg-[url(/images/bg-campanhas.jpeg)] bg-no-repeat bg-fixed bg-cover min-h-screen">
+    <div className="bg-gradient-to-t from-gray-900 to-red-900 bg-no-repeat bg-fixed bg-cover min-h-screen">
 
       <header className="relative justify-center items-center bg-gray-800 text-white py-4 shadow-md">
         
@@ -341,7 +344,32 @@ export default function DashboardPage() {
                 {filteredPlayerCampaigns.length}
               </span>
             </button>
+
+            <div> {/* Wrapper for filter button and dropdown */}
+              <div 
+                className='shadow-xl bg-black flex text-white hover:bg-gray-900 cursor-pointer rounded-lg px-6 py-2 items-center space-x-2'
+                onClick={() => setIsFilterOpen(!isFilterOpen)}
+              >
+                <span className="material-symbols-rounded" style={{ fontSize: '28px' }}>
+                  filter_list
+                </span>
+                <p className='text-lg'>Filtros</p>
+              </div>
+
+              {/* Filter dropdown */}
+              {isFilterOpen && (
+                <div className="absolute z-20 mt-2 w-[250px] bg-gray-800 rounded-lg shadow-xl border border-gray-700">
+                  <CampaignFilter
+                    onFilterChange={handleCampaignFilterChange}
+                    filters={campaignFilters}
+                  />
+                </div>
+              )}
           </div>
+          </div>
+
+          
+
           {activeTab === 'master' ? (
               <CreateCampaignButton onSuccess={fetchRawCampaigns} />
             ) : (
@@ -354,20 +382,12 @@ export default function DashboardPage() {
               </button>
             )}
         </div>
-
-        {/* --- RENDERIZAÇÃO DO COMPONENTE DE FILTRO --- */}
-        {/* PASSA O ESTADO 'campaignFilters' COMO PROP PARA O CAMPAIGNFILTER */}
-        {/* Garanta que CampaignFilter.tsx foi atualizado */}
-        <CampaignFilter
-          onFilterChange={handleCampaignFilterChange} // Handler para notificar o pai
-          filters={campaignFilters} // <-- PASSE O ESTADO campaignFilters COMO PROP AQUI!
-        />
         
         {/* --- FIM COMPONENTE DE FILTRO --- */}
           
         {/* --- RENDERIZAÇÃO DOS CARDS DE CAMPANHA --- */}
         {activeTab === 'master' && filteredMasterCampaigns.length === 0 && (
-          <div className="max-w-6xl mt-20 bg-gray-500/20 backdrop-blur-sm mx-auto rounded-lg p-4 shadow-lg justify-items-center">
+          <div className="max-w-6xl mt-20 mx-auto rounded-lg p-4 justify-items-center">
             <p className="text-white text-center font-bold text-2xl text-shadow">
               Você ainda não criou nenhuma campanha.
             </p>
@@ -375,7 +395,7 @@ export default function DashboardPage() {
         )}
 
         {activeTab === 'player' && filteredPlayerCampaigns.length === 0 && (
-          <div className="max-w-6xl mt-20 bg-gray-500/20 backdrop-blur-sm mx-auto rounded-lg p-4 shadow-lg justify-items-center">
+          <div className="max-w-6xl mt-20 mx-auto rounded-lg p-4 justify-items-center">
             <p className="text-white text-center font-bold text-2xl text-shadow">
               Você ainda não participa de nenhuma campanha.
             </p>
@@ -459,26 +479,6 @@ export default function DashboardPage() {
           </nav>
         </div>*/}
 
-      <div className='absolute'>
-        <nav className='fixed bottom-0 left-1/2 transform -translate-x-1/2 px-10 pb-1 pt-2 bg-black rounded-tr-xl rounded-tl-xl '>
-          <div className='text-white flex gap-10'>
-              <span className="material-symbols-rounded" style={{ fontSize: '40px' }}>
-                filter_list
-              </span>
-
-              <span className="material-symbols-rounded" style={{ fontSize: '40px' }}>
-                settings
-              </span>
-
-              <span className="material-symbols-rounded cursor-pointer" style={{ fontSize: '40px' }}
-                onClick={() => {
-                  router.push('/profile'); // <-- REDIRECIONA PARA profile
-                }}>
-                account_circle
-              </span>
-          </div>
-        </nav>
-      </div>
     </div>
   )
 }

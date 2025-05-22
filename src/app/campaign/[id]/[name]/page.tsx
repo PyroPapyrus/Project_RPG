@@ -397,7 +397,7 @@ const Page = ({ params }: PageProps) => {
           {/* Container for sessions content */}
           <div className="flex-col h-full">
             {/* Header fixed only within this column */}
-            <div className="sticky top-0 bg-black/50 px-[55px] py-[14px] z-10">
+            <div className="fixed w-[calc(100%-840px)] bg-black/50 px-[55px] py-[14px] z-10">
               <header className="flex items-center justify-between">
                 <h2 className="text-3xl text-white font-bold">Sessões da Campanha</h2>
                 {isMaster && (
@@ -408,21 +408,21 @@ const Page = ({ params }: PageProps) => {
                   </Button>
                 )}
 
-            {authorized && !isMaster && campaign && userId && (
-              <LeaveCampaignButton
-                campaignId={campaign.id}
-                campaignName={campaign.name}
-                userId={userId}
-                isMaster={isMaster} // Passa o estado isMaster
-                authorized={authorized} // Passa o estado authorized
-                // Se quisesse um callback, passaria aqui: onLeaveSuccess={handleSomethingAfterLeave}
-              />
-           )}
+                {authorized && !isMaster && campaign && userId && (
+                  <LeaveCampaignButton
+                    campaignId={campaign.id}
+                    campaignName={campaign.name}
+                    userId={userId}
+                    isMaster={isMaster} // Passa o estado isMaster
+                    authorized={authorized} // Passa o estado authorized
+                    // Se quisesse um callback, passaria aqui: onLeaveSuccess={handleSomethingAfterLeave}
+                  />
+                )}
               </header>
             </div>
 
             {/* Sessions content with padding */}
-            <div className="p-4">
+            <div className="p-4 pt-[80px]">
               <div>
                 {sessionsLoading ? (
                   <div className="flex justify-center items-center h-32">
