@@ -146,133 +146,131 @@ export default function EditCampaignModal({
 
   // Renderização do Modal (similar aos outros modais)
   return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+      <div className="bg-white rounded-lg p-6 w-full max-w-md shadow-xl">
 
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-        <div className="bg-white rounded-lg p-6 w-full max-w-md">
+        <div className='flex justify-between pb-2 mb-2 border-b-2'>
+          <h2 className="text-2xl font-bold">Editar Campanha</h2>
+          <CloseModalButton onClose={onClose} />
+        </div>
+        {/* Popup de Erro */}
+        {error && <ErrorPopup message={error} onClose={() => setError(null)} />}
+        {/* Formulário */}
+        <form onSubmit={handleSubmit} className="flex flex-col gap-2">
 
-          <div className='flex justify-between pb-2 mb-2 border-b-2'>
-            <h2 className="text-2xl font-bold">Editar Campanha</h2>
-            <CloseModalButton onClose={onClose} />
-          </div>
-          {/* Popup de Erro */}
-          {error && <ErrorPopup message={error} onClose={() => setError(null)} />}
-
-          {/* Formulário */}
-          <form onSubmit={handleSubmit} className="flex flex-col gap-2">
-
-            <label className="block text-sm font-medium text-gray-700">
-              Nome da Campanha
-            </label>
-            <FormInput
-              id="edit_campaign_name" // ID único para este modal
-              name="name"
-              type="text"
-              placeholder="Nome da Campanha"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              required
-              maxLength={40}
-              style={{ border: '1px solid #ccc', borderRadius: '0px' }}
-            />
+          <label className="block text-sm font-medium text-gray-700">
+            Nome da Campanha
+          </label>
+          <FormInput
+            id="edit_campaign_name" // ID único para este modal
+            name="name"
+            type="text"
+            placeholder="Nome da Campanha"
+            value={formData.name}
+            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            required
+            maxLength={40}
+            style={{ border: '1px solid #ccc', borderRadius: '0px' }}
+          />
             
-            <label className="block text-sm font-medium text-gray-700 mt-2">
-              Descrição breve
-            </label>
-            <FormInput
-              id="edit_campaign_description"
-              name="description"
-              type="textarea"
-              placeholder="Faça uma descrição breve que contextualize sua campanha!"
-              value={formData.description}
-              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setFormData({ ...formData, description: e.target.value })}
-              required
-              maxLength={500}
-              style={{ border: '1px solid #ccc', borderRadius: '0px' }}
-            />
+          <label className="block text-sm font-medium text-gray-700 mt-2">
+            Descrição breve
+          </label>
+          <FormInput
+            id="edit_campaign_description"
+            name="description"
+            type="textarea"
+            placeholder="Faça uma descrição breve que contextualize sua campanha!"
+            value={formData.description}
+            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setFormData({ ...formData, description: e.target.value })}
+            required
+            maxLength={500}
+            style={{ border: '1px solid #ccc', borderRadius: '0px' }}
+          />
 
-            <label className="block text-sm font-medium text-gray-700 mt-2">
-              Sistema da Campanha
-            </label>
-            <FormInput
-              id="edit_campaign_system"
-              name="system"
-              type="text"
-              placeholder="D&D 5e, Pathfinder, etc."
-              value={formData.system}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, system: e.target.value })}
-              required
-              maxLength={40}
-              style={{ border: '1px solid #ccc', borderRadius: '0px' }}
-            />
+          <label className="block text-sm font-medium text-gray-700 mt-2">
+            Sistema da Campanha
+          </label>
+          <FormInput
+            id="edit_campaign_system"
+            name="system"
+            type="text"
+            placeholder="D&D 5e, Pathfinder, etc."
+            value={formData.system}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, system: e.target.value })}
+            required
+            maxLength={40}
+            style={{ border: '1px solid #ccc', borderRadius: '0px' }}
+          />
 
-            <label className="block text-sm font-medium text-gray-700 mt-2">
-              Limite de Jogadores
-            </label>
-            <p className="text-sm text-gray-500 mb-1">
-              Defina o número máximo de jogadores que poderão participar da campanha (sem contar você, o mestre).
-            </p>
-            <FormInput
-              id="edit_campaign_max_players" // ID único
-              name="max_players"
-              type="number"
-              placeholder="Ex: 5"
-              value={formData.max_players.toString()} // Input type="number" espera string
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                const value = parseInt(e.target.value);
+          <label className="block text-sm font-medium text-gray-700 mt-2">
+            Limite de Jogadores
+          </label>
+          <p className="text-sm text-gray-500 mb-1">
+            Defina o número máximo de jogadores que poderão participar da campanha (sem contar você, o mestre).
+          </p>
+          <FormInput
+            id="edit_campaign_max_players" // ID único
+            name="max_players"
+            type="number"
+            placeholder="Ex: 5"
+            value={formData.max_players.toString()} // Input type="number" espera string
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+              const value = parseInt(e.target.value);
                 // Adicionar validação básica no cliente (pode ser no backend também)
                 if (!isNaN(value)) { // Verifica se o parsing foi bem-sucedido
                   setFormData({ ...formData, max_players: value });
                 } else if (e.target.value === '') { // Permite limpar o campo
                   setFormData({ ...formData, max_players: 0 }); // Ou outro valor padrão/nulo
                 }
-              }}
-                required
-                min={1} // Validação HTML5
-                max={20} // Validação HTML5
-                style={{ border: '1px solid #ccc', borderRadius: '0px' }}
-              />
+            }}
+            required
+            min={1} // Validação HTML5
+            max={20} // Validação HTML5
+            style={{ border: '1px solid #ccc', borderRadius: '0px' }}
+          />
 
-              <label className="block text-sm font-medium text-gray-700 mt-2">
-                Status da Campanha
-              </label>
-              <select
-                id="edit_campaign_status" // ID único
-                name="status"
-                value={formData.status}
-                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFormData({ ...formData, status: e.target.value as 'em_andamento' | 'hiato' | 'concluido' })}
-                className="block w-full pl-3 py-2 border border-gray-300 focus:border-blue-500 sm:text-sm"
-              >
-                <option value="em_andamento">Em Andamento</option>
-                <option value="hiato">Em Hiato</option>
-                <option value="concluido">Concluído</option>
-              </select>
+          <label className="block text-sm font-medium text-gray-700 mt-2">
+            Status da Campanha
+          </label>
+          <select
+            id="edit_campaign_status" // ID único
+            name="status"
+            value={formData.status}
+            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFormData({ ...formData, status: e.target.value as 'em_andamento' | 'hiato' | 'concluido' })}
+            className="block w-full pl-3 py-2 border border-gray-300 focus:border-blue-500 sm:text-sm"
+          >
+            <option value="em_andamento">Em Andamento</option>
+            <option value="hiato">Em Hiato</option>
+            <option value="concluido">Concluído</option>
+          </select>
 
-            {/* Botões de Ação */}
-              <div className="space-y-2 mt-2">
+          {/* Botões de Ação */}
+          <div className="space-y-2 mt-2">
 
-                {/* Botão Salvar */}
-                <SubmitButton
-                  loading={loading}
-                  loadingText="Salvando..."
-                  buttonText="Salvar Alterações"
-                  // Outras props
-                />
+            {/* Botão Salvar */}
+            <SubmitButton
+              loading={loading}
+              loadingText="Salvando..."
+              buttonText="Salvar Alterações"
+              // Outras props
+            />
 
-                {/* Botão Cancelar */}
-                <Button
-                  type="button" // Importante ser 'button'
-                  variant="outline"
-                  onClick={onClose} // Chama onClose das props
-                  disabled={loading}
-                  className="w-full text-lg"
-                >
-                  Cancelar
-                </Button>
+            {/* Botão Cancelar */}
+            <Button
+              type="button" // Importante ser 'button'
+              variant="outline"
+              onClick={onClose} // Chama onClose das props
+              disabled={loading}
+              className="w-full text-lg"
+            >
+              Cancelar
+            </Button>
                 
-              </div>
-          </form>
-        </div>
+          </div>
+        </form>
       </div>
+    </div>
    
   );
 }

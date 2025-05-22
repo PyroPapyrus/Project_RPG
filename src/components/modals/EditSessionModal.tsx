@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button'; // Seu botão padrão
 import { FormInput } from '@/components/FormInput'; // Seu input de formulário
 import { SubmitButton } from '@/components/SubmitButton'; // Seu botão de submit com loading
 import { ErrorPopup } from '@/components/ErrorPopup'; // Seu popup de erro
+import { CloseModalButton } from '../ui/close-modal-button';
 
 // Interface de Props para este componente Modal de Edição
 interface EditSessionModalProps {
@@ -151,28 +152,23 @@ export default function EditSessionModal({
   // Renderização do Modal (similar ao Create)
   return (
     // Fundo escuro fixo com z-index alto
-    <div className="fixed inset-0 z-50 bg-black bg-opacity-60 flex items-center justify-center p-4 transition-opacity duration-300 ease-in-out">
+    <div className="fixed inset-0 z-50 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50">
       {/* Container do Modal */}
-      <div className="bg-white rounded-lg p-6 w-full max-w-lg shadow-xl transform transition-all duration-300 ease-in-out scale-100">
+      <div className="bg-white rounded-lg p-6 w-full max-w-lg shadow-xl">
         {/* Cabeçalho do Modal */}
-        <div className="flex justify-between items-center mb-4">
-          {/* Título do Modal */}
-          <h2 className="text-2xl font-bold text-gray-800">Editar Sessão</h2>
-          {/* Botão de Fechar */}
-          <Button variant="ghost" size="sm" onClick={onClose} aria-label="Fechar"> {/* Usa onClose das props */}
-            {/* Ícone 'X' */}
-            ✕
-          </Button>
+        <div className='flex justify-between pb-2 mb-2 border-b-2'>
+          <h2 className="text-2xl font-bold">Editar Sessão</h2>
+          <CloseModalButton onClose={onClose} />
         </div>
 
         {/* Popup de Erro */}
         {error && <ErrorPopup message={error} onClose={() => setError(null)} />}
 
         {/* Formulário */}
-        <form onSubmit={handleSubmit} className="space-y-5 mt-4">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           {/* Campo Nome */}
-          <div className="space-y-1">
-            <label htmlFor="edit_session_name" className="block text-sm font-medium text-gray-700">
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">
               Nome da Sessão
             </label>
             <FormInput
@@ -184,28 +180,37 @@ export default function EditSessionModal({
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               required
               maxLength={100}
+              style={{ border: '1px solid #ccc', borderRadius: '0px' }}
             />
           </div>
+          <p className="-mt-2 text-xs text-gray-500">
+            {formData.name.length}/100 caracteres
+          </p>
 
           {/* Campo Descrição */}
-          <div className="space-y-1">
-            <label htmlFor="edit_session_goal" className="block text-sm font-medium text-gray-700">
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">
               Resumo Objetivo
             </label>
             <FormInput
               id="edit_session_goal" // ID único 
               name="goal" // Usar 'goal'
               type="textarea"
-              placeholder="Faça um resumo objetivo do que você pretende atingir nesta sessão. O que se espera que aconteça? (Os aventureiros se encontram no vilarejo de Ritamor. Sua missão é encontrar o que está fazendo as pessoas desaparecerem)"
+              placeholder="Faça um resumo objetivo do que você pretende atingir nesta sessão. O que se espera que aconteça? (Ex: Os aventureiros se encontram no vilarejo de Ritamor. Sua missão é encontrar o que está fazendo as pessoas desaparecerem)"
               value={formData.goal}
               onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setFormData({ ...formData, goal: e.target.value })}
               required
               rows={4}
+              maxLength={500}
+              style={{ border: '1px solid #ccc', borderRadius: '0px' }}
             />
           </div>
+          <p className="-mt-4 text-xs text-gray-500">
+            {formData.goal.length}/300 caracteres
+          </p>
 
           {/* Campo Data e Hora */}
-          <div className="space-y-1">
+          <div className="space-y-2">
             <label htmlFor="edit_session_date" className="block text-sm font-medium text-gray-700">
               Data da Sessão
             </label>
@@ -217,20 +222,13 @@ export default function EditSessionModal({
               value={formData.session_date}
               onChange={(e) => setFormData({ ...formData, session_date: e.target.value })}
               required
+              style={{ border: '1px solid #ccc', borderRadius: '0px' }}
             />
           </div>
 
           {/* Botões de Ação */}
-          <div className="flex justify-end space-x-3 pt-4">
-            {/* Botão Cancelar */}
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onClose} // Chama onClose das props
-              disabled={loading}
-            >
-              Cancelar
-            </Button>
+          <div className="mt-2 space-y-1">
+            
             {/* Botão Salvar */}
             <SubmitButton
               loading={loading}
@@ -238,6 +236,17 @@ export default function EditSessionModal({
               buttonText="Salvar Alterações" // Texto diferente
               // Outras props
             />
+
+            {/* Botão Cancelar */}
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onClose} // Chama onClose das props
+              disabled={loading}
+              className='w-full py-5 text-lg'
+            >
+              Cancelar
+            </Button>
           </div>
         </form>
       </div>

@@ -11,7 +11,7 @@ interface BackButtonProps {
 export function BackButton({ href }: BackButtonProps) {
   return (
     <Link href={href}>
-      <Button variant="ghost" size="sm" className="text-white hover:text-gray-800 hover:bg-white">
+      <Button variant="ghost" size="sm" className="rounded-full py-[21px] text-white hover:text-gray-800 hover:bg-white">
         <ArrowLeft className="h-7 w-7" />
       </Button>
     </Link>

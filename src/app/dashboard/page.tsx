@@ -268,14 +268,43 @@ export default function DashboardPage() {
 
     <div className="bg-[url(/images/bg-campanhas.jpeg)] bg-no-repeat bg-fixed bg-cover min-h-screen">
 
-      <header className="bg-gray-800 text-white py-4">
-        <div className="mx-auto px-4 flex justify-between items-center">
+      <header className="relative justify-center items-center bg-gray-800 text-white py-4 shadow-md">
+        
+        <div className='absolute left-4 top-3'>
           <BackButton href='/'/>
-            <h1 className="text-2xl font-semibold">
-              {activeTab === 'master' ? 'Minhas Campanhas' : 'Campanhas que Participo'}
-            </h1>
-          <LogoutButton />
         </div>
+
+        <div className='justify-self-center'>
+          <h1 className="text-2xl font-semibold">
+            {activeTab === 'master' ? 'Minhas Campanhas' : 'Campanhas que Participo'}
+          </h1>
+        </div>
+
+        
+  
+        <div className='flex absolute items-center top-0 right-2'>
+
+          <div>
+            <LogoutButton />
+          </div>
+
+          <a href="/">
+            <img 
+              src="/images/logo.png" 
+              alt="logo Story&Plot" 
+              className="w-64" 
+            />
+          </a>
+
+          <span 
+            className="material-symbols-rounded text-white cursor-pointer transform hover:scale-110 transition-all duration-200 ease-in-out" 
+            style={{ fontSize: '35px' }}
+            onClick={() => router.push('/profile')}>
+            account_circle
+          </span>
+          
+        </div>
+        
       </header>
 
       <main className="mx-auto pt-8">
@@ -356,7 +385,7 @@ export default function DashboardPage() {
         {/* Cards Container - Only rendered when there are campaigns */}
         {((activeTab === 'master' && filteredMasterCampaigns.length > 0) || 
           (activeTab === 'player' && filteredPlayerCampaigns.length > 0)) && (
-          <div className='bg-gray-500/50 backdrop-blur-sm mt-5 pt-6 pb-[65px] min-h-[calc(100vh-164px)]'>
+          <div className='mt-5 pt-6 pb-[65px] min-h-[calc(100vh-164px)]'>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-6xl mx-auto">
               {activeTab === 'master' ? (
                 filteredMasterCampaigns.map((campaign) => (

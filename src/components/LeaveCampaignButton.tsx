@@ -100,14 +100,17 @@ const LeaveCampaignButton: React.FC<LeaveCampaignButtonProps> = ({
     return (
         <>
             <Button
-                variant="destructive"
+                className='gap-1 py-[18px] bg-red-600 hover:bg-red-800'
                 size="sm"
                 onClick={handleLeaveButtonClick}
                 disabled={loading} // Desabilita o botão enquanto estiver processando ambas as deleções
             >
+            <span className="material-symbols-rounded">
+                logout
+            </span>
                 {loading ? 'Saindo e removendo notas...' : 'Sair da Campanha'}
             </Button>
-
+        
             {/* Modal de Confirmação para Sair da Campanha */}
             <ConfirmationModal
                 isOpen={isLeaveConfirmOpen}

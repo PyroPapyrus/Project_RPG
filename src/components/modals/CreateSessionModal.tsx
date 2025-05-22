@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button'; // Seu botão padrão
 import { FormInput } from '@/components/FormInput'; // Seu input de formulário
 import { SubmitButton } from '@/components/SubmitButton'; // Seu botão de submit com loading
 import { ErrorPopup } from '@/components/ErrorPopup'; // Seu popup de erro
+import { CloseModalButton } from '../ui/close-modal-button';
 
 // Interface de Props para este componente Modal
 interface CreateSessionModalProps {
@@ -128,92 +129,102 @@ export default function CreateSessionModal({
 
   // Renderização do Modal (baseada na estrutura do seu CreateCampaignButton)
   return (
-    <div className="fixed inset-0 z-50 bg-black bg-opacity-60 flex items-center justify-center p-4 transition-opacity duration-300 ease-in-out">
-      <div className="bg-white rounded-lg p-6 w-full max-w-lg shadow-xl transform transition-all duration-300 ease-in-out scale-100">
+    <div className="fixed inset-0 z-50 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50">
+      <div className="bg-white rounded-lg p-6 w-full max-w-lg shadow-xl">
         {/* Cabeçalho do Modal */}
-        <div className="flex justify-between items-center mb-4">
-            <h2 className="text-2xl font-bold text-gray-800">Criar Nova Sessão</h2>
-            {/* Botão de Fechar (opcional, mas recomendado) */}
-            <Button variant="ghost" size="sm" onClick={resetFormAndClose} aria-label="Fechar">
-                {/* Pode usar um ícone 'X' aqui */}
-                ✕
-            </Button>
+        <div className='flex justify-between pb-2 mb-2 border-b-2'>
+          <h2 className="text-2xl font-bold">Criar Nova Sessão</h2>
+          <CloseModalButton onClose={onClose} />
         </div>
 
         {/* Popup de Erro (reutilizado) */}
         {error && <ErrorPopup message={error} onClose={() => setError(null)} />}
 
         {/* Formulário */}
-        <form onSubmit={handleSubmit} className="space-y-5 mt-4">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+
+          <div className="space-y-2"> {/* Agrupa label e input */}
             {/* Campo Nome */}
-        <div className="space-y-1"> {/* Agrupa label e input */}
-            <label htmlFor="session_name" className="block text-sm font-medium text-gray-700">
-            Nome da Sessão
+            <label className="block text-sm font-medium text-gray-700">
+              Nome da Sessão
             </label>
             <FormInput
-            id="session_name" // ID para o htmlFor do label funcionar
-            name="session_name"
-            type="text"
-            placeholder="Ex: O Ataque dos Goblins"
-            value={formData.name}
-            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            required
-            maxLength={100}
-            // label="Nome da Sessão" <-- REMOVIDO
+              id="session_name" // ID para o htmlFor do label funcionar
+              name="session_name"
+              type="text"
+              placeholder="Ex: O Ataque dos Goblins"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              required
+              maxLength={100}
+              style={{ border: '1px solid #ccc', borderRadius: '0px' }}
+              
+              // label="Nome da Sessão" <-- REMOVIDO
             />
-        </div>
-
-        {/* Campo Descrição */}
-        <div className="space-y-1"> {/* Agrupa label e input */}
-            <label htmlFor="session_goal" className="block text-sm font-medium text-gray-700">
-            Descrição breve / Sinopse
+          </div>
+          <p className="-mt-2 text-xs text-gray-500">
+            {formData.name.length}/100 caracteres
+          </p>
+          
+          <div className="space-y-2"> {/* Agrupa label e input */}
+            {/* Campo Descrição */}
+            <label className="block text-sm font-medium text-gray-700">
+              Resumo Objetivo
             </label>
             <FormInput
-            id="session_goal" // ID para o htmlFor
-            name="session_goal"
-            type="textarea"
-            placeholder="O que se espera que aconteça? Qual foi o marco dessa sessão?"
-            value={formData.goal}
-            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setFormData({ ...formData, goal: e.target.value })}
-            required
-            rows={4}
-            // label="Descrição / Objetivos" <-- REMOVIDO
+              id="session_goal" // ID para o htmlFor
+              name="session_goal"
+              type="textarea"
+              placeholder="Faça um resumo objetivo do que você pretende atingir nesta sessão. O que se espera que aconteça? (Ex: Os aventureiros se encontram no vilarejo de Ritamor. Sua missão é encontrar o que está fazendo as pessoas desaparecerem)"
+              value={formData.goal}
+              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setFormData({ ...formData, goal: e.target.value })}
+              required
+              rows={4}
+              maxLength={300}
+              style={{ border: '1px solid #ccc', borderRadius: '0px' }}
+              // label="Descrição / Objetivos" <-- REMOVIDO
             />
-            {/* Você pode adicionar um contador de caracteres aqui se quiser, como no CreateCampaignButton */}
-        </div>
+          </div>
+          <p className="-mt-4 text-xs text-gray-500">
+            {formData.goal.length}/300 caracteres
+          </p>
+      
 
-        {/* Campo Data e Hora */}
-        <div className="space-y-1"> {/* Agrupa label e input */}
-                <label htmlFor="session_date" className="block text-sm font-medium text-gray-700">
-                Data e Hora da Sessão
-                </label>
-                <FormInput
-                id="session_date" // ID para o htmlFor
-                name="session_date"
-                type="datetime-local"
-                placeholder="" // <--- ADICIONADO placeholder obrigatório (string vazia)
-                value={formData.session_date}
-                onChange={(e) => setFormData({ ...formData, session_date: e.target.value })}
-                required
-                />
-            </div>
+          {/* Campo Data e Hora */}
+          <div className="space-y-2"> {/* Agrupa label e input */}
+            <label className="block text-sm font-medium text-gray-700">
+              Data da Sessão
+            </label>
+            <FormInput
+              id="session_date" // ID para o htmlFor
+              name="session_date"
+              type="datetime-local"
+              placeholder="" // <--- ADICIONADO placeholder obrigatório (string vazia)
+              value={formData.session_date}
+              onChange={(e) => setFormData({ ...formData, session_date: e.target.value })}
+              required
+              style={{ border: '1px solid #ccc', borderRadius: '0px' }}
+            />
+          </div>
 
           {/* Botões de Ação */}
-          <div className="flex justify-end space-x-3 pt-4">
-            <Button
-              type="button" // Importante ser 'button' para não submeter o form
-              variant="outline" // Use a variante apropriada do seu Button
-              onClick={resetFormAndClose} // Chama a função de fechar/resetar
-              disabled={loading} // Desabilita enquanto carrega
-            >
-              Cancelar
-            </Button>
+          <div className="mt-2 space-y-1">
             <SubmitButton
               loading={loading} // Passa o estado de loading
               loadingText="Criando..." // Texto durante o loading
               buttonText="Criar Sessão" // Texto normal
               // Outras props que seu SubmitButton possa precisar
             />
+
+            <Button
+              type="button" // Importante ser 'button' para não submeter o form
+              variant="outline" // Use a variante apropriada do seu Button
+              onClick={resetFormAndClose} // Chama a função de fechar/resetar
+              disabled={loading} // Desabilita enquanto carrega
+              className='w-full py-5 text-lg'
+            >
+              Cancelar
+            </Button>
           </div>
         </form>
       </div>

@@ -20,6 +20,7 @@ import ConfirmationModal from '@/components/modals/ConfirmationModal';
 import EditWorldStoryModal from '@/components/modals/EditWorldStoryModal';
 import { toast } from 'react-toastify' // Verifique se 'react-toastify' é o que você usa (antes usou 'react-hot-toast')
 import { BackButton } from '@/components/ui/back-button'
+import LeaveCampaignButton from '@/components/LeaveCampaignButton'
 
 // --- NOVO TIPO para o estado 'campaign' com a contagem de jogadores ---
 // Este tipo estende o seu tipo CampaignBase e adiciona a estrutura para a contagem
@@ -278,10 +279,10 @@ const Page = ({ params }: PageProps) => {
       <div className="flex min-h-screen justify-between">
 
         <aside className="bg-gray-800 text-white max-w-[420px] max-h-screen break-words overflow-y-auto w-full">
-          <header className='bg-gray-900 py-2 px-2'>
+          <header className='bg-gray-900 py-[11px] px-2'>
             <BackButton href='/dashboard'></BackButton>
           </header>
-          <div className="pr-10 pl-5 py-5">
+          <div className="pr-5 pl-5 py-5">
             
             <p className='font-bold'>Nome da Campanha</p>
             <p className="text-2xl mb-4 bg-gray-700 px-4 py-1">{campaign.name}</p>
@@ -289,7 +290,7 @@ const Page = ({ params }: PageProps) => {
             <div className='grid grid-cols-2 gap-x-3 gap-y-4'>
               <div>
                 <p className='font-bold'>Status</p>
-                <p className={`px-4 py-1 whitespace-nowrap  ${
+                <p className={`px-4 py-1 whitespace-nowrap ${
                   campaign.status === 'concluido' 
                     ? 'bg-red-100 text-red-600' 
                     : campaign.status === 'hiato'
@@ -318,7 +319,7 @@ const Page = ({ params }: PageProps) => {
 
               <div>
                 <p className='font-bold'>Jogadores</p>
-                <p className='flex justify-center justify-content-start mb-4 bg-gray-700 py-1'>
+                <p className='flex justify-content-start mb-4 px-4 bg-gray-700 py-1'>
                   {campaign.players_count}/{campaign.max_players}
                   <span className='material-symbols-rounded' >person</span>
                 </p>
@@ -396,14 +397,27 @@ const Page = ({ params }: PageProps) => {
           {/* Container for sessions content */}
           <div className="flex-col h-full">
             {/* Header fixed only within this column */}
-            <div className="sticky top-0 bg-black/50 px-[55px] py-3 z-10">
+            <div className="sticky top-0 bg-black/50 px-[55px] py-[14px] z-10">
               <header className="flex items-center justify-between">
                 <h2 className="text-3xl text-white font-bold">Sessões da Campanha</h2>
                 {isMaster && (
-                  <Button onClick={() => setIsCreateModalOpen(true)}>
+                  <Button 
+                    className='-my-2'
+                    onClick={() => setIsCreateModalOpen(true)}>
                     Criar Nova Sessão
                   </Button>
                 )}
+
+            {authorized && !isMaster && campaign && userId && (
+              <LeaveCampaignButton
+                campaignId={campaign.id}
+                campaignName={campaign.name}
+                userId={userId}
+                isMaster={isMaster} // Passa o estado isMaster
+                authorized={authorized} // Passa o estado authorized
+                // Se quisesse um callback, passaria aqui: onLeaveSuccess={handleSomethingAfterLeave}
+              />
+           )}
               </header>
             </div>
 
@@ -419,12 +433,16 @@ const Page = ({ params }: PageProps) => {
                     <p className="text-white text-xl">Ainda não há sessões registradas para esta campanha.</p>
                   </div>
                 ) : (
-                  <div className="space-y-6 justify-self-center max-w-[900px] w-full">
+                  <div className="space-y-6 justify-self-center max-w-[900px]">
                     {sessions.map((session) => (
                       <Card key={session.id}>
-                        <CardHeader className="bg-gray-700 rounded-t-lg border-2 border-black">
-                          <CardTitle className="flex justify-between text-xl text-white font-bold break-words">{session.name}
-                            {isMaster && (
+                        <CardHeader className="grid grid-cols-2 gap-2 bg-gray-700 rounded-t-lg border-2 border-black">
+                          <CardTitle className="col-start-1 col-end-3 text-xl text-white font-bold break-words">
+                            {session.name}
+                            
+                          </CardTitle>
+                          <div className='col-span-2 col-end-7 justify-self-end'>
+                          {isMaster && (
                               <div className='space-x-2 flex'>
                                 <Button
                                   className="text-yellow-500 bg-white/10 hover:bg-yellow-500 hover:text-yellow-700" 
@@ -441,8 +459,7 @@ const Page = ({ params }: PageProps) => {
                                 </Button>
                               </div>
                             )}
-                         
-                          </CardTitle>
+                          </div>
                           <CardDescription className="flex gap-2 text-sm text-white pt-1">
                             Data: {new Date(session.session_date).toLocaleDateString('pt-BR')}
                             

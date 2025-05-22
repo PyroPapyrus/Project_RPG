@@ -139,6 +139,10 @@ export default function SignUpPage() {
         </a>
       </header>
 
+      <div>
+      {error && <ErrorPopup message={error} onClose={() => setError(null)} />}
+      </div>
+
       <div className="relative flex justify-center items-center min-h-[calc(100vh-10rem)]">
         <div className="bg-gray-200/60 backdrop-blur-sm rounded-lg shadow-md p-8 w-full max-w-xl">
           <div className='text-center mb-5'>
@@ -148,8 +152,6 @@ export default function SignUpPage() {
 
             <p className='mt-3'>Crie sua conta</p>
           </div>
-
-        
 
           <form className="space-y-4" onSubmit={handleSubmit}>
             <div className="space-y-2">
@@ -174,8 +176,6 @@ export default function SignUpPage() {
                 </div>
               </div>
               {/* --- FIM CAMPO USERNAME --- */}
-
-
 
               <div className='bg-white border shadow-md border-gray-300 rounded-md flex items-center'>
                 <span className="material-symbols-rounded px-2" style={{ fontSize: '20px' }}>
@@ -239,7 +239,7 @@ export default function SignUpPage() {
               <p className="px-1 text-black text-sm">A senha deve conter:</p>
               <PasswordRequirements password={password} />
             </div>
-            {error && <ErrorPopup message={error} onClose={() => setError(null)} />}
+            
             {success && (
               <FeedbackMessage
                 message="Valide a criação pelo email! Redirecionando para o login..."

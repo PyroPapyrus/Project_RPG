@@ -290,7 +290,7 @@ export default function CampaignNotes({ campaignId }: CampaignNotesProps) {
             </select>
             {/* Botão para adicionar a nota */}
             <Button 
-              className='gap-2 text-sm'
+              className='gap-2 text-sm whitespace-nowrap'
               onClick={handleAddNote}
               disabled={loading}>
               {loading ? 'Adicionando...' : 'Adicionar Anotação'}
@@ -314,18 +314,25 @@ export default function CampaignNotes({ campaignId }: CampaignNotesProps) {
           {/* Input para o título */}
           <Textarea
             placeholder="Título/nome da nota"
-            className="mb-2 resize-none min-h-[40px] overflow-hidden"
+            className="bg-gray-600 border-none mb-2 resize-none min-h-[40px] overflow-hidden text-white"
             value={newNote.title}
             onChange={(e) => setNewNote({ ...newNote, title: e.target.value })}
             maxLength={60}
           />
+          <p className="-mt-1 mb-1 text-xs text-white">
+            {newNote.title.length}/60 caracteres
+          </p>
           {/* Textarea para o conteúdo */}
           <Textarea
             placeholder="Conteúdo da nota"
-            className="mb-2 resize-none"
+            className="bg-gray-600 border-none mb-2 text-white"
             value={newNote.content}
             onChange={(e) => setNewNote({ ...newNote, content: e.target.value })}
+            maxLength={200}
           />
+          <p className="-mt-1 mb-1 text-xs text-white">
+            {newNote.content.length}/200 caracteres
+          </p>
           {/* Checkbox para definir privacidade */}
           <div className="bg-black text-white px-2 py-1 rounded-sm justify-self-start flex items-center space-x-1 mb-1">
             <input
@@ -348,19 +355,27 @@ export default function CampaignNotes({ campaignId }: CampaignNotesProps) {
               {editingNote?.id === note.id ? (
                 // --- MODO EDIÇÃO ---
                 <> {/* Fragmento para agrupar elementos */}
-                  <Input
-                    className="mb-2"
+                <h1 className='text-sm text-yellow-500 mb-1'>Editando Nota: "{note.title}"</h1>
+                  <Textarea
+                    className="bg-gray-500 border-none mb-2 resize-none min-h-[40px] overflow-hidden text-white"
                     value={editingNote.title}
                     onChange={(e) => setEditingNote({ ...editingNote, title: e.target.value })}
                     placeholder="Título"
-                    maxLength={40}
+                    maxLength={60}
                   />
+                  <p className="-mt-1 mb-1 text-xs text-white">
+                    {editingNote.title.length}/60 caracteres
+                  </p>
                   <Textarea
-                    className="mb-2"
+                    className="mb-2 text-white bg-gray-500 border-none"
                     value={editingNote.content}
                     onChange={(e) => setEditingNote({ ...editingNote, content: e.target.value })}
                     placeholder="Conteúdo da nota"
+                    maxLength={200}
                   />
+                  <p className="-mt-1 mb-1 text-xs text-white">
+                    {editingNote.content.length}/200 caracteres
+                  </p>
                      <div className="flex justify-end space-x-2"> {/* Botões de salvar/cancelar */}
                       <Button onClick={handleEdit}>Salvar</Button>
                       <Button variant="outline" onClick={() => setEditingNote(null)}>Cancelar</Button>

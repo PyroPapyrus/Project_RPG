@@ -42,7 +42,7 @@ export function FormInput(props: FormInputProps) {
   }, [props.value, props.type]);
 
   const baseClasses = "w-full rounded-r-md px-3 py-2 text-sm";
-  const textareaClasses = `${baseClasses} break-word pre-wrap min-h-[100px] resize-none overflow-hidden ${props.className || ''}`;
+  const textareaClasses = `${baseClasses} break-words pre-wrap min-h-[100px] resize-none overflow-hidden ${props.className || ''}`;
   const inputClasses = `${baseClasses} ${props.className || ''}`;
 
   if (props.type === 'textarea') {
