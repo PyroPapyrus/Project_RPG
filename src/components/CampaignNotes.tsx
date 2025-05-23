@@ -300,7 +300,7 @@ export default function CampaignNotes({ campaignId }: CampaignNotesProps) {
         {/* --- FIM DE DIV COM SELECT DE FILTRO --- */}
 
         {/* --- SEÇÃO: Adicionar Nova Nota --- */}
-        <div className="mx-8 px-4 text-black py-2 rounded bg-gray-700"> 
+        <div className="mx-5 px-4 text-black py-2 rounded bg-gray-700"> 
           <div className='justify-between flex'>
             <h3 className="font-semibold mb-1 text-white">Nova Nota de Campanha</h3> {/* Título da seção */}
             {/* Ícone de Cadeado: trancado para privada, aberto para pública */}

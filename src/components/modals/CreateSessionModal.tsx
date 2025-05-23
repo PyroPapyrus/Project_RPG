@@ -181,7 +181,7 @@ export default function CreateSessionModal({
               id="session_goal"
               name="session_goal"
               type="textarea"
-              placeholder="Faça um resumo objetivo do que você pretende atingir nesta sessão. O que se espera que aconteça? (Ex: Os aventureiros se encontram no vilarejo de Ritamor. Sua missão é encontrar o que está fazendo as pessoas desaparecerem)"
+              placeholder="Faça um resumo objetivo do que você atingiu nesta sessão. O resumo objetivo é opcional desde sua criação, mas recomenda-se que, após a sessão, você escreva um resumo neste campo."
               value={formData.goal}
               onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setFormData({ ...formData, goal: e.target.value })}
               rows={4}
