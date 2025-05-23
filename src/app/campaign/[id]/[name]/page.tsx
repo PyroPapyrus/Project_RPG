@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, Pencil, Trash2 } from 'lucide-react'
+import { ArrowLeft, Pencil, Trash2, Users } from 'lucide-react'
 import CampaignNotes from '@/components/CampaignNotes'
 
 // Importar tipos existentes
@@ -17,6 +17,7 @@ import CreateSessionModal from '@/components/modals/CreateSessionModal'
 import EditSessionModal from '@/components/modals/EditSessionModal';
 import ConfirmationModal from '@/components/modals/ConfirmationModal';
 import EditWorldStoryModal from '@/components/modals/EditWorldStoryModal';
+import PlayersManagementModal from '@/components/modals/PlayersManagementModal';
 import { toast } from 'react-toastify' // Verifique se 'react-toastify' é o que você usa (antes usou 'react-hot-toast')
 import { BackButton } from '@/components/ui/back-button'
 import LeaveCampaignButton from '@/components/LeaveCampaignButton'
@@ -59,6 +60,7 @@ const Page = ({ params }: PageProps) => {
  const [isWorldStoryModalOpen, setIsWorldStoryModalOpen] = useState(false);
  // --- FIM NOVOS ESTADOS world_story ---
 
+  const [isPlayersModalOpen, setIsPlayersModalOpen] = useState(false);
 
  const [userId, setUserId] = useState<string | null>(null)
 
@@ -73,7 +75,6 @@ const Page = ({ params }: PageProps) => {
     .eq('campaign_id', campaignId)
     .order('session_date', { ascending: false })
     .order('created_at', { ascending: false });
-
 
   if (!sessionsError) {
     setSessions(sessionsData || []);
@@ -122,13 +123,9 @@ const Page = ({ params }: PageProps) => {
       }
 
       // --- PROCESSAR DADOS PARA ADICIONAR CONTADOR FACILMENTE ---
-      // campaignData virá com a estrutura { ..., players: [{ count: N }] }
-      // Vamos criar um novo objeto para o estado da campanha, adicionando player_count para acesso mais fácil
       const processedCampaignData: CampaignWithPlayerCount = {
           ...campaignData, // Copia todas as propriedades existentes da campanha (incluindo as colunas originais e 'players')
           players_count: campaignData.players?.[0]?.count || 0 // Acessa a contagem do array 'players' e adiciona como 'players_count', default 0 se nulo/vazio
-          // Opcional: Se não precisar da propriedade 'players' aninhada no estado após extrair a contagem, pode removê-la:
-          // players: undefined // Ou use um 'delete' após criar processedCampaignData
       };
       // --- FIM PROCESSAMENTO ---
 
@@ -241,7 +238,7 @@ const Page = ({ params }: PageProps) => {
   // --- FIM HANDLERS EXCLUSÃO SESSÃO ---
 
 
-    // --- NOVO HANDLER PARA ATUALIZAR world_story APÓS SALVAR NO MODAL ---
+    // --- HANDLER PARA ATUALIZAR world_story APÓS SALVAR NO MODAL ---
   const handleWorldStorySaved = (updatedWorldStory: string | null) => {
         // Atualiza o estado da campanha com o novo world_story
         if (campaign) {
@@ -253,7 +250,15 @@ const Page = ({ params }: PageProps) => {
         setIsWorldStoryModalOpen(false); // Fecha o modal
     };
     // --- FIM NOVO HANDLER ---
-  
+
+
+    // HANDLER para quando a lista de jogadores for atualizada
+    const handlePlayersUpdated = () => {
+      setIsPlayersModalOpen(false); // Fecha o modal
+      loadData(); // Recarrega todos os dados da campanha, incluindo a contagem de jogadores
+      toast.success('Jogador removido com sucesso!');
+    };
+
 
   if (loading) {
     return (
@@ -356,6 +361,20 @@ const Page = ({ params }: PageProps) => {
                 </div>
               </div>
             )}
+
+
+             {/* Botão para abrir o modal de gerenciamento de jogadores */}
+            {isMaster && (
+              <div className="mt-4">
+                <Button 
+                  onClick={() => setIsPlayersModalOpen(true)}
+                  className="w-full justify-center">
+                  <Users className="h-4 w-4 mr-2" />
+                  Gerenciar Jogadores
+                </Button>
+              </div>
+            )}
+            
             
             {/*DIVISOR ESTÉTICO ENTRE OS CAMPOS DA CAMPANHA E O WORLD STORY*/}
             <div className='flex pb-2 mt-6 mb-2 border-b-2'></div>
@@ -389,7 +408,6 @@ const Page = ({ params }: PageProps) => {
               </div>
               {/* Fim Exibição world_story */}
             </div>
-            
             
           </div>
         </aside>
@@ -462,9 +480,9 @@ const Page = ({ params }: PageProps) => {
                             )}
                           </div>
                           <CardDescription className="flex gap-2 text-sm text-white pt-1">
-                            Data: {new Date(session.session_date).toLocaleDateString('pt-BR')}
+                            Data: {new Date(session.session_date ?? '').toLocaleDateString('pt-BR')}
                             
-                            <p>({new Date(session.session_date).toLocaleDateString('pt-BR', {
+                            <p>({new Date(session.session_date ?? '').toLocaleDateString('pt-BR', {
                               year: 'numeric', month: 'long', day: 'numeric'
                             })})</p>
                           </CardDescription>
@@ -545,7 +563,7 @@ const Page = ({ params }: PageProps) => {
          />
       )}
 
-       {/* --- MODAL DE EDIÇÃO DE WORLD_STORY --- */}
+       {/* MODAL DE EDIÇÃO DE WORLD_STORY */}
        {campaign && isMaster && ( // Só renderiza se houver campanha e for Mestre
           <EditWorldStoryModal
               isOpen={isWorldStoryModalOpen} // Controlado pelo novo estado
@@ -556,6 +574,17 @@ const Page = ({ params }: PageProps) => {
           />
       )}
       {/* --- FIM MODAL --- */}
+
+        {/* MODAL DE GERENCIAMENTO DE JOGADORES */}
+      {campaign && isMaster && (
+        <PlayersManagementModal
+          isOpen={isPlayersModalOpen}
+          onClose={() => setIsPlayersModalOpen(false)}
+          campaignId={campaign.id}
+          onPlayerRemoved={handlePlayersUpdated} // <--- CORRIGIDO PARA onPlayerRemoved
+        />
+      )}
+
 
     </>
   )
