@@ -276,7 +276,7 @@ export default function CampaignNotes({ campaignId }: CampaignNotesProps) {
  return (
     <div className="space-y-4 mb-4"> {/* Container principal com espaçamento vertical */}
       <div> {/* Seção de exibição e filtro das notas */}
-        
+        <h2 className="text-2xl mt-2 font-semibold justify-self-center py-[5px] px-[64px]">Notas da Campanha</h2>
           {/* --- DIV COM SELECT DE FILTRO --- */}
           <div className="flex px-4 rounded items-center justify-center gap-2 my-2">
             <select
@@ -300,7 +300,7 @@ export default function CampaignNotes({ campaignId }: CampaignNotesProps) {
         {/* --- FIM DE DIV COM SELECT DE FILTRO --- */}
 
         {/* --- SEÇÃO: Adicionar Nova Nota --- */}
-        <div className="mx-5 px-4 text-black py-2 rounded bg-gray-700"> 
+        <div className="mx-5 text-black py-2 border-b-2"> 
           <div className='justify-between flex'>
             <h3 className="font-semibold mb-1 text-white">Nova Nota de Campanha</h3> {/* Título da seção */}
             {/* Ícone de Cadeado: trancado para privada, aberto para pública */}
@@ -350,14 +350,14 @@ export default function CampaignNotes({ campaignId }: CampaignNotesProps) {
           {/* Mapeia o array de notas FILTRADAS para renderizar cada nota */}
           {filteredNotes.map((note) => (
             /* Card individual da nota */
-            <div key={note.id} className="bg-gray-600 rounded p-3 mx-5"> {/* Usa o ID da nota como key */}
+            <div key={note.id} className="bg-gray-700 rounded p-3 mx-5"> {/* Usa o ID da nota como key */}
               {/* Renderiza o modo de edição se a nota atual for a que está sendo editada */}
               {editingNote?.id === note.id ? (
                 // --- MODO EDIÇÃO ---
                 <> {/* Fragmento para agrupar elementos */}
                 <h1 className='text-sm text-yellow-500 mb-1'>Editando Nota: "{note.title}"</h1>
                   <Textarea
-                    className="bg-gray-500 border-none mb-2 resize-none min-h-[40px] overflow-hidden text-white"
+                    className="bg-gray-600 border-none mb-2 resize-none min-h-[40px] overflow-hidden text-white"
                     value={editingNote.title}
                     onChange={(e) => setEditingNote({ ...editingNote, title: e.target.value })}
                     placeholder="Título"
@@ -367,7 +367,7 @@ export default function CampaignNotes({ campaignId }: CampaignNotesProps) {
                     {editingNote.title.length}/60 caracteres
                   </p>
                   <Textarea
-                    className="mb-2 text-white bg-gray-500 border-none"
+                    className="mb-2 text-white bg-gray-600 border-none"
                     value={editingNote.content}
                     onChange={(e) => setEditingNote({ ...editingNote, content: e.target.value })}
                     placeholder="Conteúdo da nota"

@@ -198,7 +198,7 @@ export default function EditSessionModal({
               value={formData.goal}
               onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setFormData({ ...formData, goal: e.target.value })}
               rows={4}
-              maxLength={500}
+              maxLength={300}
               style={{ border: '1px solid #ccc', borderRadius: '0px' }}
             />
           </div>

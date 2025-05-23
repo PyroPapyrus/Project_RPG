@@ -399,7 +399,7 @@ const Page = ({ params }: PageProps) => {
           <div className="flex-col h-full">
             {/* Header fixed only within this column */}
             <div className="fixed w-[calc(100%-840px)] bg-black/50 px-[55px] py-[14px] z-10">
-              <header className="flex items-center justify-between">
+              <header className="flex items-center justify-between pr-4">
                 <h2 className="text-3xl text-white font-bold">Sessões da Campanha</h2>
                 {isMaster && (
                   <Button 
@@ -434,7 +434,7 @@ const Page = ({ params }: PageProps) => {
                     <p className="text-white text-xl">Ainda não há sessões registradas para esta campanha.</p>
                   </div>
                 ) : (
-                  <div className="space-y-6 justify-self-center max-w-[900px]">
+                  <div className="space-y-5 mx-auto max-w-[900px]">
                     {sessions.map((session) => (
                       <Card key={session.id}>
                         <CardHeader className="grid grid-cols-2 gap-2 bg-gray-700 rounded-t-lg border-2 border-black">
@@ -504,7 +504,6 @@ const Page = ({ params }: PageProps) => {
 
         {/* COLUNA DE NOTAS DA CAMPANHA */}
         <aside className="text-white bg-gray-800 w-full hidden lg:block max-w-[420px] max-h-screen break-words overflow-y-auto"> {/* Adicionado hidden lg:block para esconder em telas pequenas */}
-            <h2 className="text-2xl mt-2 font-semibold justify-self-center py-[5px] px-[67px] bg-gray-700">Notas da Campanha</h2>
             {campaign && userId && (
               <CampaignNotes campaignId={campaign.id} />
             )}
