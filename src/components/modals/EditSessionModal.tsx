@@ -62,7 +62,7 @@ export default function EditSessionModal({
 
       setFormData({
         name: session.name,
-        goal: session.goal,
+        goal: session.goal || '',
         session_date: formattedDate // Define a data formatada no estado
       });
       setError(null); // Limpa erros anteriores ao abrir para editar
@@ -71,7 +71,7 @@ export default function EditSessionModal({
          setFormData({ name: '', goal: '', session_date: '' });
          setError(null);
          setLoading(false);
-    }
+    } 
   }, [session]); // Dependência: session prop
 
   // Lida com o envio do formulário (Atualização)

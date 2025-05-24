@@ -187,6 +187,9 @@ export default function EditCampaignModal({
             maxLength={500}
             style={{ border: '1px solid #ccc', borderRadius: '0px' }}
           />
+          <p className="-mt-2 text-xs text-gray-500">
+            {formData.description.length}/500 caracteres
+          </p>
 
           <label className="block text-sm font-medium text-gray-700 mt-2">
             Sistema da Campanha
