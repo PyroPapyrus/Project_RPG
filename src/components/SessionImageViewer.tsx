@@ -39,8 +39,22 @@ export default function SessionImageViewer({ sessionId, isMaster, userId }: Sess
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [imageToDelete, setImageToDelete] = useState<{ id: string; description: string | null } | null>(null);
 
+  // Adicione um listener para o evento personalizado
   useEffect(() => {
-    // ... (código useEffect existente, sem alterações aqui)
+    const handleImageDeleted = (event: CustomEvent) => {
+      const deletedImageId = event.detail;
+      setImages(prevImages => prevImages.filter(img => img.id !== deletedImageId));
+    };
+
+    window.addEventListener('imageDeleted', handleImageDeleted as EventListener);
+
+    return () => {
+      window.removeEventListener('imageDeleted', handleImageDeleted as EventListener);
+    };
+  }, []);
+
+  // Modifique o useEffect existente para incluir o fetchSessionImages
+  useEffect(() => {
     const fetchSessionImages = async () => {
       setLoading(true);
       setError(null);
@@ -73,43 +87,17 @@ export default function SessionImageViewer({ sessionId, isMaster, userId }: Sess
     fetchSessionImages();
 
     const channel = supabase
-      .channel(`session_images_channel:${sessionId}`)
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'session_images', filter: `session_id=eq.${sessionId}` },
-        async (payload) => {
-          console.log('Realtime change received!', payload);
-          if (payload.eventType === 'INSERT') {
-            const newImage = payload.new as SessionImage;
-            if (isMaster || !newImage.is_private) {
-              setImages((prevImages) => [newImage, ...prevImages]);
-              toast.info('Nova imagem adicionada à sessão!');
-            }
-          } else if (payload.eventType === 'UPDATE') {
-            const updatedImagePartial = payload.new as SessionImage;
-
-            if (!updatedImagePartial.image_base64) {
-                const { data: fullImage, error: fetchError } = await supabase
-                    .from('session_images')
-                    .select('*')
-                    .eq('id', updatedImagePartial.id)
-                    .single();
-
-                if (fetchError || !fullImage) {
-                    console.error('Erro ao re-buscar imagem completa:', fetchError);
-                    toast.error('Erro ao atualizar imagem (falha ao buscar detalhes).');
-                    return;
-                }
-                setImages((prevImages) =>
-                    prevImages.map((img) => (img.id === fullImage.id ? fullImage as SessionImage : img))
-                );
-            } else {
-                setImages((prevImages) =>
-                    prevImages.map((img) => (img.id === updatedImagePartial.id ? updatedImagePartial : img))
-                );
-            }
-            toast.info('Imagem da sessão atualizada!');
-          }
+      .channel(`session_images_${sessionId}`)
+      .on('postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'session_images',
+          filter: `session_id=eq.${sessionId}`
+        },
+        async () => {
+          // Recarrega as imagens quando houver qualquer mudança
+          await fetchSessionImages();
         }
       )
       .subscribe();
@@ -117,7 +105,6 @@ export default function SessionImageViewer({ sessionId, isMaster, userId }: Sess
     return () => {
       supabase.removeChannel(channel);
     };
-
   }, [sessionId, isMaster, supabase]);
 
   // handleEditClick agora é APENAS para a edição nos cards fora do modal
@@ -144,9 +131,12 @@ export default function SessionImageViewer({ sessionId, isMaster, userId }: Sess
         })
         .eq('id', imageId);
 
-      if (error) {
-        throw new Error(error.message || 'Erro ao atualizar a imagem.');
-      }
+      if (error) throw error;
+
+      // Emitir evento de atualização
+      window.dispatchEvent(new CustomEvent('imageUpdated', { 
+        detail: { imageId, description: editingDescription, isPrivate: editingPrivacy } 
+      }));
 
       toast.success('Imagem atualizada com sucesso!');
       handleCancelEdit();
@@ -165,8 +155,8 @@ export default function SessionImageViewer({ sessionId, isMaster, userId }: Sess
       const { error } = await supabase
         .from('session_images')
         .update({
-          description: description, // Usa os valores passados do modal
-          is_private: isPrivate,   // Usa os valores passados do modal
+          description: description,
+          is_private: isPrivate,
         })
         .eq('id', imageId);
 
@@ -174,9 +164,19 @@ export default function SessionImageViewer({ sessionId, isMaster, userId }: Sess
         throw new Error(error.message || 'Erro ao atualizar a imagem.');
       }
 
+      // Update the expandedImage state immediately after successful save
+      setExpandedImage(prevImage => {
+        if (prevImage && prevImage.id === imageId) {
+          return {
+            ...prevImage,
+            description: description,
+            is_private: isPrivate
+          };
+        }
+        return prevImage;
+      });
+
       toast.success('Imagem atualizada com sucesso no modal!');
-      // Não precisa chamar handleCancelEdit aqui, pois o modal gerencia seu próprio estado
-      // A atualização do Supabase via Realtime (evento UPDATE) irá atualizar o estado 'images' globalmente
     } catch (err: any) {
       toast.error(`Erro ao salvar: ${err.message}`);
       console.error('Erro ao salvar edição no modal:', err);
@@ -201,27 +201,26 @@ export default function SessionImageViewer({ sessionId, isMaster, userId }: Sess
 
     const { id: imageId, description: imageName } = imageToDelete;
     setLoading(true);
-    setIsConfirmModalOpen(false);
-    setImageToDelete(null);
-
     try {
       const { error } = await supabase
         .from('session_images')
         .delete()
         .eq('id', imageId);
 
-      if (error) {
-        throw new Error(error.message || 'Erro ao excluir a imagem.');
-      }
+      if (error) throw error;
+
+      // Emitir evento de exclusão
+      window.dispatchEvent(new CustomEvent('imageDeleted', { detail: imageId }));
 
       setImages((prevImages) => prevImages.filter((img) => img.id !== imageId));
-
       toast.success(`Imagem "${imageName || 'sem nome'}" excluída com sucesso!`);
     } catch (err: any) {
       toast.error(`Erro ao excluir: ${err.message}`);
       console.error('Erro ao excluir imagem:', err);
     } finally {
       setLoading(false);
+      setIsConfirmModalOpen(false);
+      setImageToDelete(null);
     }
   };
 
@@ -237,88 +236,51 @@ export default function SessionImageViewer({ sessionId, isMaster, userId }: Sess
   const isAnyCardEditing = editingImageId !== null;
 
 
-  // ... (código de loading, error, images.length === 0)
-
   return (
-    <div className="bg-white rounded-lg shadow p-4 mt-6">
-      <h3 className="text-lg font-semibold mb-2">Imagens da Sessão</h3>
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-        {images.map((image) => (
-          <div
-            key={image.id}
-            className="relative border rounded-lg overflow-hidden group cursor-pointer"
-            onClick={() => handleExpandImage(image)}
-          >
-            {image.image_base64 ? (
-              <img
-                src={image.image_base64}
-                alt={image.description || 'Imagem da sessão'}
-                className="w-full h-48 object-cover transition-transform duration-200 group-hover:scale-105"
-              />
-            ) : (
-              <div className="w-full h-48 bg-gray-200 flex items-center justify-center text-gray-500">
-                <ImageOff className="h-12 w-12" />
-                <p>Imagem não disponível</p>
-              </div>
-            )}
-            <div className="p-2 bg-white text-gray-800 text-sm">
-              {editingImageId === image.id ? (
-                // --- Modo de Edição (Card Normal) ---
-                <div className="space-y-2">
-                  <Textarea
-                    value={editingDescription}
-                    onChange={(e) => { e.stopPropagation(); setEditingDescription(e.target.value); }}
-                    placeholder="Descrição da imagem"
-                    rows={2}
-                    className="w-full"
-                    onClick={(e) => e.stopPropagation()}
-                  />
-                  <label className="flex items-center text-sm text-gray-700" onClick={(e) => e.stopPropagation()}>
-                    <input
-                      type="checkbox"
-                      checked={editingPrivacy}
-                      onChange={(e) => { e.stopPropagation(); setEditingPrivacy(e.target.checked); }}
-                      className="mr-2"
-                      onClick={(e) => e.stopPropagation()}
-                    />
-                    Privada
-                  </label>
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      onClick={(e) => { e.stopPropagation(); handleSaveEdit(image.id); }}
-                      disabled={loading}
-                    >
-                      Salvar
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={(e) => { e.stopPropagation(); handleCancelEdit(); }}
-                      disabled={loading}
-                    >
-                      Cancelar
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                // --- Modo de Visualização (Card Normal) ---
-                <>
-                  <p className="font-medium line-clamp-2">{image.description || 'Sem descrição'}</p>
-                  <div className="flex items-center text-xs text-gray-500 mt-1">
-                    {image.is_private ? (
-                      <>
-                        <Lock className="h-3 w-3 mr-1" />
-                        <span>Privada</span>
-                      </>
+    <div className="bg-black/50 backdrop-blur-sm px-4">
+      {loading ? (
+        <div className="p-4 flex items-center justify-center">
+          <p className="text-white font-bold">Carregando imagens...</p>
+        </div>
+        ) : images.length === 0 ? (
+        <div className="p-4 flex items-center justify-center">
+          <p className="text-white font-bold">Ainda não há nenhuma imagem aqui</p>
+          <span className="material-symbols-rounded text-white mx-2">no_photography</span>
+        </div>
+        ) : (
+        <div className="rounded-md flex overflow-x-auto">
+          <div className="flex gap-2 py-1 mb-2 min-w-min">
+            {images.map((image) => (
+              <div
+                key={image.id}
+                className="border border-white rounded-t-md cursor-pointer flex-none w-[100px] transition-transform hover:scale-[1.02]"
+                onClick={() => handleExpandImage(image)}
+                >
+                <div className="flex rounded-t justify-end px-1 bg-white items-center">
+                  {image.is_private ? (
+                    <Lock className="h-4 w-4 mr-1 text-red-500" />
                     ) : (
-                      <>
-                        <Unlock className="h-3 w-3 mr-1" />
-                        <span>Pública</span>
-                      </>
-                    )}
+                    <Unlock className="h-4 w-4 mr-1 text-green-500" />
+                  )}
+                </div>
+                {image.image_base64 ? (
+                  <img
+                    src={image.image_base64}
+                    alt={image.description || 'Imagem da sessão'}
+                    className="w-full h-[80px] object-cover transition-transform duration-200 group-hover:scale-105"
+                  />
+                  ) : (
+                  <div className="h-[80px] bg-gray-200 flex items-center justify-center text-gray-500">
+                    <ImageOff className="h-12 w-12" />
+                    <p>Imagem não disponível</p>
                   </div>
-                  {isMaster && (
+                )}
+                  
+                  
+                  <>
+                  {/*<p className="font-medium line-clamp-2">{image.description || 'Sem descrição'}</p>*/}
+                  
+                  {/*{isMaster && (
                     <div className="mt-2 flex gap-2">
                       <Button
                         size="sm"
@@ -341,13 +303,13 @@ export default function SessionImageViewer({ sessionId, isMaster, userId }: Sess
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
-                  )}
-                </>
-              )}
-            </div>
+                  )}*/}
+                  </>
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
+        </div>
+      )}
 
       {/* ImageViewerModal */}
       <ImageViewerModal

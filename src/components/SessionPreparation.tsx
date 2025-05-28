@@ -168,19 +168,36 @@ export default function SessionPreparation({
 
 
   return (
-    <div className="bg-white rounded-lg shadow p-4 relative">
-      <h3 className="text-lg font-semibold mb-2">Pré-Sessão</h3>
-      <Textarea
-        ref={textareaRef}
-        value={preparation}
-        onChange={(e) => setPreparation(e.target.value)}
-        onKeyDown={isMaster ? handleTextareaKeyDown : undefined} // Apenas mestres usam
-        onKeyUp={isMaster ? handleTextareaKeyUp : undefined} // Apenas mestres usam
-        placeholder="Escreva aqui as preparações para a sessão. Caso deseje uma mãozinha, de um espaço e aperte a tecla / para ter acesso a comandos de IA." // Atualizado o placeholder
-        rows={6}
-        className={aiLoading ? 'opacity-70 cursor-wait' : ''} // Feedback visual quando IA está gerando
-        disabled={aiLoading} // Desabilita enquanto a IA está gerando
-      />
+    <div className="relative mt-[20px]">
+      <div className='bg-gray-700 rounded-lg border-2 border-red-800'>
+        <div className='flex py-2 px-4 justify-between items-center'>
+          <div>
+            <h3 className="text-xl font-extrabold text-red-600">Pré-Sessão: <span className='text-white font-normal'>Planeje e prepare aqui a sua próxima sessão de RPG</span></h3>
+            
+          </div>
+
+          <div className="justify-end">
+            <Button 
+              onClick={handleSave} 
+              disabled={loading || !hasChanges || aiLoading} // Desabilita se a IA estiver gerando
+              className='px-12 font-bold'
+            > 
+              {loading ? 'Salvando...' : 'Salvar'}
+            </Button>
+          </div>
+        </div> 
+        <Textarea
+          ref={textareaRef}
+          value={preparation}
+          onChange={(e) => setPreparation(e.target.value)}
+          onKeyDown={isMaster ? handleTextareaKeyDown : undefined} // Apenas mestres usam
+          onKeyUp={isMaster ? handleTextareaKeyUp : undefined} // Apenas mestres usam
+          placeholder="Escreva aqui as preparações para a sessão. Caso deseje uma mãozinha, de um espaço e aperte a tecla / para ter acesso a comandos de IA." // Atualizado o placeholder
+          rows={6}
+          className={aiLoading ? 'opacity-70 cursor-wait' : ' h-40 bg-gray-900 text-white rounded-t-none border-none z-10'} // Feedback visual quando IA está gerando
+          disabled={aiLoading} // Desabilita enquanto a IA está gerando
+        />
+      </div>
 
       {/* Menu de comandos da IA */}
       {showAiCommands && isMaster && (
@@ -225,11 +242,7 @@ export default function SessionPreparation({
         </div>
       )}
 
-      <div className="mt-2 flex justify-end">
-        <Button onClick={handleSave} disabled={loading || !hasChanges || aiLoading}> {/* Desabilita se a IA estiver gerando */}
-          {loading ? 'Salvando...' : 'Salvar'}
-        </Button>
-      </div>
+      
     </div>
   );
 }

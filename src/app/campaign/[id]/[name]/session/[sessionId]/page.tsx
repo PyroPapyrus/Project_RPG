@@ -16,6 +16,7 @@ import SessionImageViewer from '@/components/SessionImageViewer';
 import { type Session } from '@/types/session'; 
 import { type Campaign } from '@/types/campaign';
 import { toast } from 'react-toastify';
+import { BackButton } from '@/components/ui/back-button';
 
 interface PageProps {
   params: {
@@ -108,36 +109,49 @@ const SessionPage = ({ params }: PageProps) => {
 
 
   return (
-    <div className="container mx-auto px-4 py-6">
-      <Button variant="ghost" className="mb-4" onClick={() => router.push(`/campaign/${params.id}/${params.name}`)}>
-        <ArrowLeft className="h-4 w-4 mr-2" /> Voltar para Campanha
-      </Button>
+    <div className="flex min-h-screen justify-between z-10">
+      
+      <aside className="bg-gray-700 text-white max-w-[420px] max-h-screen break-words w-full overflow-y-auto flex flex-col">
+        <header className='bg-gray-900 py-[8px] px-2'>
+          <BackButton href={`/campaign/${params.id}/${params.name}`} />
+        </header>
 
-      <SessionHeader
-        name={sessionData.name}
-        sessionDate={sessionData.session_date ?? ''}
-        goal={sessionData.goal ?? ''}
-      />
+        <div className='text-center px-12 mx-10'>
+          <h1 className='text-lg font-bold text-red-600'>Chat com IA</h1>
+          <p className='text-sm'>Use a IA para te auxiliar na preparação e criação de suas narrativas!</p>
+        </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 mt-6">
-        <div className="lg:col-span-3 space-y-6">
+        {/* This div will stay at the bottom */}
+        <div className='bg-black py-6 px-4 mx-6 mt-auto mb-2 rounded-lg'>
+          <p className='text-sm text-gray-400'>Digite aqui as mensagens/prompts para a IA te auxiliar. Seja criativo! Condicione-a a criar aventuras épicas (NÃO FUNCIONAL)</p>
+        </div>
+      </aside>
 
-          {/* Visto apenas pelo mestre */}
-          {isMaster && sessionData && ( // Faça a verificação combinada
-            <SessionPreparation
-              sessionId={sessionData.id}
-              initialPreparation={sessionData.preparation ?? ''}
-              sessionName={sessionData.name ?? ''}
-              sessionGoal={sessionData.goal ?? ''}
-              isMaster={isMaster}
-              campaignSystem={campaignSystem} 
-            />
-          )}
+      <div className='max-h-screen bg-gray-800 overflow-y-auto relative flex-1'>
+        <div className='mx-5 pb-[250px]'> {/* Added padding bottom to prevent content from being hidden behind fixed element */}
+          <SessionHeader
+            name={sessionData.name}
+            sessionDate={sessionData.session_date ?? ''}
+            goal={sessionData.goal ?? ''}
+          />
 
-          <SessionSummary
-            initialSummary={sessionData.summary ?? ''}
-            onSave={
-              isMaster
+          <div className="flex flex-col">
+            {/* Visto apenas pelo mestre */}
+            {isMaster && sessionData && (
+              <SessionPreparation
+                sessionId={sessionData.id}
+                initialPreparation={sessionData.preparation ?? ''}
+                sessionName={sessionData.name ?? ''}
+                sessionGoal={sessionData.goal ?? ''}
+                isMaster={isMaster}
+                campaignSystem={campaignSystem} 
+              />
+            )}
+
+            <SessionSummary
+              initialSummary={sessionData.summary ?? ''}
+              onSave={
+                isMaster
                 ? async (newSummary) => {
                     const { error } = await supabase
                       .from('sessions')
@@ -154,27 +168,26 @@ const SessionPage = ({ params }: PageProps) => {
             }
             isMaster={isMaster}
           />
+          </div>
+        </div>
 
-          {/* Upload visível apenas pelo mestre */}
-          {isMaster && (
-            <SessionImageUpload
-              sessionId={sessionData.id}
-            />
-          )}
-
-        {/* Componente para exibir imagens, visível para mestre e jogador */}
+        <div className='fixed bottom-0 left-[420px] right-[420px] mx-5'>
+          <SessionImageUpload
+            sessionId={sessionData.id}
+            isMaster={isMaster}
+          />
           <SessionImageViewer
             sessionId={sessionData.id}
             isMaster={isMaster}
-            userId={userId} // Passe o ID do usuário para o viewer
+            userId={userId}
           />
         </div>
-
-
-        <div className="lg:col-span-1">
-          <SessionNotes sessionId={sessionData.id} />
-        </div>
       </div>
+      {/* Coluna da direita */}
+      <div className="text-white bg-gray-900 w-full hidden lg:block max-w-[420px] max-h-screen break-words overflow-y-auto">
+        <SessionNotes sessionId={sessionData.id} />
+      </div>
+
     </div>
   );
 };

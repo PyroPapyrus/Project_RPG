@@ -371,7 +371,7 @@ export default function DashboardPage() {
           
 
           {activeTab === 'master' ? (
-              <CreateCampaignButton onSuccess={fetchRawCampaigns} />
+            <CreateCampaignButton onSuccess={fetchRawCampaigns} />
             ) : (
               <button
                 onClick={() => setJoinModalOpen(true)}
