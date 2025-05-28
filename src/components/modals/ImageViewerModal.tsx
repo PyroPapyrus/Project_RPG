@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import { X, Lock, Unlock, Edit, Trash2, Save, XCircle } from 'lucide-react'; // Adicionado Save e XCircle
 import { cn } from '@/lib/utils';
 import { Textarea } from '@/components/ui/textarea'; // Importar Textarea
+import { createPortal } from 'react-dom';
+import { CloseModalButton } from '../ui/close-modal-button';
 
 // Adicionar props para o modo mestre e as funções de ação
 interface ImageViewerModalProps {
@@ -71,11 +73,9 @@ export function ImageViewerModal({
     // onCancelModalEdit && onCancelModalEdit(); // Não precisa chamar aqui, pois não iniciamos um edição globalmente com handleEditClick
   };
 
-  return (
+  return createPortal(
     <div
-      className={cn(
-        "fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50 overflow-auto",
-      )}
+      className="fixed inset-0 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 z-[9999]"
       onClick={onClose}
     >
       <div
@@ -83,15 +83,9 @@ export function ImageViewerModal({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Botão de Fechar Modal */}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="absolute top-2 right-2 text-white bg-black bg-opacity-50 hover:bg-opacity-75 z-10"
-          onClick={onClose}
-        >
-          <X className="h-6 w-6" />
-        </Button>
-
+        <div className='absolute top-3 right-4 z-10'>
+          <CloseModalButton onClose={onClose} /> 
+        </div>
         {/* Coluna da Imagem */}
         <div className="flex-grow flex items-center justify-center overflow-hidden mb-4 md:mb-0 md:mr-4">
           <img
@@ -141,13 +135,17 @@ export function ImageViewerModal({
             <div className="pt-2 text-center text-gray-600 text-sm flex items-center justify-center">
               {isPrivate ? (
                 <>
-                  <Lock className="h-4 w-4 mr-1" />
-                  <span>Privada</span>
+                  <span className='text-red-600 flex items-center'>
+                    <Lock className=" h-4 w-4 mr-1" />
+                    Privada
+                  </span>
                 </>
               ) : (
                 <>
-                  <Unlock className="h-4 w-4 mr-1" />
-                  <span>Pública</span>
+                  <span className='text-green-600 flex items-center'>
+                    <Unlock className="h-4 w-4 mr-1" />
+                    Pública
+                  </span>
                 </>
               )}
             </div>
@@ -209,6 +207,7 @@ export function ImageViewerModal({
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
