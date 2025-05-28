@@ -178,130 +178,135 @@ const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
             <CloseModalButton onClose={onClose} />
           </div>
 
-          <div className="p-6 overflow-y-auto max-h-[calc(90vh-8rem)]">
-            <div className="grid gap-4">
-              {images.map((image) => (
-                <div 
-                  key={image.id}
-                  onClick={() => handleExpandImage(image)}
-                  className="cursor-pointer flex items-center gap-4 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
-                >
-                  <div className="w-24 h-24 flex-shrink-0">
-                    <img
-                      src={image.image_base64}
-                      alt={image.description || 'Imagem da sessão'}
-                      className="w-full h-full object-cover rounded-lg"
-                    />
-                  </div>
+          {images.length === 0 ? (
+            <p className='text-center font-bold p-12'>Ainda não há nenhuma imagem salva aqui</p>
+            ) : (
 
-                  <div className="flex-grow" onClick={(e) => e.stopPropagation()}>
-                    {editingImageId === image.id ? (
-                      <div className="space-y-3">
-                        <Textarea
-                          value={editDescription}
-                          onChange={(e) => setEditDescription(e.target.value)}
-                          placeholder="Descrição da imagem"
-                          rows={2}
-                          className="w-full"
-                        />
-                        <label className="flex items-center text-sm text-gray-700">
-                          <input
-                            type="checkbox"
-                            checked={editIsPrivate}
-                            onChange={(e) => setEditIsPrivate(e.target.checked)}
-                            className="mr-2"
-                          />
-                          Privada
-                        </label>
-                      </div>
-                    ) : (
-                      <>
-                        <p className="font-medium">
-                          {image.description || 'Sem descrição'}
-                        </p>
-                        <div className="flex items-center gap-2 mt-1">
-                          {image.is_private ? (
-                            <div className="flex items-center text-red-500">
-                              <Lock className="h-4 w-4 mr-1" />
-                              <span>Privada</span>
-                            </div>
-                          ) : (
-                            <div className="flex items-center text-green-500">
-                              <Unlock className="h-4 w-4 mr-1" />
-                              <span>Pública</span>
-                            </div>
-                          )}
-                        </div>
-                      </>
-                    )}
-                  </div>
+            <div className="p-6 overflow-y-auto max-h-[calc(90vh-8rem)]">
+              <div className="grid gap-4">
+                {images.map((image) => (
+                  <div 
+                    key={image.id}
+                    onClick={() => handleExpandImage(image)}
+                    className="cursor-pointer flex items-center gap-4 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                  >
+                    <div className="w-24 h-24 flex-shrink-0">
+                      <img
+                        src={image.image_base64}
+                        alt={image.description || 'Imagem da sessão'}
+                        className="w-full h-full object-cover rounded-lg"
+                      />
+                    </div>
 
-                  {/* Botões de edição/exclusão */}
-                  {isMaster && (
-                    <div className="flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex-grow" onClick={(e) => e.stopPropagation()}>
                       {editingImageId === image.id ? (
-                        <div className='space-x-2 p-3 rounded items-center flex'>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleSaveClick(image.id);
-                            }}
-                            className="p-2 hover:bg-gray-200 h-auto text-green-500 hover:text-green-700"
-                            title="Salvar Alterações"
-                          >
-                            <Save className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleCancelEdit();
-                            }}
-                            className="p-2 hover:bg-gray-200 h-auto text-gray-500 hover:text-gray-700"
-                            title="Cancelar Edição"
-                          >
-                            <XCircle className="text-black hover:text-gray-400 h-4 w-4" />
-                          </Button>
+                        <div className="space-y-3">
+                          <Textarea
+                            value={editDescription}
+                            onChange={(e) => setEditDescription(e.target.value)}
+                            placeholder="Descrição da imagem"
+                            rows={2}
+                            className="w-full"
+                          />
+                          <label className="flex items-center text-sm text-gray-700">
+                            <input
+                              type="checkbox"
+                              checked={editIsPrivate}
+                              onChange={(e) => setEditIsPrivate(e.target.checked)}
+                              className="mr-2"
+                            />
+                            Privada
+                          </label>
                         </div>
                       ) : (
-                        <div className='space-x-2 p-3 rounded items-center flex'>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleEditClick(image);
-                            }}
-                            className="p-2 hover:bg-gray-200 h-auto text-blue-500 hover:text-blue-700"
-                            title="Editar Imagem"
-                            disabled={isEditing}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDeleteClick(image.id, image.description);
-                            }}
-                            className="p-2 hover:bg-gray-200 h-auto text-red-500 hover:text-red-700"
-                            title="Excluir Imagem"
-                            disabled={isEditing}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
+                        <>
+                          <p className="font-medium">
+                            {image.description || 'Sem descrição'}
+                          </p>
+                          <div className="flex items-center gap-2 mt-1">
+                            {image.is_private ? (
+                              <div className="flex items-center text-red-500">
+                                <Lock className="h-4 w-4 mr-1" />
+                                <span>Privada</span>
+                              </div>
+                            ) : (
+                              <div className="flex items-center text-green-500">
+                                <Unlock className="h-4 w-4 mr-1" />
+                                <span>Pública</span>
+                              </div>
+                            )}
+                          </div>
+                        </>
                       )}
                     </div>
-                  )}
-                </div>
-              ))}
+
+                    {/* Botões de edição/exclusão */}
+                    {isMaster && (
+                      <div className="flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                        {editingImageId === image.id ? (
+                          <div className='space-x-2 p-3 rounded items-center flex'>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleSaveClick(image.id);
+                              }}
+                              className="p-2 hover:bg-gray-200 h-auto text-green-500 hover:text-green-700"
+                              title="Salvar Alterações"
+                            >
+                              <Save className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleCancelEdit();
+                              }}
+                              className="p-2 hover:bg-gray-200 h-auto text-gray-500 hover:text-gray-700"
+                              title="Cancelar Edição"
+                            >
+                              <XCircle className="text-black hover:text-gray-400 h-4 w-4" />
+                            </Button>
+                          </div>
+                        ) : (
+                          <div className='space-x-2 p-3 rounded items-center flex'>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleEditClick(image);
+                              }}
+                              className="p-2 hover:bg-gray-200 h-auto text-blue-500 hover:text-blue-700"
+                              title="Editar Imagem"
+                              disabled={isEditing}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteClick(image.id, image.description);
+                              }}
+                              className="p-2 hover:bg-gray-200 h-auto text-red-500 hover:text-red-700"
+                              title="Excluir Imagem"
+                              disabled={isEditing}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
 
