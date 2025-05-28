@@ -4,6 +4,7 @@
 
 import { Button } from '@/components/ui/button'; // Importe o seu componente Button
 import { CloseModalButton } from '../ui/close-modal-button';
+import { createPortal } from 'react-dom';
 
 // Interface de Props para o Modal de Confirmação
 interface ConfirmationModalProps {
@@ -22,22 +23,24 @@ export default function ConfirmationModal({
   onClose,
   message,
   onConfirm,
-  title = "Confirmar Ação", // Valor padrão para o título
-  cancelButtonText = "Cancelar", // Valor padrão para o texto do botão Cancelar
-  confirmButtonText = "Confirmar", // Valor padrão para o texto do botão Confirmar
+  title = "Confirmar Ação",
+  cancelButtonText = "Cancelar",
+  confirmButtonText = "Confirmar",
 }: ConfirmationModalProps) {
-
   // Se não estiver aberto, não renderiza nada
   if (!isOpen) {
     return null;
   }
 
   // Renderização do Modal
-  return (
+  return createPortal(
     // Fundo escuro fixo que ocupa toda a tela e centraliza o conteúdo
-    <div className="fixed inset-0 z-50 bg-black bg-opacity-60 flex items-center justify-center p-4 transition-opacity duration-300 x`">
+    <div className="fixed inset-0 z-[9999] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
       {/* Container do Conteúdo do Modal */}
-      <div className="bg-white rounded-lg p-6 w-full max-w-sm shadow-xl transform transition-all duration-300 ease-in-out scale-100">
+      <div 
+        className="bg-white rounded-lg p-6 w-full max-w-sm shadow-xl"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Cabeçalho do Modal */}
         <div className="flex justify-between items-center pb-3 mb-3 border-b-2">
           {/* Título do Modal */}
@@ -71,6 +74,7 @@ export default function ConfirmationModal({
           </Button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

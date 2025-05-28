@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
+import { Pencil } from 'lucide-react';
 
 interface SessionSummaryProps {
   initialSummary: string;
@@ -46,55 +47,70 @@ export default function SessionSummary({ initialSummary, onSave, isMaster }: Ses
   // --- FIM HANDLER CANCELAR ---
 
 
-  return (
-    <div className="mt-6">
-      <h3 className="text-lg font-semibold text-gray-800 mb-2">Resumo da Sessão</h3>
+  return (
+    <div className="mt-[20px]">
+      <div className='bg-black px-5 py-2 flex items-center justify-between'>
+        <h3 className="text-xl font-bold text-white">Relatório da Sessão</h3>
+        {/* Botão "Editar Resumo" - Renderizado APENAS se o usuário for o mestre */}
+        {isMaster && (
+          <Button
+            size='md'
+            className="text-yellow-500 bg-black hover:bg-yellow-500 hover:text-yellow-700"
+            onClick={() => { // <-- MODIFICAR AQUI PARA SALVAR O ORIGINAL
+              setIsEditing(true); // Ativa o modo de edição
+              setOriginalSummary(summary); // SALVA O TEXTO ATUAL COMO ORIGINAL
+              
+            }}
+            disabled={isEditing} // Desabilita o botão se já estiver editando
+          >
+            <Pencil className="h-6 w-6" />
+          </Button>
+        )}
+      </div>
 
-      {/* Renderização condicional: Modo de Edição (apenas para Mestre) ou Modo de Visualização */}
-      {isEditing && isMaster ? ( // Entra no modo de edição apenas se isEditing for true E for o mestre
-        // --- MODO EDIÇÃO ---
-        <div>
-          <textarea
-            className="w-full border border-gray-300 rounded p-2"
-            rows={5}
-            value={summary}
-            onChange={(e) => setSummary(e.target.value)}
+      {/* Renderização condicional: Modo de Edição (apenas para Mestre) ou Modo de Visualização */}
+      {isEditing && isMaster ? ( // Entra no modo de edição apenas se isEditing for true E for o mestre
+        // --- MODO EDIÇÃO ---
+        <div>
+          <textarea
+            className="w-full px-5 py-2 rounded-b-lg bg-gray-200"
+            placeholder='Escreva aqui o resumo da sessão. O resumo é opcional, mas recomenda-se que, após a sessão, você escreva um resumo neste campo.'
+            rows={5}
+            value={summary}
+            onChange={(e) => setSummary(e.target.value)}
             readOnly={!isMaster} // Torna o campo somente leitura se não for mestre
-          />
-          {/* Botões de Salvar/Cancelar visíveis apenas no modo de edição E para o mestre */}
-          <div className="mt-2 flex space-x-2">
-            {/* Botão Salvar */}
-            <Button onClick={handleSave}>
-              Salvar
-            </Button>
-            {/* Botão Cancelar */}
-            <Button
-              variant="outline"
+          />
+          {/* Botões de Salvar/Cancelar visíveis apenas no modo de edição E para o mestre */}
+          <div className="flex justify-end  space-x-2">
+            {/* Botão Salvar */}
+            <Button 
+              className='w-full'
+              onClick={handleSave}
+            >
+              Salvar
+            </Button>
+            {/* Botão Cancelar */}
+            <Button
+              variant="outline"
+              className='w-full bg-white/0 hover:bg-white/20 text-white'
               onClick={handleCancel} // <-- CHAMAR O NOVO HANDLER CANCELAR
-            >
-              Cancelar
-            </Button>
-          </div>
-        </div>
-      ) : ( // <-- MODO VISUALIZAÇÃO
-        <div>
-          {/* Exibe o resumo */}
-          <p className="text-gray-700 whitespace-pre-line">{summary || 'Nenhum resumo disponível.'}</p>
-          {/* Botão "Editar Resumo" - Renderizado APENAS se o usuário for o mestre */}
-          {isMaster && (
-            <Button
-              variant="default"
-              className="mt-2 text-sm p-0 h-auto"
-              onClick={() => { // <-- MODIFICAR AQUI PARA SALVAR O ORIGINAL
-                setIsEditing(true); // Ativa o modo de edição
-                setOriginalSummary(summary); // SALVA O TEXTO ATUAL COMO ORIGINAL
-              }}
-            >
-              Editar Resumo
-            </Button>
-          )}
-        </div>
-      )}
-    </div>
-  );
+            >
+              Cancelar
+            </Button>
+          </div>
+
+        </div>
+        ) : ( // <-- MODO VISUALIZAÇÃO
+        <div className='bg-gray-200 px-5 py-2 rounded-b-lg w-full'>
+          
+          {summary == '' ? (
+            <p className='text-gray-400 h-[120px]'>Escreva aqui o resumo da sessão. O resumo é opcional, mas recomenda-se que, após a sessão, você escreva um resumo neste campo.</p>
+          ) : (
+            
+            <p className="text-black whitespace-pre-line break-words">{summary}</p>
+          )}
+        </div>
+      )}
+    </div>
+  );
 }
