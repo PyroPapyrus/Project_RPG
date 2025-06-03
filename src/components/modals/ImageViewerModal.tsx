@@ -41,6 +41,7 @@ export function ImageViewerModal({
   const [isEditingModal, setIsEditingModal] = React.useState(false);
   const [modalDescription, setModalDescription] = React.useState(imageDescription || '');
   const [modalIsPrivate, setModalIsPrivate] = React.useState(isPrivate || false);
+  const [loading, setLoading] = React.useState(false)
 
   // Efeito para sincronizar a descrição e privacidade quando o modal é aberto
   React.useEffect(() => {

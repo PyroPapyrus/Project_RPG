@@ -216,6 +216,7 @@ export default function CreateSessionModal({
               loading={loading} // Passa o estado de loading
               loadingText="Criando..." // Texto durante o loading
               buttonText="Criar Sessão" // Texto normal
+              disabled={loading} // Desabilita enquanto carrega
               // Outras props que seu SubmitButton possa precisar
             />
 

@@ -9,6 +9,8 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'react-toastify'; // Para notificações
 import { Plus } from 'lucide-react';
+import ConfirmationModal from './modals/ConfirmationModal';
+import { supabase } from '@/lib/supabase';
 
 // Define a estrutura de um objeto Note (Nota de Campanha ou Sessão)
 interface Note {
@@ -50,8 +52,9 @@ export default function CampaignNotes({ campaignId }: CampaignNotesProps) {
  const [updatingPrivateStatus, setUpdatingPrivateStatus] = useState<string | null>(null);
  // Estado para o filtro de exibição das notas, padrão 'all'
  const [filter, setFilter] = useState<NoteFilter>('all');
- // --- FIM ESTADOS DO COMPONENTE ---
 
+ const [campaignNoteToDelete, setCampaignNoteToDelete] = useState<Note | null>(null)
+ // --- FIM ESTADOS DO COMPONENTE ---
 
  // --- EFEITO: Buscar notas ao carregar ou mudar campaign/usuário ---
  // Este efeito inicializa o formulário de nova nota e busca as notas
@@ -145,26 +148,30 @@ export default function CampaignNotes({ campaignId }: CampaignNotesProps) {
   }
  };
 
- // --- HANDLER: Excluir uma nota ---
- const handleDelete = async (id: string) => {
-  // Só exclui se houver usuário logado
-  if (!userId) return;
-
-  // Envia a requisição de exclusão para o Supabase
-  // A RLS deve garantir que apenas o autor possa excluir sua nota.
-  const { error } = await supabaseClient.from('notes')
-   .delete()
-   .eq('id', id) // Onde o ID corresponde à nota a ser excluída
-   .eq('user_id', userId); // Garante que o usuário logado é o autor (redundante com RLS)
-
-  if (error) {
-   console.error("Erro ao excluir nota de campanha:", error);
-   toast.error('Erro ao excluir a nota.');
-  } else {
-   toast.success('Nota excluída com sucesso.');
-   fetchNotes(); // Recarrega as notas para refletir a exclusão
+  // --- HANDLER PARA EXCLUIR CAMPANHA ---
+const handleConfirmDeleteCampaignNote = async () => {
+  if (!campaignNoteToDelete) return;
+ 
+  try {
+    setLoading(true);
+    // Usar supabaseClient ao invés de supabase
+    const { error } = await supabaseClient
+      .from('notes')
+      .delete()
+      .eq('id', campaignNoteToDelete.id);
+ 
+      if (error) throw error;
+ 
+      toast.success(`Nota "${campaignNoteToDelete.title}" excluída com sucesso.`);
+      fetchNotes(); // Recarrega as notas após exclusão
+  } catch (error: any) {
+    console.error('Erro ao excluir nota da campanha:', error);
+    toast.error(`Erro ao excluir nota: ${error.message || 'Desconhecido'}`);
+  } finally {
+    setLoading(false);
+    setCampaignNoteToDelete(null); // Fecha o modal
   }
- };
+}
 
  // --- HANDLER: Adicionar uma nova nota ---
  const handleAddNote = async () => {
@@ -293,7 +300,7 @@ export default function CampaignNotes({ campaignId }: CampaignNotesProps) {
               className='gap-2 text-sm whitespace-nowrap'
               onClick={handleAddNote}
               disabled={loading}>
-              {loading ? 'Adicionando...' : 'Adicionar Anotação'}
+              {loading ? 'Adicionando Nota...' : 'Adicionar Anotação'}
               <Plus className="h-5 w-5" />
             </Button>
           </div>
@@ -433,7 +440,13 @@ export default function CampaignNotes({ campaignId }: CampaignNotesProps) {
 
                         {/* --- FIM BOTÃO ALTERNAR PRIVACIDADE --- */}
                         <Button className='bg-black rounded hover:bg-gray-500 text-yellow-500' size="sm" onClick={() => setEditingNote(note)}>Editar</Button>
-                        <Button className='bg-black rounded hover:bg-gray-500 text-red-600' size="sm" onClick={() => handleDelete(note.id)}>Excluir</Button>
+                        <Button 
+                          className='bg-black rounded hover:bg-gray-500 text-red-600' 
+                          size="sm" 
+                          onClick={() => setCampaignNoteToDelete(note)} // Passando a nota como parâmetro
+                        >
+                          Excluir
+                        </Button>
                       </div>
                     )}
                 </> /* Fim do Fragmento */
@@ -455,6 +468,22 @@ export default function CampaignNotes({ campaignId }: CampaignNotesProps) {
             </p>
           )}
         </div> {/* Fim do Container que lista as notas */}
+
+        {/* MODAL DE CONFIRMAÇÃO DE EXCLUSÃO DE SESSÃO */}
+        {campaignNoteToDelete && (
+          <ConfirmationModal
+            isOpen={!!campaignNoteToDelete}
+            onClose={() => setCampaignNoteToDelete(null)}
+            message={<>Tem certeza que deseja excluir a Nota da Campanha 
+              <span className="font-bold"> "{campaignNoteToDelete.title}"</span>? 
+              Esta ação não pode ser desfeita.</>
+            }
+            onConfirm={handleConfirmDeleteCampaignNote}
+            title="DESEJA EXCLUIR A NOTA?"
+            confirmButtonText="Excluir Nota"
+            isConfirmDestructive={true}
+          />
+        )}
 
       </div> {/* Fim da Seção de exibição e filtro */}
     </div> // Fim do Container Principal

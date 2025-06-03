@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'react-toastify';
 import { Plus } from 'lucide-react';
+import ConfirmationModal from './modals/ConfirmationModal';
 
 // Interface Note (atualizada para incluir a propriedade 'users')
 interface Note {
@@ -46,8 +47,9 @@ export default function SessionNotes({ sessionId }: SessionNotesProps) {
   // Inicializar newNote
   const [newNote, setNewNote] = useState({ title: '', content: '', is_private: true, session_id: sessionId, campaign_id: null as string | null });
   const [loading, setLoading] = useState(false);
-   const [updatingPrivateStatus, setUpdatingPrivateStatus] = useState<string | null>(null);
+  const [updatingPrivateStatus, setUpdatingPrivateStatus] = useState<string | null>(null);
   const [filter, setFilter] = useState<NoteFilter>('all');
+  const [sessionNoteToDelete, setSessionNoteToDelete] = useState<Note | null>(null)
 
   // Resetar newNote e buscar notas quando o sessionId ou o userId mudar (usuário loga/desloga)
   useEffect(() => {
@@ -149,30 +151,37 @@ export default function SessionNotes({ sessionId }: SessionNotesProps) {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!userId) return; // Não deletar se não houver nota ou usuário autenticado
-    // Usar o supabaseClient do useSessionContext
-    // RLS 'Allow own notes delete' usará auth.uid() para verificar permissão no servidor.
-    const { error } = await supabaseClient.from('notes')
-      .delete()
-      .eq('id', id)
-      .eq('user_id', userId); // Manter o filtro no cliente para consistência e UI
-
-    if (error) {
-      console.error("Erro ao excluir nota da sessão:", error);
-      toast.error('Erro ao excluir a nota.');
-    } else {
-      toast.success('Nota excluída com sucesso.');
-      fetchNotes(); // Atualizar a lista
+  const handleConfirmDeleteSessionNote = async () => {
+    if (!sessionNoteToDelete) return;
+   
+    try {
+      setLoading(true);
+      // Usar supabaseClient ao invés de supabase
+      const { error } = await supabaseClient
+        .from('notes')
+        .delete()
+        .eq('id', sessionNoteToDelete.id);
+   
+        if (error) throw error;
+   
+        toast.success(`Nota "${sessionNoteToDelete.title}" excluída com sucesso.`);
+        fetchNotes(); // Recarrega as notas após exclusão
+    } catch (error: any) {
+      console.error('Erro ao excluir nota da sessão:', error);
+      toast.error(`Erro ao excluir nota: ${error.message || 'Desconhecido'}`);
+    } finally {
+      setLoading(false);
+      setSessionNoteToDelete(null); // Fecha o modal
     }
-  };
+  }
 
-  const handleAddNote = async () => {
-    if (!userId) { // Verificar se há usuário autenticado antes de tentar adicionar
-      toast.error("Você precisa estar autenticado para adicionar notas.");
-      console.error("Tentativa de adicionar nota sem usuário autenticado.");
-      return; // Interrompe a função
-    }
+ // --- HANDLER: Adicionar uma nova nota ---
+ const handleAddNote = async () => {
+  // Só adiciona se houver usuário autenticado e título/conteúdo preenchidos (pode adicionar validação mais robusta)
+  if (!userId || !newNote.title || !newNote.content) {
+   toast.error("Por favor, preencha o título e o conteúdo da nota.");
+   return;
+  }
 
     setLoading(true);
 
@@ -409,10 +418,16 @@ export default function SessionNotes({ sessionId }: SessionNotesProps) {
                           'Tornar Privada'
                         )}
                       </Button>
-                      <Button className='bg-black rounded hover:bg-gray-500 text-yellow-500' size="sm" onClick={() => setEditingNote(note)}>
+                      <Button className='bg-black rounded hover:bg-gray-500 text-yellow-500'
+                        size="sm"
+                        onClick={() => setEditingNote(note)}
+                      >
                         Editar
                       </Button>
-                      <Button className='bg-black rounded hover:bg-gray-500 text-red-600' size="sm" onClick={() => handleDelete(note.id)}>
+                      <Button className='bg-black rounded hover:bg-gray-500 text-red-600'
+                        size="sm" 
+                        onClick={() => setSessionNoteToDelete(note)}
+                      >
                         Excluir
                       </Button>
                     </div>
@@ -435,6 +450,22 @@ export default function SessionNotes({ sessionId }: SessionNotesProps) {
             </p>
           )}
         </div>
+
+        {/* MODAL DE CONFIRMAÇÃO DE EXCLUSÃO DE SESSÃO */}
+        {sessionNoteToDelete && (
+          <ConfirmationModal
+            isOpen={!!sessionNoteToDelete}
+            onClose={() => setSessionNoteToDelete(null)}
+            message={<>Tem certeza que deseja excluir a Nota da Campanha
+              <span className="font-bold"> "{sessionNoteToDelete.title}"</span>? 
+              Esta ação não pode ser desfeita.</>
+            }
+            onConfirm={handleConfirmDeleteSessionNote}
+            title="DESEJA EXCLUIR A NOTA?"
+            confirmButtonText="Excluir Nota"
+            isConfirmDestructive={true}
+        />
+        )}
       </div>
     </div>
   );

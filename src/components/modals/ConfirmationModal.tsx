@@ -10,7 +10,7 @@ import { createPortal } from 'react-dom';
 interface ConfirmationModalProps {
   isOpen: boolean;                 // Controla se o modal está visível
   onClose: () => void;             // Função para fechar o modal (chamada ao cancelar ou fechar)
-  message: string;                 // A mensagem de confirmação a ser exibida
+  message: string | React.ReactNode;                 // A mensagem de confirmação a ser exibida
   onConfirm: () => void;           // Função a ser chamada se o usuário confirmar
   title?: string;                  // Título opcional do modal (padrão: "Confirmar Ação")
   cancelButtonText?: string;       // Texto opcional para o botão Cancelar (padrão: "Cancelar")

@@ -2,10 +2,10 @@
 
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { Campaign } from '@/types/campaign'
-import { CreateCampaignButton } from '@/components/CreateCampaignButton'
+import { CreateCampaignButton } from '@/components/CreateCampaign'
 import { useRouter } from 'next/navigation'
 import { Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -29,16 +29,9 @@ interface DashboardFilters {
   sortBy: CampaignSortBy;
   }
 
-interface EditCampaignData {
-  name: string
-  description: string
-  system: string
-  max_players: number
-  status: 'em_andamento' | 'hiato' | 'concluido'
-}
-
-
 export default function DashboardPage() {
+
+
   // Armazena os dados BRUTOS, não filtrados/ordenados diretamente do DB
   const [rawMasterCampaigns, setRawMasterCampaigns] = useState<Campaign[]>([])
   const [rawPlayerCampaigns, setRawPlayerCampaigns] = useState<Campaign[]>([])
@@ -47,7 +40,7 @@ export default function DashboardPage() {
   const [filteredMasterCampaigns, setFilteredMasterCampaigns] = useState<Campaign[]>([])
   const [filteredPlayerCampaigns, setFilteredPlayerCampaigns] = useState<Campaign[]>([])
 
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
 
   // --- ESTADOS PARA EXCLUSÃO E EDIÇÃO ---
   const [campaignToDelete, setCampaignToDelete] = useState<Campaign | null>(null)
@@ -66,9 +59,39 @@ export default function DashboardPage() {
 
   // First add a state for controlling filter visibility
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   const router = useRouter()
   const supabase = createClientComponentClient()
+
+  // Add ref for the profile menu container
+  const profileMenuRef = useRef<HTMLDivElement>(null);
+  // Add at the top with other refs
+  const filterMenuRef = useRef<HTMLDivElement>(null);
+
+  // Update the useEffect that handles clicks outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      // Handle profile menu
+      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target as Node)) {
+        setIsProfileOpen(false);
+      }
+      // Handle filter menu
+      if (filterMenuRef.current && !filterMenuRef.current.contains(event.target as Node)) {
+        setIsFilterOpen(false);
+      }
+    }
+
+    // Add event listener when either menu is open
+    if (isProfileOpen || isFilterOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    // Cleanup
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isProfileOpen, isFilterOpen]);
 
   // --- FUNÇÃO PARA BUSCAR CAMPANHAS (SEMPRE BUSCA TUDO SEM FILTRO/ORDENAÇÃO) ---
   // Esta função usa as queries que sabemos que funcionam para buscar dados brutos.
@@ -267,7 +290,13 @@ export default function DashboardPage() {
     console.log("Dashboard: fetchRawCampaigns chamado após atualização.");
   };
 
-  return (
+  // Primeiro, modifique a função handleLoading para incluir a navegação
+  const handleProfileNavigation = async () => {
+    setLoading(true);
+    router.push('/profile');
+  };
+
+  return (
 
     <div className="bg-gradient-to-t from-gray-900 to-red-900 bg-no-repeat bg-fixed bg-cover min-h-screen">
 
@@ -286,26 +315,43 @@ export default function DashboardPage() {
         
   
         <div className='flex absolute items-center top-0 right-2'>
-
-          <div>
-            <LogoutButton />
-          </div>
-
           <a href="/">
             <img 
               src="/images/logo.png" 
               alt="logo Story&Plot" 
-              className="w-64" 
+              className="w-64 transform hover:scale-110 transition-all duration-200 ease-in-out" 
             />
           </a>
-
+          
+          {/* Ícone de Perfil */}
           <span 
             className="material-symbols-rounded text-white cursor-pointer transform hover:scale-110 transition-all duration-200 ease-in-out" 
             style={{ fontSize: '35px' }}
-            onClick={() => router.push('/profile')}>
+            //onClick={() => router.push('/profile')}
+            onClick={() => setIsProfileOpen(!isProfileOpen)}
+          >
             account_circle
           </span>
-          
+
+          {isProfileOpen && (
+            <div 
+              ref={profileMenuRef}
+              className="absolute right-0 top-12 p-3 z-20 mt-2 w-48 bg-gray-800 rounded-lg shadow-xl border border-gray-700 space-y-2"
+            >
+              <p>PERFIL</p>
+              <Button 
+                loading={loading}
+                loadingText='Carregando...'
+                className='w-full bg-cyan-400/10 text-cyan-400 border border-cyan-400 hover:bg-white'
+                onClick={handleProfileNavigation}
+              >
+                Abrir Perfil
+              </Button>
+              <LogoutButton 
+                className='w-full bg-red-400/20 hover:bg-white'
+              />
+            </div>
+          )}
         </div>
         
       </header>
@@ -358,7 +404,10 @@ export default function DashboardPage() {
 
               {/* Filter dropdown */}
               {isFilterOpen && (
-                <div className="absolute z-20 mt-2 w-[250px] bg-gray-800 rounded-lg shadow-xl border border-gray-700">
+                <div
+                  ref={filterMenuRef} 
+                  className="absolute z-20 mt-2 w-[250px] bg-gray-800 rounded-lg shadow-xl border border-gray-700"
+                >
                   <CampaignFilter
                     onFilterChange={handleCampaignFilterChange}
                     filters={campaignFilters}
@@ -405,7 +454,7 @@ export default function DashboardPage() {
         {/* Cards Container - Only rendered when there are campaigns */}
         {((activeTab === 'master' && filteredMasterCampaigns.length > 0) || 
           (activeTab === 'player' && filteredPlayerCampaigns.length > 0)) && (
-          <div className='mt-5 pt-6 pb-[65px] min-h-[calc(100vh-164px)]'>
+          <div className='pt-6 pb-[65px] min-h-[calc(100vh-164px)]'>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-6xl mx-auto">
               {activeTab === 'master' ? (
                 filteredMasterCampaigns.map((campaign) => (

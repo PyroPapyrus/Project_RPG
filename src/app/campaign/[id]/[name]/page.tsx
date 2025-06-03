@@ -231,10 +231,6 @@ const Page = ({ params }: PageProps) => {
       }
   };
 
-  const handleCancelDelete = () => {
-      setIsDeleteConfirmOpen(false);
-      setSessionToDelete(null);
-  };
   // --- FIM HANDLERS EXCLUSÃO SESSÃO ---
 
 
@@ -260,25 +256,25 @@ const Page = ({ params }: PageProps) => {
     };
 
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-gray-900"></div>
-      </div>
-    )
-  }
+  if (loading) {
+    return (
+      <div className="flex bg-gray-900 items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-white"></div>
+      </div>
+    )
+  }
 
-  if (!authorized || !campaign) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen">
-        <p className="text-gray-500 mb-4">Campanha não encontrada ou acesso não autorizado.</p>
-        <Button onClick={() => router.push('/dashboard')}>
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Voltar para o Dashboard
-        </Button>
-      </div>
-    )
-  }
+  if (!authorized || !campaign) {
+    return (
+      <div className="flex flex-col bg-gray-900 items-center justify-center min-h-screen">
+        <p className="text-white mb-4">Campanha não encontrada ou acesso não autorizado.</p>
+        <Button onClick={() => router.push('/dashboard')}>
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Voltar para o Dashboard
+        </Button>
+      </div>
+    )
+  }   
 
   return (
     <>
@@ -296,12 +292,12 @@ const Page = ({ params }: PageProps) => {
             <div className='grid grid-cols-2 gap-x-3 gap-y-4'>
               <div>
                 <p className='font-bold'>Status</p>
-                <p className={`px-4 py-1 whitespace-nowrap ${
+                <p className={`bg-gray-700 px-4 py-1 whitespace-nowrap ${
                   campaign.status === 'concluido' 
-                    ? 'bg-red-100 text-red-600' 
+                    ? 'text-red-600 font-bold' 
                     : campaign.status === 'hiato'
-                    ? 'bg-yellow-100 text-yellow-600'
-                    : 'bg-green-100 text-green-600'
+                    ? 'text-yellow-600 font-bold'
+                    : 'text-green-600 font-bold'
                   }`}>
                   {campaign.status === 'concluido' 
                     ? 'Concluído' 

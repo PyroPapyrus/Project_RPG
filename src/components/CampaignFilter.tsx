@@ -2,10 +2,6 @@
 
 'use client';
 
-// Remova 'useState' pois o estado será gerenciado pelo pai. Mantenha 'memo' se quiser otimização.
-import { memo } from 'react'; // Removido useState aqui
-import { Button } from '@/components/ui/button';
-
 // Definição dos tipos (mantidos)
 export type CampaignStatusFilter = 'todos' | 'em_andamento' | 'hiato' | 'concluido';
 export type CampaignSortBy = 'name_asc' | 'name_desc' | 'date_desc' | 'date_asc';
@@ -57,9 +53,9 @@ export function CampaignFilter({ onFilterChange, filters }: CampaignFilterProps)
 
   // --- UI do Componente de Filtro ---
   return (
-    <div className="p-4 space-y-4">
+    <div className="p-4 space-y-3">
       {/* Status filter */}
-      <div className="space-y-2">
+      <div className="">
         <label className="text-sm font-medium text-white">Status</label>
         <select 
           value={filters.status}
@@ -74,7 +70,7 @@ export function CampaignFilter({ onFilterChange, filters }: CampaignFilterProps)
       </div>
 
       {/* Sort filter */}
-      <div className="space-y-2">
+      <div className="">
         <label className="text-sm font-medium text-white">Ordenar por</label>
         <select
           value={filters.sortBy}

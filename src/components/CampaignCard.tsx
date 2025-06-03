@@ -22,10 +22,10 @@ export function CampaignCard({ campaign, onEdit, onDelete }: CampaignCardProps) 
           <div className="flex items-center space-x-4 min-w-[200px] justify-end">
             <span className={`text-sm px-3 py-1 rounded-full whitespace-nowrap ${
               campaign.status === 'concluido' 
-                ? 'bg-red-100 text-red-600' 
+                ? 'border-2 border-red-600 text-red-600 font-bold' 
                 : campaign.status === 'hiato'
-                ? 'bg-yellow-100 text-yellow-600'
-                : 'bg-green-100 text-green-600'
+                ? 'border-2 border-yellow-600 text-yellow-600 font-bold'
+                : 'border-2 border-green-600 text-green-600 font-bold'
             }`}>
               {campaign.status === 'concluido' 
                 ? 'Concluído' 

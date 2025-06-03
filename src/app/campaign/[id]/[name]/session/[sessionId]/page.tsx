@@ -89,16 +89,16 @@ const SessionPage = ({ params }: PageProps) => {
 
     if (loading) {
       return (
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-gray-900"></div>
+        <div className="flex bg-gray-900 items-center justify-center min-h-screen">
+          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-white"></div>
         </div>
       );
     }
 
     if (!sessionData) {
       return (
-        <div className="flex flex-col items-center justify-center min-h-screen p-4">
-          <p className="text-gray-500 mb-4">Sessão não encontrada ou acesso negado.</p>
+        <div className="flex flex-col bg-gray-900 items-center justify-center min-h-screen">
+          <p className="text-white mb-4">Sessão não encontrada ou acesso negado.</p>
           <Button onClick={() => router.push(`/campaign/${params.id}/${params.name}`)}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             Voltar para Campanha

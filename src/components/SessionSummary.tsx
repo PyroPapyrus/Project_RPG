@@ -5,14 +5,14 @@ import { Button } from '@/components/ui/button';
 import { Pencil } from 'lucide-react';
 
 interface SessionSummaryProps {
-  initialSummary: string;
-  onSave: (newSummary: string) => void;
-  isMaster: boolean;
+  initialSummary: string;
+  onSave: (newSummary: string) => void;
+  isMaster: boolean;
 }
 
 export default function SessionSummary({ initialSummary, onSave, isMaster }: SessionSummaryProps) {
-  const [isEditing, setIsEditing] = useState(false);
-  const [summary, setSummary] = useState(initialSummary);
+  const [isEditing, setIsEditing] = useState(false);
+  const [summary, setSummary] = useState(initialSummary);
   // --- NOVO ESTADO: Armazena o resumo original ao iniciar a edição ---
   const [originalSummary, setOriginalSummary] = useState(initialSummary);
   // --- FIM NOVO ESTADO ---
@@ -27,7 +27,7 @@ export default function SessionSummary({ initialSummary, onSave, isMaster }: Ses
   }, [initialSummary]);
 
 
-  const handleSave = () => {
+  const handleSave = () => {
     if (isMaster && isEditing) {
       onSave(summary);
       setIsEditing(false);
@@ -37,7 +37,7 @@ export default function SessionSummary({ initialSummary, onSave, isMaster }: Ses
       // originalSummary automaticamente. Então, não precisamos fazer nada aqui.
       // setOriginalSummary(summary); // Esta linha não é necessária se a prop initialSummary for atualizada corretamente após save.
     }
-  };
+  };
 
   // --- HANDLER: Cancelar Edição ---
   const handleCancel = () => {
@@ -81,9 +81,9 @@ export default function SessionSummary({ initialSummary, onSave, isMaster }: Ses
             readOnly={!isMaster} // Torna o campo somente leitura se não for mestre
           />
           {/* Botões de Salvar/Cancelar visíveis apenas no modo de edição E para o mestre */}
-          <div className="flex justify-end  space-x-2">
+          <div className="flex justify-end space-x-2">
             {/* Botão Salvar */}
-            <Button 
+            <Button
               className='w-full'
               onClick={handleSave}
             >
@@ -102,11 +102,9 @@ export default function SessionSummary({ initialSummary, onSave, isMaster }: Ses
         </div>
         ) : ( // <-- MODO VISUALIZAÇÃO
         <div className='bg-gray-200 px-5 py-2 rounded-b-lg w-full'>
-          
           {summary == '' ? (
             <p className='text-gray-400 h-[120px]'>Escreva aqui o resumo da sessão. O resumo é opcional, mas recomenda-se que, após a sessão, você escreva um resumo neste campo.</p>
           ) : (
-            
             <p className="text-black whitespace-pre-line break-words">{summary}</p>
           )}
         </div>

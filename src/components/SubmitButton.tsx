@@ -1,7 +1,7 @@
 interface SubmitButtonProps {
   loading: boolean;
-  disabled?: boolean;
   loadingText?: string;
+  disabled?: boolean;
   buttonText: string;
   isValid?: boolean;
   onClick?: () => void;
@@ -32,8 +32,8 @@ export function SubmitButton({
           </svg>
           {loadingText}
         </span>
-      ) : (
-        buttonText
+        ) : (
+         buttonText
       )}
     </button>
   );

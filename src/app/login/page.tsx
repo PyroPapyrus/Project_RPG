@@ -133,7 +133,8 @@ export default function LoginPage() {
               loading={loading}
               loadingText="Entrando..."
               buttonText="Entrar"
-              isValid={isFormValid}
+              isValid={isFormValid || loading}
+              disabled={loading}
             />
 
             <div className="text-sm text-center">

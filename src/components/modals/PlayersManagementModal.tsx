@@ -115,12 +115,10 @@ const PlayerManagementModal: React.FC<PlayerManagementModalProps> = ({ isOpen, o
                 </div>
                 <Button
                   onClick={() => handleRemovePlayer(player)}
-                  variant="destructive"
                   size="sm"
-                  className="flex items-center gap-1" // Ajuste para alinhar ícone e texto
+                  className="flex bg-white/0 text-red-600 hover:bg-red-600 hover:text-red-900 items-center" // Ajuste para alinhar ícone e texto
                 >
-                  <Trash2 className="h-4 w-4" />
-                  Remover
+                  <Trash2 className="h-5 w-5" />
                 </Button>
               </li>
             ))}
