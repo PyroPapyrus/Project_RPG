@@ -41,7 +41,7 @@ export function CampaignCard({ campaign, onEdit, onDelete }: CampaignCardProps) 
                       e.stopPropagation();
                       onEdit(campaign);
                     }}
-                    className="text-gray-300 hover:text-yellow-400"
+                    className="text-gray-300 hover:text-yellow-500"
                   >
                     <Pencil className="h-5 w-5" />
                   </button>
@@ -52,7 +52,7 @@ export function CampaignCard({ campaign, onEdit, onDelete }: CampaignCardProps) 
                       e.stopPropagation();
                       onDelete(campaign);
                     }}
-                    className="text-gray-300 hover:text-red-400"
+                    className="text-gray-300 hover:text-red-600"
                   >
                     <Trash2 className="h-5 w-5" />
                   </button>

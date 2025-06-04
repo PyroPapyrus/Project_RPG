@@ -551,7 +551,10 @@ const Page = ({ params }: PageProps) => {
          <ConfirmationModal
             isOpen={!!isDeleteConfirmOpen} // Use o estado booleano para controlar
             onClose={() => { setIsDeleteConfirmOpen(false); setSessionToDelete(null); }}
-            message={`Tem certeza que deseja excluir a sessão "${sessionToDelete.name}"? Esta ação não pode ser desfeita.`}
+            message={<>Tem certeza que deseja excluir a sessão 
+              <span className='font-bold break-words'> "{sessionToDelete.name}"</span>?
+              Esta ação não pode ser desfeita.</>
+            }
             onConfirm={handleConfirmDelete}
             title="DESEJA EXCLUIR A SESSÃO?" // Título específico
             confirmButtonText="Excluir Sessão" // Texto específico

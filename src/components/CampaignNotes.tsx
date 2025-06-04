@@ -475,7 +475,7 @@ const handleConfirmDeleteCampaignNote = async () => {
             isOpen={!!campaignNoteToDelete}
             onClose={() => setCampaignNoteToDelete(null)}
             message={<>Tem certeza que deseja excluir a Nota da Campanha 
-              <span className="font-bold"> "{campaignNoteToDelete.title}"</span>? 
+              <span className="font-bold break-words"> "{campaignNoteToDelete.title}"</span>? 
               Esta ação não pode ser desfeita.</>
             }
             onConfirm={handleConfirmDeleteCampaignNote}

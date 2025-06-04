@@ -130,7 +130,10 @@ const PlayerManagementModal: React.FC<PlayerManagementModalProps> = ({ isOpen, o
         <ConfirmationModal
           isOpen={isConfirmOpen}
           onClose={() => setIsConfirmOpen(false)}
-          message={`Tem certeza que deseja remover "${playerToRemove.username || playerToRemove.email || 'este jogador'}" da campanha? Esta ação não pode ser desfeita.`}
+          message={<>Tem certeza que deseja remover
+            <span className='font-bold break-words'> "{playerToRemove.username || playerToRemove.email || 'este jogador'}" </span>
+            da campanha? Esta ação não pode ser desfeita.</>
+          }
           onConfirm={confirmRemovePlayer}
           title="Remover Jogador?"
           confirmButtonText="Confirmar Remoção"

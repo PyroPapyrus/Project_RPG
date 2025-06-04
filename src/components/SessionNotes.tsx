@@ -457,7 +457,7 @@ export default function SessionNotes({ sessionId }: SessionNotesProps) {
             isOpen={!!sessionNoteToDelete}
             onClose={() => setSessionNoteToDelete(null)}
             message={<>Tem certeza que deseja excluir a Nota da Campanha
-              <span className="font-bold"> "{sessionNoteToDelete.title}"</span>? 
+              <span className="font-bold break-words"> "{sessionNoteToDelete.title}"</span>? 
               Esta ação não pode ser desfeita.</>
             }
             onConfirm={handleConfirmDeleteSessionNote}

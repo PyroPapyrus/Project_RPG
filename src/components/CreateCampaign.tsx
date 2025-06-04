@@ -21,7 +21,7 @@ interface CreateCampaignButtonProps {
   onSuccess?: () => void
 }
 
-export function CreateCampaignButton({ onSuccess }: CreateCampaignButtonProps) {
+export function CreateCampaign({ onSuccess }: CreateCampaignButtonProps) {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [formData, setFormData] = useState<CreateCampaignFormData>({
     name: '',

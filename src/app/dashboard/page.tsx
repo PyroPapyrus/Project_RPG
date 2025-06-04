@@ -5,7 +5,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { Campaign } from '@/types/campaign'
-import { CreateCampaignButton } from '@/components/CreateCampaign'
+import { CreateCampaign } from '@/components/CreateCampaign' 
 import { useRouter } from 'next/navigation'
 import { Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -21,7 +21,7 @@ import { CampaignFilter, CampaignStatusFilter, CampaignSortBy } from '@/componen
 import EditCampaignModal from '@/components/modals/EditCampaignModal';
 import ConfirmationModal from '@/components/modals/ConfirmationModal';
 import { toast } from 'react-toastify';
-import Image from 'next/image'
+
 
 // Defina o tipo para o estado de filtros na página
 interface DashboardFilters {
@@ -420,7 +420,7 @@ export default function DashboardPage() {
           
 
           {activeTab === 'master' ? (
-            <CreateCampaignButton onSuccess={fetchRawCampaigns} />
+            <CreateCampaign onSuccess={fetchRawCampaigns} />
             ) : (
               <button
                 onClick={() => setJoinModalOpen(true)}
@@ -494,7 +494,10 @@ export default function DashboardPage() {
         <ConfirmationModal
           isOpen={!!campaignToDelete}
           onClose={() => setCampaignToDelete(null)}
-          message={`Tem certeza que deseja excluir a campanha "${campaignToDelete.name}"? Esta ação não pode ser desfeita. Todas as sessões, notas e dados de jogadores relacionados também serão excluídos!`}
+          message={<>Tem certeza que deseja excluir a campanha
+            <span className='font-bold break-words'> "{campaignToDelete.name}"</span>? 
+            Esta ação não pode ser desfeita. Todas as sessões, notas e dados de jogadores relacionados também serão excluídos!</>
+          }
           onConfirm={handleConfirmDeleteCampaign} // Chama o handler que busca dados brutos
           title="DESEJA EXCLUIR A CAMPANHA?"
           confirmButtonText="Excluir Campanha"

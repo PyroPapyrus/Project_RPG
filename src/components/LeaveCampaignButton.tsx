@@ -115,7 +115,10 @@ const LeaveCampaignButton: React.FC<LeaveCampaignButtonProps> = ({
             <ConfirmationModal
                 isOpen={isLeaveConfirmOpen}
                 onClose={handleCancelLeave}
-                message={`Tem certeza que deseja sair da campanha "${campaignName}"? Esta ação removerá seu vínculo com a campanha e suas notas associadas a ela. Você precisará do código de convite para entrar novamente.`}
+                message={<>Tem certeza que deseja sair da campanha
+                    <span className='font-bold break-words'> "{campaignName}"</span>? 
+                    Esta ação removerá seu vínculo com a campanha e suas notas associadas a ela. Você precisará do código de convite para entrar novamente.</>
+                }
                 onConfirm={handleConfirmLeave}
                 title="DESEJA SAIR DA CAMPANHA?"
                 confirmButtonText="Sair da Campanha"
