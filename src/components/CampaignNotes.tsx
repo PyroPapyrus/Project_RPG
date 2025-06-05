@@ -283,27 +283,21 @@ const handleConfirmDeleteCampaignNote = async () => {
  return (
     <div className="space-y-4 mb-4"> {/* Container principal com espaçamento vertical */}
       <div> {/* Seção de exibição e filtro das notas */}
-        <h2 className="text-2xl mt-2 font-semibold justify-self-center py-[5px] px-[64px]">Notas da Campanha</h2>
-          {/* --- DIV COM SELECT DE FILTRO --- */}
-          <div className="flex px-4 rounded items-center justify-center gap-2 my-2">
-            <select
-              className="rounded-md justify-self-start items-start bg-gray-200 h-10 px-4 py-2 text-cyan-500 text-sm"
-              value={filter}
-              onChange={(e) => setFilter(e.target.value as NoteFilter)}
-            >
-              <option value="all">Todas as Notas</option>
-              <option value="mine">Minhas Notas</option>
-              <option value="public_others">Públicas (Outros)</option>
-            </select>
-            {/* Botão para adicionar a nota */}
-            <Button 
-              className='gap-2 text-sm whitespace-nowrap'
-              onClick={handleAddNote}
-              disabled={loading}>
-              {loading ? 'Adicionando Nota...' : 'Adicionar Anotação'}
-              <Plus className="h-5 w-5" />
-            </Button>
-          </div>
+        
+        {/* --- DIV COM SELECT DE FILTRO --- */}
+        <div className="mt-2 flex items-center justify-between mx-5 pb-2 border-b-2">
+          <h2 className="text-[17px] text-cyan-500 font-semibold justify-self-center whitespace-no-wrap">Notas da Campanha</h2>
+          <select
+            className="rounded-md justify-self-start items-start items-center bg-gray-200 h-9 px-4 py-2 text-cyan-500 text-sm"
+            value={filter}
+            onChange={(e) => setFilter(e.target.value as NoteFilter)}
+          >
+            <option value="all">Todas as Notas</option>
+            <option value="mine">Minhas Notas</option>
+            <option value="public_others">Públicas (Outros)</option>
+          </select>
+            
+        </div>
         {/* --- FIM DE DIV COM SELECT DE FILTRO --- */}
 
         {/* --- SEÇÃO: Adicionar Nova Nota --- */}
@@ -341,14 +335,26 @@ const handleConfirmDeleteCampaignNote = async () => {
             {newNote.content.length}/200 caracteres
           </p>
           {/* Checkbox para definir privacidade */}
-          <div className="bg-black text-white px-2 py-1 rounded-sm justify-self-start flex items-center space-x-1 mb-1">
-            <input
-              id="is_private_campaign"
-              type="checkbox"
-              checked={newNote.is_private}
-              onChange={(e) => setNewNote({ ...newNote, is_private: e.target.checked })}
-            />
-            <label htmlFor="is_private_campaign" className="text-sm">Privada</label>
+          <div className='flex items-center justify-between'>
+            <div className="bg-black cursor-pointer text-white px-3 py-2 rounded-sm justify-self-start flex items-center space-x-1">
+              <input
+                id="is_private_campaign"
+                type="checkbox"
+                checked={newNote.is_private}
+                onChange={(e) => setNewNote({ ...newNote, is_private: e.target.checked })}
+              />
+              <label htmlFor="is_private_campaign" className="text-sm cursor-pointer">Privada</label>
+            </div>
+            {/* Botão para adicionar a nota */}
+            <Button 
+              size='sm'
+              className='gap-1 text-sm rounded whitespace-nowrap'
+              onClick={handleAddNote}
+              disabled={loading}>
+              {loading ? 'Adicionando Nota...' : 'Adicionar Nota'}
+              <Plus className="h-4 w-4" />
+            </Button>
+            
           </div>
         </div> {/* Fim da Seção Adicionar Nova Nota */}
   

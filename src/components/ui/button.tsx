@@ -26,7 +26,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
             'hover:bg-gray-100 text-gray-700': variant === 'ghost',
             'text-indigo-600 underline-offset-4 hover:underline': variant === 'link',
             'h-10 px-4 py-2': size === 'default',
-            'h-8 px-2 text-sm': size === 'sm',
+            'h-9 px-2 text-sm': size === 'sm',
             'h-10 px-2 text-md, rounded-full': size === 'md',
             'h-12 px-6 text-lg': size === 'lg',
             'h-10 w-10': size === 'icon',

@@ -48,8 +48,8 @@ export default function SessionSummary({ initialSummary, onSave, isMaster }: Ses
 
 
   return (
-    <div className="mt-[20px]">
-      <div className='bg-black px-5 py-2 flex items-center justify-between'>
+    <div className="mt-[20px] border-[8px] rounded-b bg-black border-black">
+      <div className='px-3 py-2 flex items-center justify-between'>
         <h3 className="text-xl font-bold text-white">Relatório da Sessão</h3>
         {/* Botão "Editar Resumo" - Renderizado APENAS se o usuário for o mestre */}
         {isMaster && (
@@ -73,7 +73,7 @@ export default function SessionSummary({ initialSummary, onSave, isMaster }: Ses
         // --- MODO EDIÇÃO ---
         <div>
           <textarea
-            className="w-full px-5 py-2 rounded-b-lg bg-gray-200"
+            className="w-full px-3 py-2 rounded-b bg-gray-200 resize-auto"
             placeholder='Escreva aqui o resumo da sessão. O resumo é opcional, mas recomenda-se que, após a sessão, você escreva um resumo neste campo.'
             rows={5}
             value={summary}
@@ -91,8 +91,7 @@ export default function SessionSummary({ initialSummary, onSave, isMaster }: Ses
             </Button>
             {/* Botão Cancelar */}
             <Button
-              variant="outline"
-              className='w-full bg-white/0 hover:bg-white/20 text-white'
+              className='w-full bg-red-600 hover:bg-red-700 text-white'
               onClick={handleCancel} // <-- CHAMAR O NOVO HANDLER CANCELAR
             >
               Cancelar
@@ -101,12 +100,23 @@ export default function SessionSummary({ initialSummary, onSave, isMaster }: Ses
 
         </div>
         ) : ( // <-- MODO VISUALIZAÇÃO
-        <div className='bg-gray-200 px-5 py-2 rounded-b-lg w-full'>
+        <div 
+          className='bg-gray-200 px-3 py-2 rounded-b w-full cursor-pointer transition-all duration-300 hover:rounded-lg hover:scale-[1.02]'
+          onClick={() => { // <-- MODIFICAR AQUI PARA SALVAR O ORIGINAL
+            setIsEditing(true); // Ativa o modo de edição
+            setOriginalSummary(summary); // SALVA O TEXTO ATUAL COMO ORIGINAL
+          }}
+        >
           {summary == '' ? (
-            <p className='text-gray-400 h-[120px]'>Escreva aqui o resumo da sessão. O resumo é opcional, mas recomenda-se que, após a sessão, você escreva um resumo neste campo.</p>
+            <p className='text-gray-400 min-h-[120px]'>
+              Escreva aqui o resumo da sessão. O resumo é opcional, mas recomenda-se que, após a sessão, você escreva um resumo neste campo.
+            </p>
           ) : (
-            <p className="text-black whitespace-pre-line break-words">{summary}</p>
-          )}
+            <p className="text-black min-h-[120px] whitespace-pre-line break-words">
+              {summary}
+            </p>
+          )} 
+          
         </div>
       )}
     </div>

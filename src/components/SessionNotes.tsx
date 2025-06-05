@@ -276,12 +276,13 @@ export default function SessionNotes({ sessionId }: SessionNotesProps) {
   return (
     <div className="space-y-4 mb-4">
       <div>
-        <h2 className="text-2xl mt-2 font-semibold justify-self-center py-[5px] px-[64px]">Notas da Sessão</h2>
-        
-        {/* Seção de filtro */}
-        <div className="flex px-4 rounded items-center justify-center gap-2 my-2">
+        {/* --- DIV COM SELECT DE FILTRO --- */}
+        <div className="mt-2 flex items-center justify-between mx-5 pb-2 border-b-2">
+          <h2 className="text-[17px] text-cyan-500 font-semibold justify-self-center whitespace-no-wrap">
+            Notas da Sessão
+          </h2>
           <select
-            className="rounded-md justify-self-start items-start bg-gray-200 h-10 px-4 py-2 text-cyan-500 text-sm"
+            className="rounded-md justify-self-start items-start items-center bg-gray-200 h-9 px-4 py-2 text-cyan-500 text-sm"
             value={filter}
             onChange={(e) => setFilter(e.target.value as NoteFilter)}
           >
@@ -289,20 +290,12 @@ export default function SessionNotes({ sessionId }: SessionNotesProps) {
             <option value="mine">Minhas Notas</option>
             <option value="public_others">Públicas (Outros)</option>
           </select>
-          <Button 
-            className='gap-2 text-sm whitespace-nowrap'
-            onClick={handleAddNote}
-            disabled={loading}
-          >
-            {loading ? 'Adicionando...' : 'Adicionar Anotação'}
-            <Plus className="h-5 w-5" />
-          </Button>
         </div>
 
-        {/* Seção de nova nota */}
+        {/* --- SEÇÃO: Adicionar Nova Nota --- */}
         <div className="mx-5 text-black py-2 border-b-2">
           <div className='justify-between flex'>
-            <h3 className="font-semibold mb-1 text-white">Nova Nota da Sessão</h3>
+            <h3 className="font-semibold mb-1 text-white">Nova Nota de Sessão</h3>
             {newNote.is_private ? (
               <span className="material-symbols-rounded text-red-600" title="Nota Privada">lock</span>
             ) : (
@@ -332,14 +325,25 @@ export default function SessionNotes({ sessionId }: SessionNotesProps) {
             {newNote.content.length}/200 caracteres
           </p>
 
-          <div className="bg-black text-white px-2 py-1 rounded-sm justify-self-start flex items-center space-x-1 mb-1">
-            <input
-              id="is_private_session"
-              type="checkbox"
-              checked={newNote.is_private}
-              onChange={(e) => setNewNote({ ...newNote, is_private: e.target.checked })}
-            />
-            <label htmlFor="is_private_session" className="text-sm">Privada</label>
+          <div className='flex items-center justify-between'>
+            <div className="bg-black cursor-pointer text-white px-3 py-2 rounded-sm justify-self-start flex items-center space-x-1">
+              <input
+                id="is_private_session"
+                type="checkbox"
+                checked={newNote.is_private}
+                onChange={(e) => setNewNote({ ...newNote, is_private: e.target.checked })}
+              />
+              <label htmlFor="is_private_session" className="text-sm cursor-pointer">Privada</label>
+            </div>
+            <Button 
+              size='sm'
+              className='gap-1 text-sm rounded whitespace-nowrap'
+              onClick={handleAddNote}
+              disabled={loading}
+            >
+              {loading ? 'Adicionando Nota...' : 'Adicionar Nota'}
+              <Plus className="h-4 w-4" />
+            </Button>
           </div>
         </div>
 
@@ -377,7 +381,7 @@ export default function SessionNotes({ sessionId }: SessionNotesProps) {
                   </div>
                 </>
               ) : (
-                // Modo de visualização
+                // Modo visualização
                 <>
                   <h4 className="font-semibold text-white border-b-2">
                     <div className="flex items-center justify-between">
@@ -418,13 +422,15 @@ export default function SessionNotes({ sessionId }: SessionNotesProps) {
                           'Tornar Privada'
                         )}
                       </Button>
-                      <Button className='bg-black rounded hover:bg-gray-500 text-yellow-500'
-                        size="sm"
+                      <Button 
+                        className='bg-black rounded hover:bg-gray-500 text-yellow-500'
+                        size="sm" 
                         onClick={() => setEditingNote(note)}
                       >
                         Editar
                       </Button>
-                      <Button className='bg-black rounded hover:bg-gray-500 text-red-600'
+                      <Button 
+                        className='bg-black rounded hover:bg-gray-500 text-red-600'
                         size="sm" 
                         onClick={() => setSessionNoteToDelete(note)}
                       >

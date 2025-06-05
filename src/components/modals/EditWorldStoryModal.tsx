@@ -86,7 +86,7 @@ export default function EditWorldStoryModal({
   // Renderização do Modal
   return (
     <div className="fixed inset-0 z-50 bg-black bg-opacity-60 flex items-center justify-center p-4 transition-opacity duration-300 ease-in-out">
-      <div className="bg-white rounded-lg p-6 w-full max-w-5xl shadow-xl transform transition-all duration-300 ease-in-out scale-100"> {/* Aumentei o max-w para 5xl para deixar mais largo */}
+      <div className="bg-gray-200 rounded-lg p-6 w-full max-w-5xl shadow-xl transform transition-all duration-300 ease-in-out scale-100"> {/* Aumentei o max-w para 5xl para deixar mais largo */}
         {/* Cabeçalho do Modal */}
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-2xl font-bold text-gray-800">Editar História do Mundo</h2>
@@ -101,9 +101,6 @@ export default function EditWorldStoryModal({
         {/* Usamos um form para que o SubmitButton funcione corretamente, mesmo com um textarea */}
         <form onSubmit={handleSave} className="space-y-5 mt-4">
           <div className="space-y-1">
-            <label className="block text-sm font-medium text-gray-700 sr-only"> {/* sr-only: esconde visualmente mas mantém para leitores de tela */}
-               Conteúdo da História do Mundo
-            </label>
             <FormInput
               id="world_story_modal"
               name="world_story_modal"
@@ -112,20 +109,12 @@ export default function EditWorldStoryModal({
               value={worldStory || ''} // Usa o estado interno
               onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setWorldStory(e.target.value)} // Atualiza o estado interno
               rows={15} // Define um número de linhas para o textarea
-              className="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y" // resize-y permite redimensionar verticalmente
+              className="w-full bg-gray-200 border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y" // resize-y permite redimensionar verticalmente
             />
           </div>
 
           {/* Botões de Ação */}
-          <div className="flex justify-end space-x-3 pt-4">
-            <Button
-              type="button" // Importante para não submeter o form
-              variant="outline"
-              onClick={onClose} // Chama a função de fechar passada por props
-              disabled={loading}
-            >
-              Cancelar
-            </Button>
+          <div className="space-y-2">
             <SubmitButton
               loading={loading}
               loadingText="Salvando..."
@@ -133,6 +122,16 @@ export default function EditWorldStoryModal({
               // SubmitButton dentro de um form aciona o onSubmit do form
               // Não precisa de onClick aqui se o type for submit
             />
+            <Button
+              type="button" // Importante para não submeter o form
+              variant="outline"
+              onClick={onClose} // Chama a função de fechar passada por props
+              disabled={loading}
+              className='w-full text-lg'
+            >
+              Cancelar
+            </Button>
+            
           </div>
         </form>
       </div>

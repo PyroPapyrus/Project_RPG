@@ -393,11 +393,14 @@ const Page = ({ params }: PageProps) => {
               </div>
             
               {/* Exibir world_story para todos (somente leitura) */}
-              <div className='max-w-[420px] bg-white shadow-lg shadow-black text-black -mx-2 p-3 rounded-tl-2xl rounded-br-2xl rounded'> 
+              <div 
+                className='max-w-[420px] bg-gray-300 shadow-lg shadow-black text-black -mx-2 p-3 rounded-tl-2xl rounded-br-2xl rounded cursor-pointer transition-transform hover:scale-[1.02]'
+                onClick={() => setIsWorldStoryModalOpen(true)}
+              > 
                 {campaign.world_story ? (
-                  <p>{campaign.world_story}</p>
+                  <p className='min-h-[120px]'>{campaign.world_story}</p>
                 ) : (
-                  <p className="text-gray-400 pb-[70px] italic max-w-[420px]">
+                  <p className="text-gray-500 min-h-[120px] italic max-w-[420px]">
                     Escreva aqui a história/contextualização do mundo da sua campanha
                   </p>
                 )}
