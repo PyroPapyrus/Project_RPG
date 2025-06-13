@@ -4,27 +4,26 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-import { Send, Sparkles, ChevronDown, ChevronUp, MessageSquarePlus, Trash2  } from 'lucide-react';
+import { Send, Sparkles, ChevronDown, ChevronUp, MessageSquarePlus, Trash2 } from 'lucide-react';
 import { Button } from './ui/button';
 import { Textarea } from './ui/textarea';
 import { toast } from 'react-toastify';
 import ConfirmationModal from './modals/ConfirmationModal';
 import ConversationHistory from './ConversationHistory';
+import { v4 as uuidv4 } from 'uuid';
 
-// Definindo o tipo para uma mensagem na conversa
 interface Message {
-  role: 'user' | 'model'; // 'user' para o usuário, 'model' para a IA
+  id: string;
+  role: 'user' | 'model';
   parts: Array<{ text: string }>;
 }
 
 interface ChatAIProps {
-  sessionId: string; // ID da sessão atual
-  campaignSystem?: string | null; // Sistema da campanha (opcional, para contexto da IA)
+  sessionId: string;
+  campaignSystem?: string | null;
 }
 
-// Defina um limite de caracteres para o texto curto
-const SHORT_TEXT_LIMIT = 200; // Por exemplo, 200 caracteres
-
+const SHORT_TEXT_LIMIT = 200;
 
 export function ChatAI({ sessionId, campaignSystem }: ChatAIProps) {
   const supabase = createClientComponentClient();
@@ -33,19 +32,33 @@ export function ChatAI({ sessionId, campaignSystem }: ChatAIProps) {
   const [loading, setLoading] = useState(false);
   const [conversationId, setConversationId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-
   const [isDeleting, setIsDeleting] = useState(false);
-  const [showConfirmDeleteModal, setShowConfirmDeleteModal] = useState(false); // NOVO: Estado para controlar o modal de confirmação
+  const [showConfirmDeleteModal, setShowConfirmDeleteModal] = useState(false);
+  const [expandedMessages, setExpandedMessages] = useState<Set<string>>(new Set());
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const loadConversation = useCallback(async (convId: string | null = null) => {
+  const toggleExpand = (messageId: string) => {
+    setExpandedMessages((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(messageId)) {
+        newSet.delete(messageId);
+      } else {
+        newSet.add(messageId);
+      }
+      return newSet;
+    });
+  };
+
+  const loadConversation = useCallback(async (convIdToLoad: string | null = null) => {
     setLoading(true);
     setMessages([]);
     setExpandedMessages(new Set());
     setInputMessage('');
+    setConversationId(convIdToLoad); // Garante que o ID da conversa seja o que está sendo carregado ou null
+
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       toast.error('Usuário não autenticado para carregar chat.');
@@ -53,30 +66,19 @@ export function ChatAI({ sessionId, campaignSystem }: ChatAIProps) {
       return;
     }
 
-    if (convId) { // Carrega uma conversa específica
+    let fetchedData = null;
+    let fetchError = null;
+
+    if (convIdToLoad) {
       const { data, error } = await supabase
         .from('ai_conversations')
         .select('id, messages')
-        .eq('id', convId)
-        .eq('user_id', user.id) // Garante que o usuário é o dono
+        .eq('id', convIdToLoad)
+        .eq('user_id', user.id)
         .single();
-
-      if (error) {
-        console.error('Erro ao carregar conversa específica:', error);
-        toast.error('Erro ao carregar a conversa selecionada.');
-        setMessages([]);
-        setConversationId(null);
-      } else if (data) {
-        setConversationId(data.id);
-        setMessages(data.messages as Message[]);
-        setExpandedMessages(new Set());
-      } else {
-        // Conversa não encontrada (ex: foi deletada por outro dispositivo)
-        toast.error('A conversa selecionada não foi encontrada.');
-        setMessages([]);
-        setConversationId(null);
-      }
-    } else { // Carrega a última conversa ou inicia uma nova
+      fetchedData = data;
+      fetchError = error;
+    } else {
       const { data, error } = await supabase
         .from('ai_conversations')
         .select('id, messages')
@@ -85,65 +87,51 @@ export function ChatAI({ sessionId, campaignSystem }: ChatAIProps) {
         .order('created_at', { ascending: false })
         .limit(1)
         .single();
-
-      if (error && error.code !== 'PGRST116') {
-        console.error('Erro ao carregar histórico de conversa inicial:', error);
-        toast.error('Erro ao carregar histórico da conversa com a IA.');
-        setMessages([]);
-        setConversationId(null);
-      } else if (data) {
-        setConversationId(data.id);
-        setMessages(data.messages as Message[]);
-        setExpandedMessages(new Set());
-      } else {
-        setConversationId(null);
-        setMessages([]);
-        setExpandedMessages(new Set());
-      }
+      fetchedData = data;
+      fetchError = error;
     }
+
+    if (fetchError && fetchError.code !== 'PGRST116') {
+      console.error('Erro ao carregar histórico de conversa:', fetchError);
+      toast.error('Erro ao carregar histórico da conversa com a IA.');
+      setConversationId(null);
+    } else if (fetchedData) {
+      setConversationId(fetchedData.id);
+      const messagesWithIds: Message[] = (fetchedData.messages as Message[]).map(msg => ({
+        ...msg,
+        id: msg.id || uuidv4()
+      }));
+      setMessages(messagesWithIds);
+    } else {
+      setConversationId(null);
+    }
+
     setLoading(false);
     scrollToBottom();
   }, [sessionId, supabase]);
 
   useEffect(() => {
-    loadConversation(); // Carrega a última conversa ao iniciar
+    loadConversation();
   }, [loadConversation]);
 
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
 
-  const [expandedMessages, setExpandedMessages] = useState<Set<number>>(new Set());
-
-  const toggleExpand = (index: number) => {
-    setExpandedMessages((prev) => {
-      const newSet = new Set(prev);
-      if (newSet.has(index)) {
-        newSet.delete(index);
-      } else {
-        newSet.add(index);
-      }
-      return newSet;
-    });
-  };
-
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!inputMessage.trim() || loading) return;
 
-    const newMessage: Message = { role: 'user', parts: [{ text: inputMessage }] };
-    setMessages((prevMessages) => [...prevMessages, newMessage]);
-    setInputMessage('');
+    const currentMessage = inputMessage; // Salva a mensagem atual do input
+    setInputMessage(''); // Limpa o input imediatamente
     setLoading(true);
 
     try {
       const response = await fetch('/api/ai/chat', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          userMessage: inputMessage,
+          userMessage: currentMessage, // Usa a mensagem salva
           conversationId: conversationId,
           sessionId: sessionId,
           campaignSystem: campaignSystem,
@@ -156,14 +144,22 @@ export function ChatAI({ sessionId, campaignSystem }: ChatAIProps) {
       }
 
       const data = await response.json();
-      setMessages((prevMessages) => [...prevMessages, { role: 'model', parts: [{ text: data.aiContent }] }]);
-      setConversationId(data.conversationId);
+      // AGORA: Atualiza o estado messages com o histórico COMPLETO retornado pela API
+      // E garante que cada mensagem tenha um ID único.
+      const updatedMessagesWithIds: Message[] = (data.updatedMessages as Message[]).map(msg => ({
+          ...msg,
+          id: msg.id || uuidv4()
+      }));
+      setMessages(updatedMessagesWithIds);
+      setConversationId(data.conversationId); // Atualiza o ID da conversa (especialmente para novas)
+
       toast.success('Mensagem da IA recebida!');
 
     } catch (error: any) {
       console.error('Erro ao enviar mensagem:', error);
       toast.error(`Erro: ${error.message || 'Erro desconhecido.'}`);
-      setMessages((prevMessages) => prevMessages.slice(0, prevMessages.length - 1));
+      // Se der erro, o input já foi limpo e o loading está ativo.
+      // O histórico não é alterado, evitando duplicação ou dados incorretos no frontend.
     } finally {
       setLoading(false);
     }
@@ -177,7 +173,7 @@ export function ChatAI({ sessionId, campaignSystem }: ChatAIProps) {
   };
 
   const handleDeleteConversation = async () => {
-    setShowConfirmDeleteModal(false); // Fecha o modal antes de iniciar a exclusão
+    setShowConfirmDeleteModal(false);
     if (!conversationId) {
       toast.info('Não há conversa para deletar.');
       return;
@@ -204,16 +200,14 @@ export function ChatAI({ sessionId, campaignSystem }: ChatAIProps) {
     }
   };
 
-    // Função para selecionar uma conversa do histórico
   const handleSelectOldConversation = (convId: string) => {
     if (convId === conversationId) {
       toast.info('Esta conversa já está aberta.');
       return;
     }
-    loadConversation(convId); // Carrega a conversa específica
+    loadConversation(convId);
     toast.info('Conversa antiga carregada.');
   };
-
 
   return (
     <div className="flex flex-col flex-1 bg-gray-800 rounded-lg shadow-lg">
@@ -237,7 +231,7 @@ export function ChatAI({ sessionId, campaignSystem }: ChatAIProps) {
             variant="ghost"
             size="sm"
             className="text-red-400 hover:bg-gray-600"
-            onClick={() => setShowConfirmDeleteModal(true)} // Abre o modal de confirmação
+            onClick={() => setShowConfirmDeleteModal(true)}
             disabled={!conversationId || isDeleting || loading}
           >
             <Trash2 className="h-4 w-4 mr-1" /> Deletar Conversa
@@ -245,7 +239,6 @@ export function ChatAI({ sessionId, campaignSystem }: ChatAIProps) {
         </div>
       </div>
 
-       {/* Componente para Histórico de Conversas */}
       <ConversationHistory
         sessionId={sessionId}
         onConversationSelect={handleSelectOldConversation}
@@ -262,9 +255,9 @@ export function ChatAI({ sessionId, campaignSystem }: ChatAIProps) {
             Comece uma nova conversa! A IA está pronta para te ajudar com suas ideias de RPG.
           </div>
         ) : (
-          messages.map((msg, index) => (
+          messages.map((msg) => (
             <div
-              key={index}
+              key={msg.id}
               className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
             >
               <div
@@ -273,12 +266,12 @@ export function ChatAI({ sessionId, campaignSystem }: ChatAIProps) {
                     ? 'bg-blue-600 text-white'
                     : 'bg-gray-600 text-gray-100'
                 }`}
-                onClick={() => msg.role === 'model' && toggleExpand(index)}
+                onClick={() => msg.role === 'model' && toggleExpand(msg.id)}
                 style={{ cursor: msg.role === 'model' && msg.parts[0].text.length > SHORT_TEXT_LIMIT ? 'pointer' : 'default' }}
               >
                 {msg.parts.map((part, pIdx) => {
                   const text = part.text;
-                  const isExpanded = expandedMessages.has(index);
+                  const isExpanded = expandedMessages.has(msg.id);
                   const shouldTruncate = msg.role === 'model' && text.length > SHORT_TEXT_LIMIT && !isExpanded;
 
                   return (
@@ -328,7 +321,6 @@ export function ChatAI({ sessionId, campaignSystem }: ChatAIProps) {
         {loading && <p className="text-xs text-gray-400 mt-1">Aguardando resposta da IA...</p>}
       </form>
 
-      {/* Seu Modal de Confirmação customizado */}
       <ConfirmationModal
         isOpen={showConfirmDeleteModal}
         onClose={() => setShowConfirmDeleteModal(false)}
@@ -337,7 +329,7 @@ export function ChatAI({ sessionId, campaignSystem }: ChatAIProps) {
         message="Tem certeza que deseja deletar esta conversa com a IA? Esta ação não pode ser desfeita."
         confirmButtonText={isDeleting ? 'Deletando...' : 'Deletar'}
         cancelButtonText="Cancelar"
-        isConfirmDestructive={true} // Define o estilo destrutivo para o botão de confirmação
+        isConfirmDestructive={true}
       />
     </div>
   );
