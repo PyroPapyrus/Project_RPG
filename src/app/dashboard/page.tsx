@@ -21,13 +21,14 @@ import { CampaignFilter, CampaignStatusFilter, CampaignSortBy } from '@/componen
 import EditCampaignModal from '@/components/modals/EditCampaignModal';
 import ConfirmationModal from '@/components/modals/ConfirmationModal';
 import { toast } from 'react-toastify';
+import { Loading } from '@/components/Loading'
 
 
 // Defina o tipo para o estado de filtros na página
 interface DashboardFilters {
   status: CampaignStatusFilter;
   sortBy: CampaignSortBy;
-  }
+}
 
 export default function DashboardPage() {
 
@@ -296,11 +297,17 @@ export default function DashboardPage() {
     router.push('/profile');
   };
 
+  if (loading) {
+    return (
+      <Loading />
+    )
+  }
+
   return (
 
-    <div className="bg-gradient-to-t from-gray-900 to-red-900 bg-no-repeat bg-fixed bg-cover min-h-screen">
+    <div className="bg-[url('/images/dark-bg-rpg_resized.png')] bg-cover min-h-screen bg-no-repeat bg-fixed">
 
-      <header className="relative justify-center items-center bg-gray-800 text-white py-4 shadow-md">
+      <header className="relative justify-center items-center bg-gray-900 text-white py-4 shadow-md">
         
         <div className='absolute left-4 top-3'>
           <BackButton href='/'/>
@@ -312,7 +319,6 @@ export default function DashboardPage() {
           </h1>
         </div>
 
-        
   
         <div className='flex absolute items-center top-0 right-2'>
           <a href="/">
@@ -356,8 +362,9 @@ export default function DashboardPage() {
         
       </header>
 
-      <main className="mx-auto pt-8">
-        <div className="flex justify-between items-center max-w-6xl mx-auto">
+      <main className="mx-auto bg-black/50 min-h-[calc(100vh-64px)]">
+        
+        <div className="flex justify-between items-center pt-7 max-w-6xl mx-auto">
           <div className="flex space-x-4">
             <button 
               className={`shadow-xl shadow-black/20 px-4 py-2 rounded-lg flex items-center gap-2 transition-colors ${
@@ -366,7 +373,7 @@ export default function DashboardPage() {
                   : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
               }`}
               onClick={() => setActiveTab('master')}
-            >
+              >
               <span>Minhas Campanhas</span>
               <span className={`${
                 activeTab === 'master' ? 'bg-gray-600' : 'bg-gray-300'
@@ -382,7 +389,7 @@ export default function DashboardPage() {
                   : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
               }`}
               onClick={() => setActiveTab('player')}
-            >
+              >
               <span>Campanhas que jogo</span>
               <span className={`${
                 activeTab === 'player' ? 'bg-gray-600' : 'bg-gray-300'
@@ -392,90 +399,106 @@ export default function DashboardPage() {
             </button>
 
             <div> {/* Wrapper for filter button and dropdown */}
-              <div 
-                className='shadow-xl bg-black flex text-white hover:bg-gray-900 cursor-pointer rounded-lg px-6 py-2 items-center space-x-2'
+              <Button 
+                className='shadow-xl h-10 bg-gray-800 flex text-white transform-all hover:bg-gray-900 cursor-pointer rounded-lg px-6 py-2 items-center space-x-2'
                 onClick={() => setIsFilterOpen(!isFilterOpen)}
-              >
+                >
                 <span className="material-symbols-rounded" style={{ fontSize: '28px' }}>
                   filter_list
                 </span>
                 <p className='text-lg'>Filtros</p>
-              </div>
+              </Button>
 
               {/* Filter dropdown */}
               {isFilterOpen && (
                 <div
                   ref={filterMenuRef} 
                   className="absolute z-20 mt-2 w-[250px] bg-gray-800 rounded-lg shadow-xl border border-gray-700"
-                >
+                  >
                   <CampaignFilter
                     onFilterChange={handleCampaignFilterChange}
                     filters={campaignFilters}
                   />
                 </div>
               )}
+              {/* --- FIM COMPONENTE DE FILTRO --- */}
           </div>
-          </div>
-
-          
-
-          {activeTab === 'master' ? (
-            <CreateCampaign onSuccess={fetchRawCampaigns} />
-            ) : (
-              <button
-                onClick={() => setJoinModalOpen(true)}
-                className="bg-black text-white hover:bg-gray-900 rounded-full px-6 py-2 flex items-center space-x-2"
-              >
-                <Plus className="h-5 w-5" />
-                <span>Entrar em Campanha</span>
-              </button>
-            )}
         </div>
-        
-        {/* --- FIM COMPONENTE DE FILTRO --- */}
-          
-        {/* --- RENDERIZAÇÃO DOS CARDS DE CAMPANHA --- */}
-        {activeTab === 'master' && filteredMasterCampaigns.length === 0 && (
-          <div className="max-w-6xl mt-20 mx-auto rounded-lg p-4 justify-items-center">
-            <p className="text-white text-center font-bold text-2xl text-shadow">
-              Você ainda não criou nenhuma campanha.
-            </p>
-          </div>
-        )}
 
-        {activeTab === 'player' && filteredPlayerCampaigns.length === 0 && (
-          <div className="max-w-6xl mt-20 mx-auto rounded-lg p-4 justify-items-center">
-            <p className="text-white text-center font-bold text-2xl text-shadow">
-              Você ainda não participa de nenhuma campanha.
-            </p>
-          </div>
-        )}
-
-        {/* Cards Container - Only rendered when there are campaigns */}
-        {((activeTab === 'master' && filteredMasterCampaigns.length > 0) || 
-          (activeTab === 'player' && filteredPlayerCampaigns.length > 0)) && (
-          <div className='pt-6 pb-[65px] min-h-[calc(100vh-164px)]'>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-6xl mx-auto">
-              {activeTab === 'master' ? (
-                filteredMasterCampaigns.map((campaign) => (
-                  <CampaignCard
-                    key={campaign.id}
-                    campaign={campaign}
-                    onEdit={handleEditCampaignClick}
-                    onDelete={setCampaignToDelete}
-                  />
-                ))
+            {activeTab === 'master' ? (
+              <CreateCampaign 
+                onSuccess={fetchRawCampaigns} 
+              />
               ) : (
-                filteredPlayerCampaigns.map((campaign) => (
-                  <CampaignCard
-                    key={campaign.id}
-                    campaign={campaign}
-                  />
-                ))
+                <button
+                  onClick={() => setJoinModalOpen(true)}
+                  className="bg-gradient-to-r from-[#D00000] to-[#940533] hover:scale-[1.02] transition transform-all text-white rounded-full px-6 py-2 flex items-center space-x-2"
+                >
+                  <Plus className="h-5 w-5" />
+                  <span>Entrar em Campanha</span>
+                </button>
               )}
-            </div>
           </div>
-        )}
+        
+          {/* --- RENDERIZAÇÃO DOS CARDS DE CAMPANHA --- */}
+          {activeTab === 'master' && filteredMasterCampaigns.length === 0 && (
+            <div className="max-w-6xl mt-[250px] mx-auto justify-items-center">
+              <span className="material-symbols-rounded" style={{ fontSize: '60px', color: 'white'}}>
+                swords
+              </span>
+              <p className="text-white text-center font-bold text-2xl text-shadow">
+                Nenhuma campanha encontrada.
+              </p>
+              <p className="text-white text-center text-xl text-shadow">
+                Você ainda não criou nenhuma campanha.
+              </p>
+            </div>
+          )}
+
+          {activeTab === 'player' && filteredPlayerCampaigns.length === 0 && (
+            <div className="max-w-6xl mt-[250px] mx-auto justify-items-center">
+              <span className="material-symbols-rounded" style={{ fontSize: '60px', color: 'white'}}>
+                login
+              </span>
+              <p className="text-white text-center font-bold text-2xl text-shadow">
+                Nenhuma campanha encontrada.
+              </p>
+              <p className="text-white text-center text-xl text-shadow">
+                Você ainda não participa de nenhuma campanha.
+              </p>
+            </div>
+          )}
+          
+
+          {/* Cards Container - Only rendered when there are campaigns */}
+          {((activeTab === 'master' && filteredMasterCampaigns.length > 0) || 
+            (activeTab === 'player' && filteredPlayerCampaigns.length > 0)) && (
+            <div className='pt-6 min-h-[calc(100vh-164px)]'>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-6xl mx-auto">
+                {activeTab === 'master' ? (
+                  filteredMasterCampaigns.map((campaign) => (
+                    <CampaignCard
+                      key={campaign.id}
+                      campaign={campaign}
+                      onEdit={handleEditCampaignClick}
+                      onDelete={setCampaignToDelete}
+                      loading={loading}
+                    />
+                  ))
+                ) : (
+                  filteredPlayerCampaigns.map((campaign) => (
+                    <CampaignCard
+                      key={campaign.id}
+                      campaign={campaign}
+                    />
+                  ))
+                )}
+              </div>
+            </div>
+          )}
+
+          
+        
       </main>
 
       {/* --- MODAL DE EDIÇÃO DE CAMPANHA --- */}

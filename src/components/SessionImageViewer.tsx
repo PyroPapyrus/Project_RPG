@@ -39,6 +39,9 @@ export default function SessionImageViewer({ sessionId, isMaster, userId }: Sess
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [imageToDelete, setImageToDelete] = useState<{ id: string; description: string | null } | null>(null);
 
+  // Primeiro, adicione um novo estado para controlar o loading do toggle
+  const [updatingPrivacyId, setUpdatingPrivacyId] = useState<string | null>(null);
+
   // Adicione um listener para o evento personalizado
   useEffect(() => {
     const handleImageDeleted = (event: CustomEvent) => {
@@ -235,6 +238,34 @@ export default function SessionImageViewer({ sessionId, isMaster, userId }: Sess
   // Check if any card is currently in editing mode outside the modal
   const isAnyCardEditing = editingImageId !== null;
 
+  // Adicione a função handleTogglePrivacy
+  const handleTogglePrivacy = async (e: React.MouseEvent, image: SessionImage) => {
+    e.stopPropagation();
+    if (!isMaster) return;
+    
+    try {
+      const newPrivateStatus = !image.is_private;
+      
+      const { error } = await supabase
+        .from('session_images')
+        .update({ is_private: newPrivateStatus })
+        .eq('id', image.id);
+
+      if (error) throw error;
+
+      // Atualiza apenas a imagem específica no estado local
+      setImages(prevImages =>
+        prevImages.map(img =>
+          img.id === image.id
+            ? { ...img, is_private: newPrivateStatus }
+            : img
+        )
+      );
+
+    } catch (err: any) {
+      toast.error('Erro ao alterar privacidade da imagem');
+    }
+  };
 
   return (
     <div className="bg-black/50 backdrop-blur-sm px-4">
@@ -249,33 +280,39 @@ export default function SessionImageViewer({ sessionId, isMaster, userId }: Sess
         </div>
         ) : (
         <div className="rounded-md flex overflow-x-auto">
-          <div className="flex gap-2 py-1 mb-2 min-w-min">
+          <div className="flex gap-2 py-3 mb-2 min-w-min">
             {images.map((image) => (
               <div
                 key={image.id}
-                className="border border-white rounded-t-md cursor-pointer flex-none w-[100px] transition-transform hover:scale-[1.02]"
+                className="cursor-pointer flex-none w-[100px] transition-transform hover:scale-[1.02]"
                 onClick={() => handleExpandImage(image)}
                 >
-                <div className="flex rounded-t justify-end px-1 bg-white items-center">
-                  {image.is_private ? (
-                    <Lock className="h-4 w-4 mr-1 text-red-500" />
+                <div className='w-full duration-200 transform-all group-hover:scale-105'>
+                  <div className={`flex absolute rounded-tl-md rounded-br-md ${isMaster ? 'cursor-pointer hover:bg-gray-700' : ''} bg-gray-600 px-1 py-1 items-center`}
+                    onClick={(e) => isMaster && handleTogglePrivacy(e, image)}
+                    title={isMaster ? `Clique para tornar ${image.is_private ? 'pública' : 'privada'}` : image.is_private ? 'Privada' : 'Pública'}
+                  >
+                    {updatingPrivacyId === image.id ? (
+                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"/>
+                    ) : image.is_private ? (
+                      <Lock className="h-4 w-4 text-red-500" />
+                      ) : (
+                      <Unlock className="h-4 w-4 text-green-500" />
+                    )}
+                  </div>
+                  {image.image_base64 ? (
+                    <img
+                      src={image.image_base64}
+                      alt={image.description || 'Imagem da sessão'}
+                      className="border w-full rounded-lg transform-all border-gray-600 h-[95px] items-center object-cover duration-200 transform-all group-hover:scale-105"
+                    />
                     ) : (
-                    <Unlock className="h-4 w-4 mr-1 text-green-500" />
+                    <div className="h-[80px] bg-gray-200 flex items-center justify-center text-gray-500">
+                      <ImageOff className="h-12 w-12" />
+                      <p>Imagem não disponível</p>
+                    </div>
                   )}
                 </div>
-                {image.image_base64 ? (
-                  <img
-                    src={image.image_base64}
-                    alt={image.description || 'Imagem da sessão'}
-                    className="w-full h-[80px] object-cover transition-transform duration-200 group-hover:scale-105"
-                  />
-                  ) : (
-                  <div className="h-[80px] bg-gray-200 flex items-center justify-center text-gray-500">
-                    <ImageOff className="h-12 w-12" />
-                    <p>Imagem não disponível</p>
-                  </div>
-                )}
-                  
                   
                   <>
                   {/*<p className="font-medium line-clamp-2">{image.description || 'Sem descrição'}</p>*/}

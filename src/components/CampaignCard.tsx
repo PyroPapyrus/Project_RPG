@@ -1,20 +1,37 @@
 import { Campaign } from '@/types/campaign'
 import { Trash2, Pencil } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+import { useState } from 'react'
+import { Loading } from './Loading'
+import { createPortal } from 'react-dom'
 
 interface CampaignCardProps {
   campaign: Campaign
   onEdit?: (campaign: Campaign) => void
   onDelete?: (campaign: Campaign) => void
+  loading?: boolean
 }
 
 export function CampaignCard({ campaign, onEdit, onDelete }: CampaignCardProps) {
   const router = useRouter()
+  const [loading, setLoading] = useState(false)
+
+const handleOpenCampaign = async (campaign: Campaign) => {
+  setLoading(true);
+  router.push(`/campaign/${campaign.id}/sessions`);
+}
+
+  if (loading) {
+    return createPortal (
+      <Loading />,
+      document.body
+    )
+  }
 
   return (
     <div
       className="bg-white rounded-lg shadow-md overflow-hidden cursor-pointer transition-transform hover:scale-[1.02] h-[355px] flex flex-col w-full"
-      onClick={() => router.push(`/campaign/${campaign.id}/sessions`)}
+      onClick={() => handleOpenCampaign(campaign)}
       >
       <div className="bg-gray-800 text-white p-4">
         <div className="flex flex-wrap justify-between items-start gap-2">

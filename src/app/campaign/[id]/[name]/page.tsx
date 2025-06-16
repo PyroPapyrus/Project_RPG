@@ -21,6 +21,7 @@ import PlayersManagementModal from '@/components/modals/PlayersManagementModal';
 import { toast } from 'react-toastify' // Verifique se 'react-toastify' é o que você usa (antes usou 'react-hot-toast')
 import { BackButton } from '@/components/ui/back-button'
 import LeaveCampaignButton from '@/components/LeaveCampaignButton'
+import { Loading } from '@/components/Loading'
 
 // --- NOVO TIPO para o estado 'campaign' com a contagem de jogadores ---
 // Este tipo estende o seu tipo CampaignBase e adiciona a estrutura para a contagem
@@ -42,7 +43,7 @@ interface PageProps {
 const Page = ({ params }: PageProps) => {
   // Mude o tipo do estado 'campaign' para o novo tipo com contagem
  const [campaign, setCampaign] = useState<CampaignWithPlayerCount | null>(null)
- const [loading, setLoading] = useState(true)
+ const [loading, setLoading] = useState(false)
  const [authorized, setAuthorized] = useState(false)
  const [isMaster, setIsMaster] = useState(false)
  const [sessions, setSessions] = useState<Session[]>([])
@@ -184,6 +185,11 @@ const Page = ({ params }: PageProps) => {
     loadData()
   }, [loadData]);
 
+  const handleSessionNavigation = async (session: Session) => {
+    setLoading(true);
+    router.push(`/campaign/${params.id}/${params.name}/session/${session.id}`);
+  };
+
 
   // --- HANDLER PARA CLICAR NO BOTÃO EDITAR SESSÃO ---
   const handleEditButtonClick = (session: Session) => {
@@ -255,26 +261,21 @@ const Page = ({ params }: PageProps) => {
       toast.success('Jogador removido com sucesso!');
     };
 
-
   if (loading) {
-    return (
-      <div className="flex bg-gray-900 items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-white"></div>
-      </div>
-    )
+    return <Loading />
   }
 
   if (!authorized || !campaign) {
     return (
       <div className="flex flex-col bg-gray-900 items-center justify-center min-h-screen">
-        <p className="text-white mb-4">Campanha não encontrada ou acesso não autorizado.</p>
+        <p className="text-white mb-4">Campanha não encontrada ou acesso negado.</p>
         <Button onClick={() => router.push('/dashboard')}>
           <ArrowLeft className="h-4 w-4 mr-2" />
           Voltar para o Dashboard
         </Button>
       </div>
     )
-  }   
+  }
 
   return (
     <>
@@ -332,17 +333,17 @@ const Page = ({ params }: PageProps) => {
             {isMaster && campaign.invite_code && (
               <div className="justify-self-start">
                 <p className='font-bold'>Código de Convite</p>
-                <div className='flex'>
-                  <p className="bg-gray-700 px-6 py-1 text-cyan-400">{campaign.invite_code}</p>
+                <div className='flex items-center'>
+                  <p className="bg-gray-700 px-6 py-1 text-cyan-400 italic">{campaign.invite_code}</p>
                   <Button 
                     size="sm" 
-                    className='rounded-l-none'
+                    className='rounded-l-none h-8'
                     onClick={() => {
                       navigator.clipboard.writeText(campaign.invite_code || '')
 
                       const messageDiv = document.createElement('div');
                       messageDiv.textContent = 'Código copiado!';
-                      messageDiv.className = 'ml-3 px-3 py-1 bg- font-bold';
+                      messageDiv.className = 'ml-3 px-3 py-1 italic font';
                       
                       const container = document.querySelector('#invite-code-container');
                       container?.appendChild(messageDiv);
@@ -501,9 +502,11 @@ const Page = ({ params }: PageProps) => {
                             <div className="flex justify-end">
                               <Button 
                                 className='text-black'
+                                loading={loading}
+                                loadingText="Carregando..."
                                 variant="outline"
                                 size="sm" 
-                                onClick={() => router.push(`/campaign/${params.id}/${params.name}/session/${session.id}`)}
+                                onClick={() => handleSessionNavigation(session)}
                               >
                                 Ver Detalhes
                               </Button>

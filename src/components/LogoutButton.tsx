@@ -4,6 +4,7 @@ import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { useRouter } from 'next/navigation'
 import { Button } from './ui/button'
 import { cn } from '@/lib/utils'
+import { useState } from 'react'
 
 interface LogoutButtonProps {
   className?: string
@@ -12,14 +13,18 @@ interface LogoutButtonProps {
 export default function LogoutButton({ className }: LogoutButtonProps) {
   const router = useRouter()
   const supabase = createClientComponentClient()
+  const [loading, setLoading] = useState(false)
 
   const handleSignOut = async () => {
+    setLoading(true);
     await supabase.auth.signOut()
     router.push('/login')
   }
 
   return (
     <Button
+      loading={loading}
+      loadingText='Saindo...'
       variant='outline'
       onClick={handleSignOut}
       className={cn(

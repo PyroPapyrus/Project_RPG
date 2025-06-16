@@ -16,6 +16,7 @@ import { BackButton } from '@/components/ui/back-button'; // Importar BackButton
 import { PasswordRequirements } from '@/components/PasswordRequirements'; // Ajuste o caminho se necessário
 import { ArrowLeft } from 'lucide-react';
 import LogoutButton from '@/components/LogoutButton';
+import { Loading } from '@/components/Loading';
 // --- FIM IMPORTAÇÃO ---
 
 interface UserProfile {
@@ -310,14 +311,22 @@ export default function ProfilePage() {
 
   const isOAuthUser = user?.app_metadata.provider && user?.app_metadata.provider !== 'email';
 
-// --- Renderização Condicional: Mostra loading inicial ---
-if (isLoadingSession || isLoadingProfile) {
-    return <div className="p-8 text-center">Carregando perfil...</div>;
+  // --- Renderização Condicional: Mostra loading inicial ---
+  if (isLoadingSession || isLoadingProfile) {
+    return <Loading />;
   }
 
   // --- Renderização Condicional: Mensagem se o usuário não estiver logado ---
   if (!user) {
-     return <div className="p-8 text-center">Você precisa estar logado para ver esta página.</div>;
+     return (
+      <div className="flex flex-col bg-gray-800 items-center justify-center min-h-screen">
+        <p className='p-5 items-center text-white'>Você precisa estar logado para ver esta página.</p>
+        <Button onClick={() => router.push('/dashboard')}>
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Voltar para o Dashboard
+        </Button>
+      </div>
+    )
   }
 
   // --- RENDERIZAÇÃO PRINCIPAL COM ESTILOS DO LOGIN ---

@@ -1,17 +1,43 @@
-import Link from 'next/link'
-import Image from 'next/image'
-import { Poppins } from 'next/font/google'
+'use client'
 
 import './globals.css'
+
+import Image from 'next/image'
+import { Poppins } from 'next/font/google'
+import { Loading } from '@/components/Loading'
+import { useState } from 'react'
+import { Button } from '@/components/ui/button'
+import { useRouter } from 'next/navigation'
 
 const poppins = Poppins({
   weight: '800',
   subsets: ['latin'],
 })
 
+
 export default function Home() {
+
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
+
+  const handleToSignUpPage = async () => {
+    setLoading(true);
+    router.push('/signup');
+  }
+
+    const handleToLoginPage = async () => {
+    setLoading(true);
+    router.push('/login');
+  }
+
+  if (loading) {
+    return (
+      <Loading />
+    )
+  }
+
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
+    <div className="min-h-screen justify-center bg-gray-900 text-white">
       {/* Hero Section */}
       <section className="relative h-screen flex items-center justify-center">
         <div className="absolute inset-0 z-0">
@@ -39,21 +65,23 @@ export default function Home() {
             Comece agora  criando a sua conta e junte-se a seus amigos
           </p>
           
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link
-              href="/login"
-              className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition duration-300"
-              prefetch={false}
+          <div className="flex gap-3 justify-self-center">
+            <Button
+              loading={loading}
+              loadingText=''
+              className="bg-blue-700 hover:bg-blue-800 text-white font-bold h-11 px-11 rounded-lg transition hover:scale-[1.05] duration-300"
+              onClick={() => handleToLoginPage()}
             >
               Entrar
-            </Link>
-            <Link
-              href="/signup"
-              className="bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 px-6 rounded-lg transition duration-300"
-              prefetch={false}
+            </Button> 
+            <Button
+              loading={loading}
+              loadingText=''
+              className="bg-gray-700 hover:bg-gray-800 text-white font-bold h-11 px-6 rounded-lg hover:scale-[1.05] transition duration-300"
+              onClick={() => handleToSignUpPage()}
             >
               Criar Conta
-            </Link>
+            </Button>
           </div>
         </div>
       </section>
@@ -153,13 +181,13 @@ export default function Home() {
           <p className="text-xl mb-8 text-gray-300">
             Junte-se a seus amigos e aventurem-se ao RPG de forma simples e intuitiva através da nossa ferramenta. 
           </p>
-          <Link
-            href="/signup"
-            className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-lg transition duration-300 inline-block"
-            prefetch={false}
+          <Button
+            loading={loading}
+            className="bg-blue-600 hover:bg-blue-700 text-white font-bold h-12 px-8 rounded-lg transition duration-300 "
+            onClick={() => handleToSignUpPage()}
           >
             Começar Agora
-          </Link>
+          </Button>
         </div>
       </section>
 

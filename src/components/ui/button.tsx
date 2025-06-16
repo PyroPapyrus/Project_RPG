@@ -1,6 +1,7 @@
 import { ButtonHTMLAttributes, forwardRef } from 'react'
 import { Slot } from "@radix-ui/react-slot"
 import { cn } from '@/lib/utils' // Assumindo que cn vem de um utils que combina classes
+import { Loading } from '../Loading'
 
 // Interface ButtonProps - Adicionando 'destructive' ao tipo do variant
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -14,8 +15,10 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
+
   ({ className, loading, loadingText, disabled = false, isEditing = true, variant = 'default', size = 'default', asChild = false, children, ...props }, ref) => {
     const Comp = asChild ? Slot : "button"
+    
     return (
       <Comp
         className={cn(
