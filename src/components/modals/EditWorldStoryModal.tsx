@@ -85,10 +85,10 @@ export default function EditWorldStoryModal({
 
   // Renderização do Modal
   return (
-    <div className="fixed inset-0 z-50 bg-black bg-opacity-60 flex items-center justify-center p-4 transition-opacity duration-300 ease-in-out">
-      <div className="bg-gray-200 rounded-lg p-6 w-full max-w-5xl shadow-xl transform transition-all duration-300 ease-in-out scale-100"> {/* Aumentei o max-w para 5xl para deixar mais largo */}
+    <div className="fixed min-h-screen inset-0 z-50 bg-black bg-opacity-60 flex items-center justify-center transition-opacity duration-300 ease-in-out">
+      <div className="bg-gray-200 rounded-lg p-6 w-full max-w-5xl shadow-xl transform transition-all duration-300 scale-100"> {/* Aumentei o max-w para 5xl para deixar mais largo */}
         {/* Cabeçalho do Modal */}
-        <div className="flex justify-between items-center mb-4">
+        <div className="flex justify-between items-center border-b-2 border-gray-300 pb-4">
           <h2 className="text-2xl font-bold text-gray-800">Editar História do Mundo</h2>
           {/* Botão de Fechar */}
           <CloseModalButton onClose={onClose} />

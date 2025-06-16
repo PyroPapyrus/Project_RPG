@@ -18,6 +18,7 @@ import { type Campaign } from '@/types/campaign';
 import { toast } from 'react-toastify';
 import { BackButton } from '@/components/ui/back-button';
 import { ChatAI } from '@/components/ChatAI';
+import { Loading } from '@/components/Loading';
 
 interface PageProps {
   params: {
@@ -87,14 +88,6 @@ const SessionPage = ({ params }: PageProps) => {
     useEffect(() => {
         fetchSession();
       }, [fetchSession]); 
-
-    if (loading) {
-      return (
-        <div className="flex bg-gray-900 items-center justify-center min-h-screen">
-          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-white"></div>
-        </div>
-      );
-    }
 
     if (!sessionData) {
       return (

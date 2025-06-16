@@ -85,13 +85,13 @@ export function CreateCampaign({ onSuccess }: CreateCampaignButtonProps) {
 
   return (
     <>
-      <Button 
+      <button 
         onClick={() => setIsModalOpen(true)}
-        className="bg-black text-white hover:bg-gray-900 rounded-full px-6 py-2 flex items-center space-x-2"
+        className="bg-gradient-to-r from-[#D00000] to-[#940533] hover:scale-[1.02] transition transform-all text-white rounded-full px-6 py-2 flex items-center space-x-2"
       >
         <Plus className="h-5 w-5" />
         <span>Criar Campanha</span>
-      </Button>
+      </button>
 
       {isModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">

@@ -48,7 +48,7 @@ export default function SessionSummary({ initialSummary, onSave, isMaster }: Ses
 
 
   return (
-    <div className="mt-[20px] border-[8px] rounded-b bg-black border-black">
+    <div className="mt-[20px] border-black border-x-[8px] border-b-[8px] rounded-b bg-black ">
       <div className='px-3 py-2 flex items-center justify-between'>
         <h3 className="text-xl font-bold text-white">Relatório da Sessão</h3>
         {/* Botão "Editar Resumo" - Renderizado APENAS se o usuário for o mestre */}
