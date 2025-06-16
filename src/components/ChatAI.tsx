@@ -4,13 +4,14 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-import { Send, Sparkles, ChevronDown, ChevronUp, MessageSquarePlus, Trash2 } from 'lucide-react';
+import { Send, Sparkles, ChevronDown, ChevronUp, MessageSquarePlus, Trash2, History } from 'lucide-react';
 import { Button } from './ui/button';
 import { Textarea } from './ui/textarea';
 import { toast } from 'react-toastify';
 import ConfirmationModal from './modals/ConfirmationModal';
 import ConversationHistory from './ConversationHistory';
 import { v4 as uuidv4 } from 'uuid';
+import { BackButton } from './ui/back-button';
 
 interface Message {
   id: string;
@@ -21,11 +22,15 @@ interface Message {
 interface ChatAIProps {
   sessionId: string;
   campaignSystem?: string | null;
+  params: {
+    id: string;
+    name: string;
+  };
 }
 
 const SHORT_TEXT_LIMIT = 200;
 
-export function ChatAI({ sessionId, campaignSystem }: ChatAIProps) {
+export function ChatAI({ sessionId, campaignSystem, params }: ChatAIProps) {
   const supabase = createClientComponentClient();
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState('');
@@ -35,6 +40,7 @@ export function ChatAI({ sessionId, campaignSystem }: ChatAIProps) {
   const [isDeleting, setIsDeleting] = useState(false);
   const [showConfirmDeleteModal, setShowConfirmDeleteModal] = useState(false);
   const [expandedMessages, setExpandedMessages] = useState<Set<string>>(new Set());
+  const [isHistoryExpanded, setIsHistoryExpanded] = useState(false);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -206,53 +212,87 @@ export function ChatAI({ sessionId, campaignSystem }: ChatAIProps) {
       return;
     }
     loadConversation(convId);
+    setIsHistoryExpanded(false); // Add this line to close the history view
     toast.info('Conversa antiga carregada.');
   };
 
   return (
-    <div className="flex flex-col flex-1 bg-gray-800 rounded-lg shadow-lg">
-      <div className="text-center bg-gray-700 py-2 rounded-t-lg">
-        <h1 className="text-lg font-bold text-blue-400 flex items-center justify-center">
-          <Sparkles className="h-5 w-5 mr-2" /> Chat com IA
-        </h1>
-        <p className="text-sm text-gray-300">Converse com a IA para auxiliar suas narrativas!</p>
-        <div className="flex justify-center space-x-2 mt-2 px-2">
-          <Button
-            onClick={startNewConversation}
-            variant="ghost"
-            size="sm"
-            className="text-white hover:bg-gray-600"
-            disabled={loading}
-          >
-            <MessageSquarePlus className="h-4 w-4 mr-1" /> Nova Conversa
-          </Button>
+    <div className="border-r max-w-[420px] flex flex-col flex-1 bg-gray-800 shadow-lg">
+      <div className="text-center bg-gray-700 rounded-t-lg">
+        <div className="relative bg-gray-900 pt-3 flex flex-col items-center justify-center">
+          <div>
+            <div className="absolute left-1 top-1">
+              <BackButton href={`/campaign/${params.id}/${params.name}`} />
+            </div>
+            <h1 className="text-lg font-bold text-cyan-400 flex items-center">
+              <Sparkles className="h-5 w-5 mr-2" /> Chat com IA
+            </h1>
+          </div>
+          <div>
+            <p className="text-sm mt-1 text-gray-300">Converse com a IA para auxiliar suas narrativas!</p>
+          </div>
+          <div className='bg-gray-800 flex w-full justify-center mt-2 whitespace-nowrap border-b border-gray-600'>
+            <div className='grid grid-cols-3 gap-1 w-full px-1'>
+              <Button
+                onClick={() => {
+                  startNewConversation();
+                  setIsHistoryExpanded(false);
+                }}
+                variant="ghost"
+                size="sm"
+                className="text-white hover:bg-gray-600 flex items-center justify-center min-w-0 px-1"
+                disabled={loading}
+              >
+                <MessageSquarePlus className="h-4 w-4 mr-1" />
+                <span className="text-xs">Nova Conversa</span>
+              </Button>
 
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-red-400 hover:bg-gray-600"
-            onClick={() => setShowConfirmDeleteModal(true)}
-            disabled={!conversationId || isDeleting || loading}
-          >
-            <Trash2 className="h-4 w-4 mr-1" /> Deletar Conversa
-          </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-red-500 hover:bg-gray-700 flex items-center justify-center min-w-0 px-1"
+                onClick={() => setShowConfirmDeleteModal(true)}
+                disabled={!conversationId || isDeleting || loading || isHistoryExpanded}
+              >
+                <Trash2 className="h-4 w-4 mr-1" />
+                <span className="text-xs">Deletar Conversa</span>
+              </Button>
+
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-white hover:bg-gray-600 flex items-center justify-center min-w-0 px-1"
+                onClick={() => setIsHistoryExpanded(!isHistoryExpanded)}
+              >
+                <History className="h-4 w-4 mr-1" />
+                <span className="text-xs">
+                  {isHistoryExpanded ? 'Voltar' : 'Histórico'}
+                </span>
+              </Button>
+            </div>
+              
+          </div>
         </div>
+        
       </div>
 
-      <ConversationHistory
-        sessionId={sessionId}
-        onConversationSelect={handleSelectOldConversation}
-        currentConversationId={conversationId}
-      />
-
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 p-4 space-y-4">
         {loading && messages.length === 0 && !conversationId ? (
           <div className="flex items-center justify-center h-full text-gray-400">
             Iniciando chat...
           </div>
-        ) : messages.length === 0 && !loading ? (
+        ) : messages.length === 0 && !loading && !isHistoryExpanded ? (
           <div className="flex items-center justify-center h-full text-gray-400 text-center">
             Comece uma nova conversa! A IA está pronta para te ajudar com suas ideias de RPG.
+          </div>
+        ) : isHistoryExpanded ? (
+          <div className="h-full">
+            <ConversationHistory
+              sessionId={sessionId}
+              onConversationSelect={handleSelectOldConversation}
+              currentConversationId={conversationId}
+              fullScreen
+            />
           </div>
         ) : (
           messages.map((msg) => (
@@ -297,30 +337,38 @@ export function ChatAI({ sessionId, campaignSystem }: ChatAIProps) {
         )}
         <div ref={messagesEndRef} />
       </div>
-
-      <form onSubmit={handleSendMessage} className="p-4 border-t border-gray-700 mt-auto">
-        <div className="flex items-center space-x-2">
-          <Textarea
-            value={inputMessage}
-            onChange={(e) => setInputMessage(e.target.value)}
-            placeholder={loading ? "Gerando resposta..." : "Digite sua mensagem..."}
-            rows={1}
-            className="flex-1 bg-gray-700 text-white border-gray-600 focus:border-blue-500 placeholder:text-gray-400"
-            disabled={loading}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                handleSendMessage(e);
-              }
-            }}
-          />
-          <Button type="submit" disabled={loading || !inputMessage.trim()}>
-            {loading ? 'Enviando...' : <Send className="h-5 w-5" />}
-          </Button>
-        </div>
-        {loading && <p className="text-xs text-gray-400 mt-1">Aguardando resposta da IA...</p>}
-      </form>
-
+      
+      {!isHistoryExpanded && (
+        <form onSubmit={handleSendMessage} className="relative p-10 fixed  mt-auto">
+          <div className="flex items-center space-x-2 fixed max-w-[420px] bg-gray-800 pt-2 border-t border-gray-700 bottom-0 left-0 w-full ">
+            <Textarea
+              value={inputMessage}
+              onChange={(e) => setInputMessage(e.target.value)}
+              placeholder={loading ? "Gerando resposta..." : "Digite sua mensagem..."}
+              rows={1}
+              className="flex-1 bg-gray-700 text-white border-gray-600 focus:border-blue-500 placeholder:text-gray-400"
+              disabled={loading}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSendMessage(e);
+                }
+              }}
+            />
+            <Button 
+              type="submit"
+              
+              disabled={loading || !inputMessage.trim()}
+              loading={loading}
+              className='items-center'
+              >
+              
+              <Send className="h-5 w-5 items-center" />
+            </Button>
+          </div>
+          {loading && <p className="text-xs text-gray-400 mt-1">Aguardando resposta da IA...</p>}
+        </form>
+      )}
       <ConfirmationModal
         isOpen={showConfirmDeleteModal}
         onClose={() => setShowConfirmDeleteModal(false)}

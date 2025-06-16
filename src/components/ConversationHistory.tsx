@@ -18,9 +18,15 @@ interface ConversationHistoryProps {
   sessionId: string;
   onConversationSelect: (conversationId: string) => void;
   currentConversationId: string | null;
+  fullScreen?: boolean;
 }
 
-export function ConversationHistory({ sessionId, onConversationSelect, currentConversationId }: ConversationHistoryProps) {
+export function ConversationHistory({ 
+  sessionId, 
+  onConversationSelect, 
+  currentConversationId,
+  fullScreen 
+}: ConversationHistoryProps) {
   const supabase = createClientComponentClient();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
@@ -92,65 +98,47 @@ export function ConversationHistory({ sessionId, onConversationSelect, currentCo
     return `Conversa em ${new Date(conversation.created_at).toLocaleDateString('pt-BR')} ${new Date(conversation.created_at).toLocaleTimeString('pt-BR')}`;
   };
 
-  return (
-    <div className="bg-gray-700 p-4 rounded-lg shadow-inner mt-4">
-      <Button
-        onClick={() => setIsExpanded(!isExpanded)} // Alterna o estado de expansão
-        variant="ghost"
-        className="w-full justify-between text-left text-lg font-bold text-gray-200 hover:bg-gray-600 mb-2"
-      >
-        <div className="flex items-center">
+  if (fullScreen) {
+    return (
+      <div className="">
+        <h2 className="text-xl font-semibold text-white mb-4 flex items-center">
           <History className="h-5 w-5 mr-2" /> Histórico de Conversas
-        </div>
-        {isExpanded ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
-      </Button>
-
-      {isExpanded && ( // Renderiza o conteúdo do histórico apenas se isExpanded for true
-        <>
-          {loading ? (
-            <p className="text-gray-400 text-sm p-2">Carregando histórico...</p>
-          ) : conversations.length === 0 ? (
-            <p className="text-gray-400 text-sm p-2">Nenhuma conversa anterior encontrada para esta sessão.</p>
-          ) : (
-            <div className="space-y-2 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
-              {conversations
-                // Você pode manter o filtro, ou mostrar a conversa atual e destacá-la
-                .filter(conv => conv.id !== currentConversationId)
-                .map((conv) => (
-                  <Button
-                    key={conv.id}
-                    onClick={() => onConversationSelect(conv.id)}
-                    variant="ghost"
-                    className={`w-full justify-start text-left text-gray-200 hover:bg-gray-600 ${conv.id === currentConversationId ? 'bg-gray-600 font-semibold' : ''}`}
-                    size="sm"
-                  >
-                    {formatConversationTitle(conv)}
-                  </Button>
-                ))}
-            </div>
-          )}
-        </>
-      )}
-
-      {/* Estilos para a scrollbar (mantidos como estavam) */}
-      <style jsx>{`
-        .custom-scrollbar::-webkit-scrollbar {
-          width: 8px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-          background: #374151; /* gray-700 */
-          border-radius: 4px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: #6b7280; /* gray-500 */
-          border-radius: 4px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: #4b5563; /* gray-600 */
-        }
-      `}</style>
-    </div>
-  );
+        </h2>
+        
+        {loading ? (
+          <div className="flex items-center justify-center text-gray-400">
+            Carregando histórico...
+          </div>
+        ) : conversations.length === 0 ? (
+          <div className="flex items-center justify-center text-gray-400">
+            Nenhuma conversa anterior encontrada.
+          </div>
+        ) : (
+          <div className="space-y-2 ">
+            {conversations.map((conv) => (
+              <button
+                key={conv.id}
+                onClick={() => onConversationSelect(conv.id)}
+                className={`w-full p-4 text-left rounded-lg transition-colors ${
+                  conv.id === currentConversationId 
+                    ? 'bg-gray-500 hover:bg-gray-900 text-white' 
+                    : 'bg-gray-700 text-gray-200 hover:bg-gray-900'
+                }`}
+              >
+                <div className="font-medium mb-1">
+                  {formatConversationTitle(conv)}
+                </div>
+                <div className="text-sm text-gray-300">
+                  {new Date(conv.created_at).toLocaleDateString('pt-BR')} às{' '}
+                  {new Date(conv.created_at).toLocaleTimeString('pt-BR')}
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
 }
 
 // Certifique-se de exportar a função ConversationHistory

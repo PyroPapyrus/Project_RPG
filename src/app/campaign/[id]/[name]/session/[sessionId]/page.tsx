@@ -106,13 +106,11 @@ const SessionPage = ({ params }: PageProps) => {
     <div className="flex min-h-screen justify-between z-10">
       
       <aside className="bg-gray-700 text-white max-w-[420px] max-h-screen break-words w-full overflow-y-auto flex flex-col">
-        <header className='bg-gray-900 py-[8px] px-2 sticky top-0 z-10'>
-          <BackButton href={`/campaign/${params.id}/${params.name}`} />
-        </header>
-
         <ChatAI 
-        sessionId={sessionData.id}
-        campaignSystem={campaignSystem} />
+          sessionId={sessionData.id}
+          campaignSystem={campaignSystem}
+          params={params}
+        />
       </aside>
 
       <div className='max-h-screen bg-gray-800 overflow-y-auto relative flex-1'>
