@@ -110,47 +110,6 @@ export default function SessionImageViewer({ sessionId, isMaster, userId }: Sess
     };
   }, [sessionId, isMaster, supabase]);
 
-  // handleEditClick agora é APENAS para a edição nos cards fora do modal
-  const handleEditClick = (image: SessionImage) => {
-    setEditingImageId(image.id);
-    setEditingDescription(image.description || '');
-    setEditingPrivacy(image.is_private);
-  };
-
-  const handleCancelEdit = () => {
-    setEditingImageId(null);
-    setEditingDescription('');
-    setEditingPrivacy(false);
-  };
-
-  const handleSaveEdit = async (imageId: string) => {
-    setLoading(true);
-    try {
-      const { error } = await supabase
-        .from('session_images')
-        .update({
-          description: editingDescription,
-          is_private: editingPrivacy,
-        })
-        .eq('id', imageId);
-
-      if (error) throw error;
-
-      // Emitir evento de atualização
-      window.dispatchEvent(new CustomEvent('imageUpdated', { 
-        detail: { imageId, description: editingDescription, isPrivate: editingPrivacy } 
-      }));
-
-      toast.success('Imagem atualizada com sucesso!');
-      handleCancelEdit();
-    } catch (err: any) {
-      toast.error(`Erro ao salvar: ${err.message}`);
-      console.error('Erro ao salvar edição:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   // NOVA FUNÇÃO: handleSaveModalEdit - Chamada pelo ImageViewerModal
   const handleSaveModalEdit = async (imageId: string, description: string, isPrivate: boolean) => {
     setLoading(true);
@@ -243,6 +202,9 @@ export default function SessionImageViewer({ sessionId, isMaster, userId }: Sess
     e.stopPropagation();
     if (!isMaster) return;
     
+    // Set loading state for this specific image
+    setUpdatingPrivacyId(image.id);
+    
     try {
       const newPrivateStatus = !image.is_private;
       
@@ -253,7 +215,7 @@ export default function SessionImageViewer({ sessionId, isMaster, userId }: Sess
 
       if (error) throw error;
 
-      // Atualiza apenas a imagem específica no estado local
+      // Update local state only after successful database update
       setImages(prevImages =>
         prevImages.map(img =>
           img.id === image.id
@@ -263,7 +225,11 @@ export default function SessionImageViewer({ sessionId, isMaster, userId }: Sess
       );
 
     } catch (err: any) {
+      console.error('Erro ao alterar privacidade:', err);
       toast.error('Erro ao alterar privacidade da imagem');
+    } finally {
+      // Clear loading state regardless of outcome
+      setUpdatingPrivacyId(null);
     }
   };
 

@@ -5,8 +5,7 @@
 import { useState, useEffect } from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { toast } from 'react-toastify';
-import { Button } from './ui/button'; // Reutilize seu componente Button
-import { ChevronDown, ChevronUp, History } from 'lucide-react'; // Importe os ícones
+import { History } from 'lucide-react'; // Importe os ícones
 
 interface Conversation {
   id: string;
@@ -30,7 +29,6 @@ export function ConversationHistory({
   const supabase = createClientComponentClient();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isExpanded, setIsExpanded] = useState(false); // NOVO: Estado para controlar a expansão
 
   // Função para carregar as conversas
   const fetchConversations = async () => {
