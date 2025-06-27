@@ -33,8 +33,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
             'h-10 px-2 text-md, rounded-full': size === 'md',
             'h-12 px-6 text-lg': size === 'lg',
             'h-10 w-10': size === 'icon',
-          },
-          className
+          }, className
         )}
         disabled={loading || disabled || !isEditing}
         ref={ref}

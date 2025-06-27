@@ -217,7 +217,7 @@ export function ChatAI({ sessionId, campaignSystem, params }: ChatAIProps) {
   };
 
   return (
-    <div className="border-r max-w-[420px] flex flex-col flex-1 bg-gray-800 shadow-lg">
+    <div className="border-r border-gray-700 max-w-[420px] flex flex-col flex-1 bg-gray-800 shadow-lg">
       <div className="text-center bg-gray-700 rounded-t-lg">
         <div className="relative bg-gray-900 pt-3 flex flex-col items-center justify-center">
           <div>
@@ -339,8 +339,8 @@ export function ChatAI({ sessionId, campaignSystem, params }: ChatAIProps) {
       </div>
       
       {!isHistoryExpanded && (
-        <form onSubmit={handleSendMessage} className="relative p-10 fixed  mt-auto">
-          <div className="flex items-center space-x-2 fixed max-w-[420px] bg-gray-800 pt-2 border-t border-gray-700 bottom-0 left-0 w-full ">
+        <form onSubmit={handleSendMessage} className="relative p-10 fixed mt-auto">
+          <div className="flex items-center fixed max-w-[420px] bg-gray-800 mb-1 pt-2 border-t border-gray-700 bottom-0 left-0 w-full ">
             <Textarea
               value={inputMessage}
               onChange={(e) => setInputMessage(e.target.value)}
@@ -360,7 +360,7 @@ export function ChatAI({ sessionId, campaignSystem, params }: ChatAIProps) {
               
               disabled={loading || !inputMessage.trim()}
               loading={loading}
-              className='items-center'
+              className='items-center h-6 px-1 mr-3'
               >
               
               <Send className="h-5 w-5 items-center" />
