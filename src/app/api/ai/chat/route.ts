@@ -14,7 +14,7 @@ if (!GEMINI_API_KEY) {
 const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
 
 const model = genAI.getGenerativeModel({
-  model: 'gemini-1.5-flash',
+  model: 'gemini-3-flash-preview',
   systemInstruction: `Você é um assistente de IA para mestres e jogadores de RPG. Seu objetivo é ajudar na criação e desenvolvimento de narrativas, personagens, locais, itens, tramas, desafios e o qualquer similares para RPG. Seja criativo, conciso e direto ao ponto. Use uma linguagem que remeta ao universo de RPG de fantasia medieval (ou outro sistema se especificado). Adapte suas sugestões para serem úteis para o RPG.`,
   generationConfig: {
     temperature: 0.9,
