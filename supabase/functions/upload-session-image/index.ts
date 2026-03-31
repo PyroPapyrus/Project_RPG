@@ -1,10 +1,16 @@
 // supabase/functions/upload-session-image/index.ts
 
+declare const Deno: {
+    env: {
+        get: (key: string) => string | undefined;
+    };
+    serve: (handler: (req: Request) => Response | Promise<Response>) => void;
+};
+
 // Importa as dependências necessárias
 // Use '@supabase/supabase-js' diretamente para o SDK JS
-// O server.ts do Deno std deve ser importado assim
-import { serve } from 'https://deno.land/std@0.208.0/http/server.ts'; // Use uma versão recente e estável
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'; // Versão estável do SDK JS (v3 está em beta)
+// Usa Deno.serve diretamente para evitar dependência de import URL no TypeScript do workspace
+import { createClient } from '@supabase/supabase-js'; // Versão estável do SDK JS (v3 está em beta)
 
 // NOTA: Se você estiver usando versões antigas do Deno ou do Supabase CLI,
 // a sintaxe de importação ou o parseamento de FormData pode variar.
@@ -23,7 +29,7 @@ const corsHeaders = {
 
 console.log('Edge function "upload-session-image" started');
 
-serve(async (req: Request) => {
+Deno.serve(async (req: Request) => {
   // Lida com requisições OPTIONS para CORS pre-flight
   if (req.method === 'OPTIONS') {
     return new Response(null, {
