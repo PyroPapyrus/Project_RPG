@@ -55,6 +55,7 @@ export default function LoginPage() {
   return (
     <div className='bg-gray-900 min-h-screen'>
       <Image
+        unoptimized
         src="/images/bg-login-cadastro.gif"
         alt="RPG Background"
         fill
@@ -63,7 +64,7 @@ export default function LoginPage() {
       />
             
       {error && <ErrorPopup message={error} onClose={() => setError(null)} />}
-      <header className='bg-gray-800/30 shadow-md relative flex justify-center items-center'>
+      <header className=' relative flex justify-center items-center'>
         <div className='absolute left-4'>
           <BackButton href='/'/>
         </div>

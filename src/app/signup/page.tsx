@@ -125,8 +125,8 @@ export default function SignUpPage() {
         priority
       />
 
-      <header className='bg-gray-800/30 shadow-md relative flex justify-center items-center'>
-        <div className='absolute left-4'>
+      <header className='relative flex justify-center items-center'>
+        <div className='absolute left-4 bg-black rounded-full'>
           <BackButton href='/'/>
         </div>
       
